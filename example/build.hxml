@@ -1,0 +1,14 @@
+# Build release
+
+-lib hxnodejs
+-lib djNode
+-cp ../src/
+-cp src/
+-main Main
+-js bin/app.js
+-D terminal
+-dce full
+
+# note -cmd dos command
+# e.g.
+# -cmd copy bin/app.js d:/bins/
