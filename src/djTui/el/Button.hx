@@ -9,7 +9,7 @@ import djTui.BaseElement;
  * - Various styles for displaying
  * - Can have a minimum width
  */ 
-class Button extends BaseElement 
+class Button extends BaseMenuItem 
 {
 	// The original Unmodified Text
 	var text(default, set):String;
@@ -18,34 +18,21 @@ class Button extends BaseElement
 	var minWidth:Int;
 	
 	// Encapsulated text with a [ ]
-	var useStyle:Bool;
+	var btnStyle:Bool;
 	
 	//====================================================;
 	
-	public function new(txt:String, _useStyle:Bool = true, _minWidth:Int = 3)
+	public function new(sid:String, txt:String, _btnStyle:Bool = true, _minWidth:Int = 3)
 	{
-		super();
+		super(sid);
+		type = "button";
 		height = 1;
-		useStyle = _useStyle;
+		btnStyle = _btnStyle;
 		minWidth = _minWidth;
-		text = txt;	// setter
+		text = txt;	// sets width also
 	}//---------------------------------------------------;
 	
-	override function onFocusChange():Void
-	{
-		if (isFocused) {
-			setColors(parent.skin.accent_fg, parent.skin.accent_bg);
-		}else {
-			setColors(parent.skin.accent_blur_fg, null);
-		}
-	}//---------------------------------------------------;
-	
-	override public function draw():Void 
-	{
-		_readyCol();
-		WM.T.move(x, y).print(text);
-	}//---------------------------------------------------;
-	
+	// --
 	override function onKey(k:String):Void 
 	{
 		if (k == "enter" || k == "space")
@@ -57,15 +44,15 @@ class Button extends BaseElement
 	function set_text(val)
 	{
 		text = val;
+		rText = text;
 		if (text.length < minWidth) {
-			text = StrTool.padString(text, minWidth, "center");
+			rText = StrTool.padString(text, minWidth, "center");
 		}
-		//width = displayText.length + useStyle?2:0;
-		if (useStyle)
+		if (btnStyle)
 		{
-			text = '[' + text + ']';
+			rText = '[' + text + ']';
 		}
-		width = text.length;
+		width = rText.length;
 		return val;
 	}//---------------------------------------------------;
 	

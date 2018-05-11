@@ -1,6 +1,7 @@
 package djTui;
 import djTui.el.Label;
 import djTui.Styles.WMSkin;
+import haxe.extern.EitherType;
 
 /**
  * 
@@ -17,7 +18,6 @@ class Window extends BaseElement
 	
 	var title_el:Label;
 	
-	
 	// Currently Active Borderstyle
 	public var borderStyle:Int;
 	
@@ -25,6 +25,10 @@ class Window extends BaseElement
 	var padX:Int;
 	var padY:Int;
 	
+	// Effective width, inside the window (calculates padding)
+	public var inWidth(get, null):Int;
+	
+	// Holds all the elements that exist inside the window
 	var el_children:Array<BaseElement>;
 
 	var active:BaseElement;
@@ -32,9 +36,6 @@ class Window extends BaseElement
 	
 	// --
 	var lastAdded:BaseElement; // DEV: Shorthand for el_children.last()
-	
-	// Is it currently drawn/open
-	public var isOpen:Bool = false;
 	
 	// - Push status updates to Window Manager :
 	// --
@@ -68,8 +69,9 @@ class Window extends BaseElement
 	**/
 	public function new(_border:Int = 1, ?_skin:WMSkin)
 	{
+		el_children = [];	// <- Important to be before super();
 		super();
-		el_children = [];
+		type = "window";
 		setColors(WM.skin.win_fg, WM.skin.win_bg);
 		borderStyle = _border;
 		skin = _skin;
@@ -78,11 +80,13 @@ class Window extends BaseElement
 		callbacks = function(_, _){ }; // Make it not crash, because it's going to get called
 	}//---------------------------------------------------;
 	
+	//public function center
 	
 	public function padding(xx:Int, yy:Int):Window
 	{
 		padX = xx; padY = yy; return this;
 	}//---------------------------------------------------;
+	
 	
 	/**
 	   - Just Add an element to the window, without worrying about positioning
@@ -101,9 +105,10 @@ class Window extends BaseElement
 		el_children.push(el);
 		el.parent = this;
 		el.callbacks = onElementCallback;
-		el.onFocusChange();	// setup and colors
+		el.onFocusChange();	// setup and colors, in supported elements
 		el.onAdded();
-		if (isOpen) el.draw();
+		el.visible = visible;
+		if (visible) el.draw();
 		lastAdded = el;
 	}//---------------------------------------------------;
 	
@@ -112,20 +117,37 @@ class Window extends BaseElement
 	{
 		if (el_children.remove(el))
 		{
-			if (isOpen) draw();
+			el.visible = false;
+			if (visible) draw();
 		}
 	}//---------------------------------------------------;
 
-	
-	public function addStacked(el:BaseElement, yPad:Int = 0)
+	/**
+	   Add a single element in a new line on the window
+	   @param	el Add an element to a line
+	   @param	yPad Padding form the element above it
+	   @param	align Align in relation go the window
+	**/
+	public function addLine(el:BaseElement, align:String = "left", yPad:Int = 0)
 	{
+		switch(align)
+		{
+			case "left":
+				el.x = x + padX;
+			case "right":
+				el.x = x + width - padX - el.width;
+			case "center":
+				el.x = x + Std.int((width / 2) - (el.width / 2));
+			case "fill":
+				el.width = inWidth;
+				el.x = x + padX;
+		}
+		
 		if (lastAdded == null)
 		{
-			el.x = x + padX;
 			el.y = y + padY;
 		}else
 		{
-			el.x = lastAdded.x;
 			el.y = lastAdded.y + lastAdded.height + yPad;
 		}
 		
@@ -133,11 +155,37 @@ class Window extends BaseElement
 	}//---------------------------------------------------;
 	
 	
+	/**
+	   Close window, does not destroy it
+	**/
+	public function close()
+	{
+		visible = false; //-> will trigger children
+		callback_wm("close", this);
+	}//---------------------------------------------------;
+	
+	/**
+	   Shorthand to WM.open()
+	   @param	autoFocus
+	**/
+	public function open(autoFocus:Bool = false)
+	{
+		WM.add(this, autoFocus);
+	}//---------------------------------------------------;
+	
+	
+	/**
+	   - Focus this window
+	   - Unfocuses any other focused window
+	   - Focuses first focusable element
+	**/
 	override public function focus() 
 	{
 		if (!flag_can_focus) return;
 		callback_wm("focus", this);	// << Send this first to unfocus/draw any other windows
+		lockDraw = true;
 		super.focus();
+		lockDraw = false;
 		// Focus the first selectable element :
 		if (el_children.length == 0) return;
 		BaseElement.focusNext(el_children, null);
@@ -149,8 +197,10 @@ class Window extends BaseElement
 		if (!isFocused) return;
 		if (active != null) active.unfocus();
 		active_last = active;
+		lockDraw = true;
 		active = null;
 		super.unfocus();
+		lockDraw = false;
 	}//---------------------------------------------------;
 	
 	
@@ -158,24 +208,18 @@ class Window extends BaseElement
 	// --
 	override public function draw():Void 
 	{
-		if (lockDraw) return;
+		if (lockDraw || !visible) return;
 		
 		_readyCol();
 		
 		// Draw the window background
 		WM.D.rect(x, y, width, height);
 		
-		// Draw border
+		// Draw Border
 		if (borderStyle > 0)
 		{
-			if (isFocused) {
-				WM.T.fg(WM.skin.win_hl);
-			}else {
-				WM.T.fg(WM.skin.win_fg);
-			}
 			WM.D.border(x, y, width, height, borderStyle);
 		}
-		
 		// Draw Children
 		// -
 		for (el in el_children)
@@ -184,6 +228,7 @@ class Window extends BaseElement
 		}
 		
 	}//---------------------------------------------------;
+	
 	
 	// Focus next element, will loop through the edges
 	@:allow(djTui.WM)
@@ -206,6 +251,7 @@ class Window extends BaseElement
 		}
 	}//---------------------------------------------------;
 	
+	// Checks if <active> is the last focusable on the window list
 	function isLastFocusableElement():Bool
 	{
 		var ai = el_children.indexOf(active);
@@ -217,6 +263,34 @@ class Window extends BaseElement
 		
 		return ai == ni;
 	}//---------------------------------------------------;
+	
+	
+	//====================================================;
+	// 
+	//====================================================;
+	
+	
+	override function set_visible(val):Bool
+	{
+		if (visible != val) 
+		{
+			for (el in el_children) el.visible = val;
+		}
+		return visible = val;
+	}//---------------------------------------------------;
+	
+	/**
+	   Search and return an element with target SID
+	   @param	sid the SID of the element 
+	   @return
+	**/
+	public function getSID(sid:String):BaseElement
+	{
+		// Note, this is faster than an array.filter, because it will not parse all the elements
+		for (el in el_children) if (el.SID == sid) return el;
+		return null;
+	}//---------------------------------------------------;
+	
 	
 	//====================================================;
 	// EVENTS 
@@ -264,14 +338,23 @@ class Window extends BaseElement
 				if (active != null) active.unfocus();
 				active_last = active;
 				active = el;
+				
 		}
+		
+		// Pipe callbacks to user
+		callbacks(st, el);
 		
 	}//---------------------------------------------------;
 	
+	//====================================================;
+	// GETTER, SETTERS
+	//====================================================;
 	
-	//====================================================;
-	// SETTERS
-	//====================================================;
+	
+	function get_inWidth()
+	{
+		return Std.int(width - padX - padX);
+	}//---------------------------------------------------;
 	
 	function set_title(val)
 	{
@@ -284,7 +367,7 @@ class Window extends BaseElement
 		
 		if (title.length > width - 4) {
 			title_el = new Label(title, width - 4);
-			// TODO: Animate it
+			// TODO: Animate it ??
 		}else
 		{
 			title_el = new Label('| ' + title + ' |');

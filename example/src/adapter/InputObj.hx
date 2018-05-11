@@ -34,7 +34,7 @@ class InputObj implements IInput
 			onKey(switch(code) {
 				case KeycodeID.esc: "esc";
 				case KeycodeID.enter: "enter";
-				case KeycodeID.backsp: "back";
+				case KeycodeID.backsp: "backsp";
 				case KeycodeID.space: "space";
 				case KeycodeID.up: "up";
 				case KeycodeID.down: "down";

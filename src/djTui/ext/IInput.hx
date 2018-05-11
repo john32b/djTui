@@ -5,7 +5,7 @@ package djTui.ext;
  * KeyCode IDs :
  * 
  *	 -	up,down,left,right
- * 		enter,back,esc,
+ * 		enter,backsp,esc,
  * 		pageup,pagedown,
  * 		tab
  * 

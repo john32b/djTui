@@ -3,52 +3,38 @@ package djTui.el;
 import djTui.BaseElement;
 
 /**
- * ...
- * @author John Dimi
+ * Simple checkbox, switches between two states
+ * -----
+ * 
  */
-class Toggle extends BaseElement 
+class Toggle extends BaseMenuItem 
 {
-
-	var checked:Bool = false;
+	//  Hold current state
+	var data:Bool;
 	
-	// Actual text rendered
-	var text:String;
-
 	public function new()
 	{
 		super();
-		setToggle(false);
+		size(5, 1);
+		type = "toggle";
+		setData(false);
 	}//---------------------------------------------------;
 	
-	override function onFocusChange():Void
+	override public function setData(val:Any) 
 	{
-		if (isFocused) {
-			setColors(parent.skin.accent_fg, parent.skin.accent_bg);
-		}else {
-			setColors(parent.skin.accent_blur_fg, null);
-		}
-	}//---------------------------------------------------;
-	
-	public function setToggle(b:Bool)
-	{
-		checked = b;
-		if (checked) text = '[ X ]';
-		else text = '[   ]';
+		data = val;
+		if (data) rText = '[ X ]';
+		else rText = '[   ]';	
 	}//---------------------------------------------------;
 	
 	override function onKey(k:String):Void 
 	{
 		if (k == "enter" || k == "space")
 		{
-			setToggle(!checked);
+			setData(!data);
+			callbacks("change", this);
 			draw();
 		}
 	}//---------------------------------------------------;
 	
-	override public function draw():Void 
-	{
-		_readyCol();
-		WM.T.move(x, y).print(text);
-	}//---------------------------------------------------;
-	
-}
+}// --

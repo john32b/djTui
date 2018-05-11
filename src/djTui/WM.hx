@@ -34,12 +34,11 @@ class WM
 	// Holds all the windows currently on the desktop/TUI
 	static var win_list:Array<Window>;
 	
-	// Pointer to the last active window
-	static var active_last:Window;
-	
 	// Pointer to currently active/focused window
 	static var active:Window;
 	
+	// Pointer to the last active window, useful to have when closing windows
+	static var active_last:Window;
 	
 	// If true, pressing tab will switch between windows
 	public static var flag_tab_switch_windows:Bool = false;
@@ -72,31 +71,84 @@ class WM
 		
 		// --
 		
-		win_list = [];
-		
 		I.onKey = onKey;
 		I.start();
 		
-		// --
+		// - Init and ClearBG
+		closeAll();
+	}//---------------------------------------------------;
+	
+	
+	/**
+	   Close all windows and redraw the bg
+	**/
+	public static function closeAll()
+	{
+		win_list = [];
+		active = active_last = null;
+		for (w in win_list) w.visible = false;
+		clearBG();
+	}//---------------------------------------------------;
+	
+	
+	/**
+		Clear the WM background
+	**/
+	static function clearBG()
+	{
+		T.reset();
+		if (skin.tui_bg != null) T.bg(skin.tui_bg);
+		D.rect(0, 0, width, height);
+	}//---------------------------------------------------;
+	
+	
+	/**
+	   Adds a window to the display list
+	   @param	w The window to add
+	   @param	autoFocus Focus the window?
+	**/
+	public static function add(w:Window, autoFocus:Dynamic)
+	{
+		trace('Adding Window UID:{w.UID}, SID:${w.SID}');
 		
-		if (skin.tui_bg != null)
+		if (win_list.indexOf(w) == -1)
 		{
-			T.bg(skin.tui_bg);
-			D.rect(0, 0, width, height);
+			win_list.push(w);
+			w.callback_wm = onWindowCallbacks;
 		}
+		
+		w.visible = true; // -> will trigger all children visible
+		
+		// This is the first time the window is being added to the display list, so draw it.
+		w.draw();
+		
+		if (autoFocus && w.flag_can_focus) w.focus();
+	}//---------------------------------------------------;
+	
+	
+	/**
+	   Adds these windows right below to the previous one 
+	   Useful to creating multi-paneled views. e.g header/2 columns/footer
+	   NOTE: 	Auto resizes windows to <width>.
+				leaves <height> intact
+	   @param	w Array of windows to add
+	**/
+	public static function addTiled(w:Array<Window>)
+	{
+		var lastw = win_list[win_list.length - 1];
+		// ---
+		//----->>>> TODO
 	}//---------------------------------------------------;
 	
 	
 	
-	public static function addWindow(w:Window, autoFocus:Dynamic = true)
+	/**
+	   Centers a window to the screen/viewport
+	**/
+	public static function center(w:Window)
 	{
-		trace('Added Window UID:{w.UID}');
-		win_list.push(w);
-		w.callback_wm = onWindowCallbacks;
-		
-		w.isOpen = true;
-		
-		if (autoFocus) w.focus(); else w.draw();
+		w.x = Std.int(width / 2 - w.width / 2);
+		w.y = Std.int(height / 2 - w.height / 2);
 	}//---------------------------------------------------;
 	
 	
@@ -111,6 +163,54 @@ class WM
 	static function focusNext()
 	{
 		BaseElement.focusNext(cast win_list, cast active);
+	}//---------------------------------------------------;
+	
+	
+	/**
+	   - USER should call window.close()
+	   - Remove a window from the list
+	   - Redraw any windows behind it
+	   - Focuses previously focused window
+	   @param	w The Window to remove
+	**/
+	static function closeWindow(win:Window)
+	{
+		win_list.remove(win);
+		
+		// Draw a <black> hole where the window was
+		T.reset(); if (skin.tui_bg != null) T.bg(skin.tui_bg);
+		D.rect(win.x, win.y, win.width, win.height);
+		
+		// If there are any windows behind it, re-draw them
+		for (w in win_list)
+		{
+			if (w.overlapsWith(win))
+			{
+				w.draw();
+			}
+		}
+		
+		if (active == win) 
+		{
+			active = null;
+			
+			if (active_last != null) 
+			{
+				active_last.focus();
+			}
+		}
+		
+	}//---------------------------------------------------;
+	
+	
+	static function windowOverlapsWithAny(win:Window)
+	{
+		for (w in win_list) 
+		{
+			if (win == w) continue;
+			if (win.overlapsWith(w)) return true;
+		}
+		return false;
 	}//---------------------------------------------------;
 	
 	
@@ -131,7 +231,7 @@ class WM
 		}
 	}//---------------------------------------------------;
 	
-	
+	// --
 	static function onWindowCallbacks(status:String, win:Window)
 	{
 		switch(status)
@@ -141,20 +241,19 @@ class WM
 				if (active != null) active.unfocus();
 				active_last = active;
 				active = win;
+				if (windowOverlapsWithAny(win)) win.draw();
 				
 			case "focus_next":
 				// - Requested to focus next window, because a window reached the end
-				//   if its scroll list
 				// - If there are no more windows left, focus the same one again
 				if (!BaseElement.focusNext(cast win_list, cast active))
 				{
 					win.focusNext();
 				}
 				
-			case "open":
-				
 			case "close":
-			
+				closeWindow(win);
+				
 			default:
 		}
 	}//---------------------------------------------------;

@@ -39,10 +39,8 @@ class StrTool
 	 * @param	align Optional alignment, [left|right|center]
 	 * @return  the padded string.
 	 */
-	public static function padString(str:String, length:Int, ?align:String):String
+	public static function padString(str:String, length:Int, align:String = "left"):String
 	{
-		if (align == null) align = "left";
-		
 		var b:Int = length - str.length;
 		
 		// String already in target length

@@ -1,8 +1,8 @@
 /** 
  * Base Element
  * ------------------------
- * Base class for all TUI Elements, windows and such
- * ------------------------
+ * - Some shared functionality for Windows and Elements
+ * 
  * @Author: johndimi <johndimi@outlook.com> @jondimi
  * 
  *****************************************************/
@@ -17,8 +17,9 @@ class BaseElement
 	static var UID_GEN:Int = 1;
 	
 	// General use UniqueIDs
-	// public var SID:String; // Don't need it
+	public var SID:String;
 	public var UID(default, null):Int;
+	public var type:String;	// e.g. label, oneof, etc.
 	
 	public var x:Int = 0;
 	public var y:Int = 0;
@@ -30,33 +31,37 @@ class BaseElement
 	public var colorFG:String;
 	public var colorBG:String;
 		
+	// Is it currently visible/onscreen
+	public var visible(default, set):Bool;
+	
 	public var isFocused(default, null):Bool = false;
 	
-	// public var type:String;	// e.g. label, oneof, etc.
+	// Puse generic status messages
+	// NOTE: Always Set, don't check for null
+	// NOTE: USER should not assing this on elements ( it is managed by a window )
+	public var callbacks:String->BaseElement->Void; 
 	
-	// Status callbacks
-	// focus
-	@:allow(djTui.Window)
-	var callbacks:String->BaseElement->Void; // ~ Always Set, don't check for null ~ //
-	
-	// --
-	// Can be added to a window
+	// Must be added to a window
 	var parent:Window = null;
 	
 	// If true will skip draw calls
-	// devnote: Parent checks this, so don't worry about it
+	// NOTE : Parent checks this, so don't worry about it
 	@:allow(djTui.Window)
 	var lockDraw:Bool = false;
 	
-	// --
-	// @userset
+	// == FLAGS ==
+	
+	// If false then the element cannot be focused and will be skipped
 	public var flag_can_focus:Bool = true;
 	
 	//====================================================;
 	
-	public function new()
+	public function new(?sid:String)
 	{
 		UID = UID_GEN++;
+		SID = sid;
+		visible = false;	// everything starts as `not visible` untill added to a window/WM
+		if (SID == null) SID = 'id_$sid';
 	}//---------------------------------------------------;
 	
 	// Move Relative
@@ -99,7 +104,7 @@ class BaseElement
 		return this;
 	}//---------------------------------------------------;
 	
-	
+	// --
 	public function focus()
 	{
 		if (isFocused || !flag_can_focus) return;
@@ -109,7 +114,7 @@ class BaseElement
 		draw(); 
 	}//---------------------------------------------------;
 	
-	
+	// --
 	public function unfocus()
 	{
 		if (!isFocused) return;
@@ -120,12 +125,11 @@ class BaseElement
 	
 	/**
 	   @virtual
-	   Element was added on a window, so initialize it
+	   Element was just added on a window
 	**/
 	@:allow(djTui.Window)
 	function onAdded():Void {}
 	
-
 	/**
 	   @virtual
 	   A key was pushed to current element
@@ -149,7 +153,7 @@ class BaseElement
 	**/
 	public function draw():Void {}
 	
-	
+	// Might be useful
 	public function overlapsWith(el:BaseElement):Bool
 	{
 		return 	(x + width > el.x) &&
@@ -158,11 +162,29 @@ class BaseElement
 				(y < el.y + el.height); 
 	}//---------------------------------------------------;
 	
+	// Shorthand function, quickly reset and set colors
 	inline function _readyCol()
 	{
 		WM.T.reset().fg(colorFG).bg(colorBG);
 	}//---------------------------------------------------;
 	
+	
+	//====================================================;
+	// DATA
+	//====================================================;
+	
+	function set_visible(val):Bool
+	{	
+		return visible = val;	
+	}//---------------------------------------------------;
+	
+	// For debugging
+	public function toString()
+	{
+		return
+		Type.getClassName(Type.getClass(this)) + 
+		' - UID:$UID, x:$x, y:$y, width:$width, height:$height';
+	}//---------------------------------------------------;
 	
 	//====================================================;
 	// STATICS 
@@ -199,18 +221,12 @@ class BaseElement
 			}
 			
 			if (j == ia) return false; // Nothing found
-			if (ar[j].flag_can_focus) break;
+			if (ar[j].flag_can_focus && ar[j].visible) break;
 		}//-
 		
 		ar[j].focus();
 		return true;
 	}//---------------------------------------------------;
 	
-	public function toString()
-	{
-		return
-		Type.getClassName(Type.getClass(this)) + 
-		' - UID:$UID, x:$x, y:$y, width:$width, height:$height';
-	}
 	
 }//-- end BaseDrawable
