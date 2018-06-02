@@ -48,19 +48,37 @@ class Styles
 	
 	
 	// Border Decorations
-	public static var border(default, null):Array<Array<String>>;
+	public static var border(default, null):Array<String>;
+	// Border Connections
+	public static var bCon(default, null):Array<String>;
+	
 	// All skins
 	public static var skins(default, null):Array<WMSkin>;
 	
 	public static function init()
 	{
-		//-- Set Border styles here
+		//-- Default Borders ::
+		// Notes : https://en.wikipedia.org/wiki/Box-drawing_character
 		
-		border = [];
-		border[1] = [ "┌", "─", "┐", "└", "─", "┘", "│", "│" ];
-		border[2] = [ "╔", "═", "╗", "╚", "═", "╝", "║", "║" ];
+		// borders : up row, bottom row, left, right
+		border = [ 
+			'',
+			'┌─┐└─┘││', // 1: all thin
+			'╔═╗╚═╝║║', // 2: all thick
+			'╓─╖╙─╜║║', // 3: thin horizontal
+			'╒═╕╘═╛││'  // 4: thin vertical
+		];
 		
-		//-- Set Default Tui Skins
+		// connections : up, down, left, right, intersection
+		bCon = [ 
+			'',
+			'┬┴├┤┼',
+			'╦╩╠╣╬',
+			'╤╧╟╢╪', // inner thin,  outer thick
+			'╥╨╞╡╫'  // inner thick, outer thin
+		];
+		
+		//-- Default Tui Skins ::
 		
 		var s = new WMSkin();
 			s.win_fg = "white";
@@ -72,11 +90,37 @@ class Styles
 			s.accent_blur_bg = "cyan";
 			s.accent_blur_fg = "black";
 			
-			
 		skins = [];
 		skins[0] = s;
 		
+	}//---------------------------------------------------;
+	
+	/**
+	   Returns special symbols for connecting the Standard Border Styles
+	   @param	from 1 or 2 (inside)
+	   @param	to 1 or 2 (border)
+	   @param	d up, down, left, right, X ( 0,1,2,3,4)
+	   
+	**/
+	public static function connectBorder(from:Int, to:Int, d:Int):String
+	{
+		if (from == to)
+		{
+			return bCon[from].charAt(d);
+		}
 		
+		if (from == 1 && to == 2)
+		{
+			return bCon[3].charAt(d);
+		}
+		
+		if ( from == 2 && to == 1)
+		{
+			return bCon[4].charAt(d);
+		}
+		
+		// Default:
+		return bCon[from].charAt(d);
 	}//---------------------------------------------------;
 	
 }//--

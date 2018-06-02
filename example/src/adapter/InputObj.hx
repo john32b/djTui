@@ -28,7 +28,6 @@ class InputObj implements IInput
 	function _onKey(k:String)
 	{
 		var code = Keycode.toKeyCodeID(k);
-		
 		if (code != null) 
 		
 			onKey(switch(code) {
@@ -43,6 +42,8 @@ class InputObj implements IInput
 				case KeycodeID.pagedown: "pagedown";
 				case KeycodeID.pageup: "pageup";
 				case KeycodeID.tab: "tab";
+				case KeycodeID.home: "home";
+				case KeycodeID.end: "end";
 				default: ""; // Other
 			});
 		
@@ -55,11 +56,11 @@ class InputObj implements IInput
 	public function start()
 	{
 		Keyboard.startCapture(true, _onKey);
-	}
+	}//---------------------------------------------------;
 	
 	public function stop()
 	{
 		Keyboard.stop();
-	}
+	}//---------------------------------------------------;
 	
 }// -- end class --

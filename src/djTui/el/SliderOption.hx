@@ -9,23 +9,16 @@ import djTui.BaseElement;
  */
 class SliderOption extends BaseMenuItem
 {
-	// Hold the currently selected index
-	var data:Int;
+	var options:Array<String>;	// The source options 
+	var index_max:Int;			// Shorthand for `options.length - 1`
+	var index:Int;				// Hold the currently selected index
+	var maxW:Int;				// Max Width the number string can get to
 	
-	// Shorthand for `options.length - 1`
-	var max:Int;
+	var ar_stat:Array<Bool>; 	// Arrow enabled status
 	
-	// The source options 
-	var options:Array<String>;
-
-	// The final text being rendered is in 3 parts
-	// <arrow> + <text> + <arrow>
-	var rTxt:Array<String> = [];
-	
-	var maxW:Int; 	// Max Width the number string can get to
+	static inline var ARROW_PAD:Int = 2;
 	
 	/**
-	   
 	   @param	sid  --
 	   @param	src  Array with choices
 	   @param	init Initial Index
@@ -33,55 +26,94 @@ class SliderOption extends BaseMenuItem
 	public function new(sid:String, src:Array<String>, init:Int = 0)
 	{
 		super(sid);	
-		type = "oneof";
+		ar_stat = [false, false];
+		type = ElementType.option;
 		options = src.copy(); // safer this way
 		// -- calculate the max width of options
 			maxW = options[0].length;
 			for (i in 0...options.length){
 				if (options[i].length > maxW) maxW = options[i].length;
 			}
-		max = options.length - 1;
+		index_max = options.length - 1;
+		size(maxW + ARROW_PAD * 2, 1);
 		setData(init);
-		size(rTxt[1].length + 4, 1);
 	}//---------------------------------------------------;
 	
-	override public function draw():Void 
+	override function focusSetup(focus:Bool):Void 
 	{
-		_readyCol();
-		WM.T.move(x, y);
-		WM.T.print(rTxt[0] + rTxt[1] + rTxt[2]);
+		super.focusSetup(focus);
+		renderText();
 	}//---------------------------------------------------;
 	
+	// --
 	override function onKey(k:String):Void 
 	{
-		if (k == "left")
+		switch(k)
 		{
-			if (data == 0) return;
-			setData(data - 1);
-			callbacks("change", this);
-			draw();
-		}else		
-		if (k == "right")
-		{
-			if (data == max) return;
-			setData(data + 1);
-			callbacks("change", this);
-			draw();
+			case "left": 	if (index != 0) sd(index - 1);
+			case "pageup":	if (index != 0) sd(0);
+			case "right":	if (index != index_max) sd(index + 1);
+			case "pagedown":if (index != index_max) sd(index_max);
+			default:
 		}
 	}//---------------------------------------------------;
 	
+	
+	// -- Set Data and callback 'change' in one call
+	function sd(d:Int)
+	{
+		setData(d);
+		callbacks("change", this);
+	}//---------------------------------------------------;
+	
+	
+	// --
+	// Focused Text is nudged a bit to the right for the arrows to fit
+	function renderText()
+	{
+		if (isFocused)
+		{
+			rText = StrTool.repeatStr(ARROW_PAD, ' ') + 
+					StrTool.padString(options[index], width - ARROW_PAD, 'left');
+		}else
+		{
+			rText = ' ' + 
+					StrTool.padString(options[index], width - 1, 'left');
+		}
+	}//---------------------------------------------------;
+	
+	// --
+	override public function draw():Void 
+	{
+		super.draw();
+		
+		if (isFocused)
+		{
+			// Assume same colors as normal text
+			if(ar_stat[0]) WM.T.move(x, y).print("<");
+			if(ar_stat[1]) WM.T.move(x + ARROW_PAD + options[index].length + 1, y).print(">");
+		}
+	}//---------------------------------------------------;
+	
+	
+	// --
+	// Sets current selected INDEX
+	// ! Does not safeguard
 	override public function setData(val:Any) 
 	{
-		data = val;
-		if (data == 0) 	 rTxt[0] = '  '; else rTxt[0] = '< ';
-						 rTxt[1] = StrTool.padString(options[data], maxW, "left");
-		if (data == max) rTxt[2] = '  '; else rTxt[2] = ' >';
+		index = val;
+		// Assuming index is always correct
+		ar_stat[0] = index != 0;
+		ar_stat[1] = index != index_max;
+		renderText();
+		if (visible) draw();
 	}//---------------------------------------------------;
 	
+	// --
+	// Read current selected INDEX
 	override public function getData():Any 
 	{
-		return data;
+		return index;
 	}//---------------------------------------------------;
-	
 	
 }// --

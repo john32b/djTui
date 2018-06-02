@@ -16,7 +16,7 @@ class Toggle extends BaseMenuItem
 	{
 		super();
 		size(5, 1);
-		type = "toggle";
+		type = ElementType.toggle;
 		setData(false);
 	}//---------------------------------------------------;
 	

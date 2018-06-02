@@ -15,6 +15,9 @@ import djTui.Styles.WMSkin;
 
 class WM 
 {
+	
+	public inline static var VERSION:String = "0.1";
+	
 	// A created Terminal Renderer
 	public static var T:ITerminal;
 
@@ -76,6 +79,10 @@ class WM
 		
 		// - Init and ClearBG
 		closeAll();
+		
+		// -
+		trace('== Window Manager Created =');
+		trace(' - Viewport Width = $width , Height = $height');
 	}//---------------------------------------------------;
 	
 	
@@ -107,10 +114,20 @@ class WM
 	   @param	w The window to add
 	   @param	autoFocus Focus the window?
 	**/
-	public static function add(w:Window, autoFocus:Dynamic)
+	public static function add(w:Window, autoFocus:Bool = false)
 	{
-		trace('Adding Window UID:{w.UID}, SID:${w.SID}');
+		// Fix Positioning Errors
+		if (w.x < 0) w.pos(0, w.y); else
+		if (w.x + w.width > width) w.pos(width - w.width, w.y);
 		
+		if (w.y < 0) w.pos(w.x, 0); else
+		if (w.y + w.height > height) w.pos(w.x, height - w.height);
+		
+		trace('Adding Window UID:{w.UID}, SID:${w.SID}');
+		trace(' - Size: ${w.width} | ${w.height} ');
+		trace(' - Pos: ${w.x} | ${w.y} ');
+		
+		// --
 		if (win_list.indexOf(w) == -1)
 		{
 			win_list.push(w);
@@ -122,33 +139,44 @@ class WM
 		// This is the first time the window is being added to the display list, so draw it.
 		w.draw();
 		
-		if (autoFocus && w.flag_can_focus) w.focus();
+		if (autoFocus && w.flag_focusable) w.focus();
 	}//---------------------------------------------------;
 	
 	
 	/**
-	   Adds these windows right below to the previous one 
-	   Useful to creating multi-paneled views. e.g header/2 columns/footer
-	   NOTE: 	Auto resizes windows to <width>.
-				leaves <height> intact
-	   @param	w Array of windows to add
+	  = Position windows to the viewport with a tiled layout 
+	   - WARNING, assumes empty display list
+	   - Every batch of windows are added to the same line
+	   - Useful to creating multi-paneled views. e.g header/2 columns/footer
+	   @param	w_arr Array of windows to add
+	   @param	from If set will place the new windows BELOW this one
+	   
 	**/
-	public static function addTiled(w:Array<Window>)
+	public static function addTiled(w_arr:Array<Window>, ?from:Window)
 	{
-		var lastw = win_list[win_list.length - 1];
-		// ---
-		//----->>>> TODO
-	}//---------------------------------------------------;
-	
-	
-	
-	/**
-	   Centers a window to the screen/viewport
-	**/
-	public static function center(w:Window)
-	{
-		w.x = Std.int(width / 2 - w.width / 2);
-		w.y = Std.int(height / 2 - w.height / 2);
+		var ww:Window = from; // Temp
+		
+		var nextX:Int = 0; // Always start at 1
+		var nextY:Int = 0; // Either 1 or next window's Y+height
+		
+		if (ww == null && win_list.length > 0)
+		{
+			ww = win_list[win_list.length - 1];
+		}
+		
+		if (ww != null)
+		{
+			nextY = ww.y + ww.height;
+		}
+		
+		var c:Int = 0;
+		do {
+			ww = w_arr[c];
+			ww.pos(nextX, nextY);
+			add(ww, false);
+			nextX = ww.x + ww.width;
+		}while (++c < w_arr.length);
+		
 	}//---------------------------------------------------;
 	
 	
@@ -196,6 +224,7 @@ class WM
 			
 			if (active_last != null) 
 			{
+				if (win.flag_is_sub) active_last.flag_once_focusLast = true;
 				active_last.focus();
 			}
 		}
@@ -222,7 +251,15 @@ class WM
 	{
 		if (flag_tab_switch_windows && key == "tab")
 		{
+			// Send tab to modal windows
+			if (active != null && active.flag_focus_lock)
+			{
+				active.onKey('tab');
+				return;
+			}
+			
 			focusNext();
+			
 		}else
 		
 		if (active != null)

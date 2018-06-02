@@ -8,7 +8,6 @@ import haxe.Timer;
  * ----------
  * - A label is by default not focusable
  * - Set WIDTH==0 to enable autosize
- * - Alignment is then WIDTH>0
  * - You can change the text after creating the object
  */ 
 
@@ -24,7 +23,7 @@ class Label extends BaseMenuItem
 	var timer:Timer;
 	
 	// -- HELPERS --
-	var anim_blink:Bool;
+	var anim_blink:Bool; // current blink status, true for on
 	var anim_scroll:Int;
 	var anim_active_call:Void->Void;
 	
@@ -33,40 +32,29 @@ class Label extends BaseMenuItem
 		@param	_txt	The Text of the Label
 		@param	_width 	You can force a width, it will be padded with " " to reach it
 						If string is longer it will be cut
+		@param _align   Alignment within the label itself.
 	**/
 	public function new(_txt:String, _width:Int = 0, _align:String = "left")
 	{
 		super();
-		type = "label";
-		flag_can_focus = false;
+		type = ElementType.label;
+		flag_focusable = false;
 		align = _align;
 		width = _width;
 		if (width == 0) width = _txt.length;
 		height = 1;
-		
 		text = _txt; // -> setter
-		
 		anim_blink = false;
 		anim_scroll = 0;
 	}//---------------------------------------------------;
 	
-
 	// NOTE: I need this because I want to get the parent window BG color,
 	// 		 and it's not available at new()
 	override function onAdded():Void 
 	{
 		setColors(parent.skin.win_fg);
 	}//---------------------------------------------------;
-	
-	// - Special occation, when a label needs to be highlighted
-	// - This isn't the same as focus(), focus is still disabled()
-	public function highlight(on:Bool = true)
-	{
-		if (on) setColors(parent.skin.accent_bg); 
-		else setColors(parent.skin.win_fg);
-		draw();
-	}//---------------------------------------------------;
-	
+		
 	// -- Scroll the label TEXT withing the render Area
 	// - Will loop through
 	// - call stop() sto stop
@@ -94,7 +82,7 @@ class Label extends BaseMenuItem
 	}//---------------------------------------------------;
 	
 	// -- Start blinking the label
-	// - call stop() to stopd
+	// - call stop() to stop
 	public function blink(freq:Int = 300):Label
 	{
 		stop();
@@ -105,8 +93,7 @@ class Label extends BaseMenuItem
 		timer.run = function()
 		{
 			anim_blink = !anim_blink;
-			if (anim_blink)
-			{
+			if (anim_blink){
 				rText = StrTool.padString(text, width);
 			}else{
 				rText = StrTool.padString("", width);
@@ -116,6 +103,16 @@ class Label extends BaseMenuItem
 		timer.run();
 		
 		return this;
+	}//---------------------------------------------------;
+
+	// --
+	// Stop blinking and set text to empty
+	public function blinkOff()
+	{
+		stop();
+		rText = StrTool.padString("", width);
+		anim_blink = false;
+		draw();
 	}//---------------------------------------------------;
 	
 	// Stop all animations
@@ -128,6 +125,7 @@ class Label extends BaseMenuItem
 		}
 	}//---------------------------------------------------;
 		
+	// Stop Any animation and reset text to empty
 	override public function reset() 
 	{
 		text = "";
@@ -152,8 +150,10 @@ class Label extends BaseMenuItem
 	function set_text(val)
 	{
 		text = val;
-		rText = val;
 		rText = StrTool.padString(text, width, align);
+		// Restart the animation, if any
+		if (anim_active_call != null) anim_active_call();
+		if (visible) draw();
 		return val;
 	}//---------------------------------------------------;
 

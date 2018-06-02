@@ -11,23 +11,26 @@ import djTui.BaseElement;
  */ 
 class Button extends BaseMenuItem 
 {
-	// The original Unmodified Text
+	inline static var SMB_0:String = "<";
+	inline static var SMB_1:String = ">";
+	
+	// The original unmodified Text
 	var text(default, set):String;
 	
 	// Minimum width allowed, text will be padded to reach this if smaller
 	var minWidth:Int;
 	
 	// Encapsulated text with a [ ]
-	var btnStyle:Bool;
+	var flag_btnStyle:Bool;
 	
 	//====================================================;
 	
-	public function new(sid:String, txt:String, _btnStyle:Bool = true, _minWidth:Int = 3)
+	public function new(sid:String, txt:String, _btnStyle:Bool = true, _minWidth:Int = 4)
 	{
 		super(sid);
-		type = "button";
+		type = ElementType.button;
 		height = 1;
-		btnStyle = _btnStyle;
+		flag_btnStyle = _btnStyle;
 		minWidth = _minWidth;
 		text = txt;	// sets width also
 	}//---------------------------------------------------;
@@ -35,12 +38,11 @@ class Button extends BaseMenuItem
 	// --
 	override function onKey(k:String):Void 
 	{
-		if (k == "enter" || k == "space")
-		{
-			callbacks("fire", this);
-		}
+		if (k == "enter" || k == "space") callbacks("fire", this);
+		else if (k == "left") callbacks("focus_prev", this);
+		else if (k == "right") callbacks("focus_next", this);
 	}//---------------------------------------------------;
-	
+	// --
 	function set_text(val)
 	{
 		text = val;
@@ -48,13 +50,13 @@ class Button extends BaseMenuItem
 		if (text.length < minWidth) {
 			rText = StrTool.padString(text, minWidth, "center");
 		}
-		if (btnStyle)
+		if (flag_btnStyle)
 		{
-			rText = '[' + text + ']';
+			rText = SMB_0 + text + SMB_1;
 		}
 		width = rText.length;
+		if (visible) draw();
 		return val;
 	}//---------------------------------------------------;
-	
 	
 }// --

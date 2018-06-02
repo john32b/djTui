@@ -1,6 +1,7 @@
 package djTui.el;
 
 import djTui.BaseElement;
+import haxe.Timer;
 
 /**
  * ...
@@ -9,7 +10,7 @@ import djTui.BaseElement;
 class TextInput extends BaseMenuItem 
 {
 	
-	static var CARET_SYMBOL:String = "_";
+	static var CARET_SYMBOL:String = "█";
 	public static var BANK_LETTERS:String = "QAZWSXEDCRFVTGBYHNUJMIKOLPqazwsxedcrfvtgbyhnujmikolp";
 	public static var BANK_NUMBERS:String = "1234567890";
 	public static var BANK_SYMBOLS:String = " `~!@#$%^&*()_+-=[]{}\\|;:\'\",.<>/?";
@@ -18,32 +19,79 @@ class TextInput extends BaseMenuItem
 	public var text(default, set):String;
 	
 	// Maximum input length
-	private var maxLength:Int = 0;
+	var maxLength:Int = 0;
 	
 	// Current valid keys user is permited to enter
-	private var validKeys:String = null;
+	var validKeys:String = null;
+	
+	// Timer used in Caret blinking
+	var timer:Timer;
+	
+	// Caret currently active
+	var caret_t:Bool;
 	
 	/**
 	   @param	sid
-	   @param	width Visual Width
-	   @param	maxL  Max input Length, must be smaller than width
-	   @param	type [number,all]
+	   @param	_width Visual Width
+	   @param	_maxl  Max input Length, must be smaller than width
+	   @param	_allow [number,all]
 	**/
 	
-	public function new(?sid:String, _width:Int = 0, _maxl:Int = 0, type:String = "all") 
+	public function new(?sid:String, _width:Int = 8, _maxl:Int = 0, _allow:String = "all") 
 	{
 		super(sid);
-		type = "input";
+		type = ElementType.input;
 		width = _width;
-		maxLength = _maxl;
-		if (type == "number") validKeys = BANK_NUMBERS;
+		maxLength = _maxl - 1;
+		if (_allow == "number") validKeys = BANK_NUMBERS;
 		else validKeys = BANK_LETTERS + BANK_NUMBERS;
 		text = "";
 	}//---------------------------------------------------;
 	
+	override function focusSetup(focus:Bool):Void 
+	{
+		if (focus) {
+			setColors(parent.skin.accent_blur_fg, parent.skin.accent_fg);
+		}else {
+			setColors(parent.skin.accent_blur_fg, parent.skin.accent_blur_bg);
+		}
+		if (focus) caret_start(); else caret_stop();
+	}//---------------------------------------------------;
+	
+	//@:setter(visible)
+	override function set_visible(value:Bool):Bool 
+	{
+		visible = value;
+		if (!visible) caret_stop();
+		return value;
+	}//---------------------------------------------------;
+	
+	function caret_start()
+	{
+		caret_stop();
+		timer = new Timer(200);
+		timer.run = function()
+		{
+			caret_t = ! caret_t;
+			_readyCol();
+			WM.T.move(x + text.length, y);
+			if (caret_t) {
+				WM.T.print(CARET_SYMBOL);
+			}else{
+				WM.T.print(" ");
+			}
+		}
+	}//---------------------------------------------------;
+	
+	function caret_stop()
+	{
+		if (timer != null) { timer.stop(); timer = null; }
+		caret_t = false;
+	}//---------------------------------------------------;
+	
 	override function onAdded():Void 
 	{
-		if (maxLength == 0) maxLength = width;
+		if (maxLength <= 0) maxLength = width - 1; // Leave room for carret
 	}//---------------------------------------------------;
 	
 	// --
@@ -77,11 +125,13 @@ class TextInput extends BaseMenuItem
 		if (text.length > maxLength) text = text.substr(0, maxLength);
 		rText = text;
 		rText = StrTool.padString(text, width, "left");
+		caret_t = false;
 		return val;
 	}//---------------------------------------------------;
 	
 	override public function getData():Any 
 	{
 		return text;
-	}
+	}//---------------------------------------------------;
+	
 }// --

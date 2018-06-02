@@ -19,7 +19,7 @@ class BaseElement
 	// General use UniqueIDs
 	public var SID:String;
 	public var UID(default, null):Int;
-	public var type:String;	// e.g. label, oneof, etc.
+	public var type:ElementType;
 	
 	public var x:Int = 0;
 	public var y:Int = 0;
@@ -36,9 +36,8 @@ class BaseElement
 	
 	public var isFocused(default, null):Bool = false;
 	
-	// Puse generic status messages
-	// NOTE: Always Set, don't check for null
-	// NOTE: USER should not assing this on elements ( it is managed by a window )
+	// Push generic status messages
+	// ! USER should not read this on elements ( it is managed by a window )
 	public var callbacks:String->BaseElement->Void; 
 	
 	// Must be added to a window
@@ -46,13 +45,12 @@ class BaseElement
 	
 	// If true will skip draw calls
 	// NOTE : Parent checks this, so don't worry about it
-	@:allow(djTui.Window)
 	var lockDraw:Bool = false;
 	
 	// == FLAGS ==
 	
 	// If false then the element cannot be focused and will be skipped
-	public var flag_can_focus:Bool = true;
+	public var flag_focusable:Bool = true;
 	
 	//====================================================;
 	
@@ -60,21 +58,22 @@ class BaseElement
 	{
 		UID = UID_GEN++;
 		SID = sid;
-		visible = false;	// everything starts as `not visible` untill added to a window/WM
-		if (SID == null) SID = 'id_$sid';
+		visible = false;	// everything starts as `not visible` until added to a window/WM
+		if (SID == null) SID = 'id_$UID';
 	}//---------------------------------------------------;
 	
 	// Move Relative
 	public function move(dx:Int, dy:Int):BaseElement
 	{
-		pos(x + dx, y + dy);
+		x += dx;
+		y += dy;
 		return this;
 	}//---------------------------------------------------;
 	
 	// Move Absolute
 	public function pos(_x:Int, _y:Int):BaseElement
 	{
-		x = _x; y = _y;
+		move(_x - x, _y - y); // This is to trigger the move() on `Window.hx`
 		return this;
 	}//---------------------------------------------------;
 	
@@ -92,7 +91,6 @@ class BaseElement
 	{
 		colorFG = fg;
 		colorBG = bg;
-		//
 		if (colorBG == null && parent != null) colorBG = parent.colorBG;
 	}//---------------------------------------------------;
 	
@@ -107,10 +105,10 @@ class BaseElement
 	// --
 	public function focus()
 	{
-		if (isFocused || !flag_can_focus) return;
+		if (isFocused || !flag_focusable) return;
 		callbacks('focus', this);
 		isFocused = true;
-		onFocusChange();
+		focusSetup(isFocused);
 		draw(); 
 	}//---------------------------------------------------;
 	
@@ -119,7 +117,7 @@ class BaseElement
 	{
 		if (!isFocused) return;
 		isFocused = false;
-		onFocusChange();
+		focusSetup(isFocused);
 		draw();
 	}//---------------------------------------------------;
 	
@@ -141,10 +139,9 @@ class BaseElement
 	/**
 	   @virtual 
 	   Called every time the focus changes
-	   @ALSO called at initialization to setup the initial colors for elements
-	         that support focus/unfocus
+	   Handles focus colors etc
 	**/
-	function onFocusChange():Void {}
+	function focusSetup(focus:Bool):Void {}
 	
 	/**
 	   @virtual
@@ -170,10 +167,10 @@ class BaseElement
 	
 	
 	//====================================================;
-	// DATA
+	// DATA, SETTERS, GETTERS
 	//====================================================;
 	
-	function set_visible(val):Bool
+	function set_visible(val)
 	{	
 		return visible = val;	
 	}//---------------------------------------------------;
@@ -186,10 +183,18 @@ class BaseElement
 		' - UID:$UID, x:$x, y:$y, width:$width, height:$height';
 	}//---------------------------------------------------;
 	
+	// @ virtual
+	public function setData(val:Any) {}
+	
+	// @ virtual
+	public function getData():Any { return null; }
+	
+	// @ virtual
+	public function reset() {}
+	
 	//====================================================;
 	// STATICS 
 	//====================================================;
-
 	
 	// Automatically focuses the next element in <ar> next from <active>
 	// Loops through the end until it reaches <active> again
@@ -221,7 +226,7 @@ class BaseElement
 			}
 			
 			if (j == ia) return false; // Nothing found
-			if (ar[j].flag_can_focus && ar[j].visible) break;
+			if (ar[j].flag_focusable && ar[j].visible) break;
 		}//-
 		
 		ar[j].focus();

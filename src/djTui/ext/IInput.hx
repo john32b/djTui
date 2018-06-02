@@ -7,7 +7,8 @@ package djTui.ext;
  *	 -	up,down,left,right
  * 		enter,backsp,esc,
  * 		pageup,pagedown,
- * 		tab
+ * 		tab,
+ * 		home,end
  * 
  *	 -	regular key ascii, (e.g. 'k')
  * 

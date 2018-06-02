@@ -1,5 +1,6 @@
 package djTui.el;
 
+
 import djTui.BaseElement;
 
 /**
@@ -12,9 +13,6 @@ import djTui.BaseElement;
 
 class SliderNum extends BaseMenuItem 
 {
-	// The final text being rendered is in 3 parts
-	// <arrow> + <text> + <arrow>
-	var rTxt:Array<String> = [];
 	
 	var data:Float;	// Actual value
 	var min:Float;
@@ -22,56 +20,101 @@ class SliderNum extends BaseMenuItem
 	var inc:Float;	// Increment steps
 	var maxW:Int; 	// Max Width the number string can get to
 	
-	// Hold the current number
-	public function new(sid:String, _min:Float, _max:Float, _inc:Float = 1) 
+	// Arrow enabled status
+	var ar_stat:Array<Bool>;
+	
+	static inline var ARROW_PAD:Int = 2;
+	
+	/**
+	   @param	sid
+	   @param	_min Minimum Value
+	   @param	_max Maximum Value
+	   @param	_inc Increment
+	   @param	_cur Starting Index
+	**/
+	public function new(sid:String, _min:Float, _max:Float, _inc:Float = 1, _st:Float = 0) 
 	{
 		super(sid);	
-		type = "numbersel";
+		ar_stat = [false, false];
+		type = ElementType.number;
 		min = _min;
 		max = _max;
 		inc = _inc;
 		maxW = Std.string(max).length;
-		size(maxW + 4, 1);
-		setData(min);
+		size(maxW + ARROW_PAD * 2, 1);
+		if (_st == 0) _st = min;
+		setData(_st);
 	}//---------------------------------------------------;
-
-	override function onKey(k:String):Void 
+	
+	// --
+	// Focused Text is nudged a bit to the right for the arrows to fit
+	function renderText()
 	{
-		if (k == "left")
+		if (isFocused)
 		{
-			if (data == min) return;
-			setData(data - inc);
-			callbacks("change", this);
-			draw();
-		}else		
-		if (k == "right")
+			rText = StrTool.repeatStr(ARROW_PAD, ' ') + 
+					StrTool.padString('$data', width - ARROW_PAD, 'left');
+		}else
 		{
-			if (data == max) return;
-			setData(data + inc);
-			callbacks("change", this);
-			draw();
+			rText = ' ' + 
+					StrTool.padString('$data', width - 1, 'left');
 		}
 	}//---------------------------------------------------;
 	
-	override public function draw():Void 
+	// --
+	override function focusSetup(focus:Bool):Void 
 	{
-		_readyCol();
-		WM.T.move(x, y);
-		WM.T.print(rTxt[0] + rTxt[1] + rTxt[2]);
+		super.focusSetup(focus);
+		renderText();
 	}//---------------------------------------------------;
 	
-	override function setData(val:Any)
+	override function onKey(k:String):Void 
+	{
+		switch(k)
+		{
+			case "left": 	if (data != min) sd(data - inc);
+			case "pageup":	if (data != min) sd(min);
+			case "right":	if (data != max) sd(data + inc);
+			case "pagedown":if (data != max) sd(max);
+			default:
+		}
+	}//---------------------------------------------------;
+	
+	
+	// -- Set Data and callback 'change' in one call
+	function sd(d:Float)
+	{
+		setData(d);
+		callbacks("change", this);
+	}//---------------------------------------------------;
+	
+	// --
+	override public function draw():Void 
+	{
+		super.draw();
+		
+		if (isFocused)
+		{
+			// Assume same colors as normal text
+			
+			if(ar_stat[0]) WM.T.move(x, y).print("<");
+			if(ar_stat[1]) WM.T.move(x + ARROW_PAD + '$data'.length + 1, y).print(">");
+		}
+	}//---------------------------------------------------;
+	
+	// --
+	override public function setData(val:Any) 
 	{
 		data = val;
 		if (data < min) data = min; else 
 		if (data > max) data = max;
-		
-		if (data == min) rTxt[0] = '  '; else rTxt[0] = '< ';
-						 rTxt[1] = StrTool.padString('$val', maxW, "left");
-		if (data == max) rTxt[2] = '  '; else rTxt[2] = ' >';
-		
+		ar_stat[0] = data != min;
+		ar_stat[1] = data != max;
+		renderText();
+		if (visible) draw();
 	}//---------------------------------------------------;
 	
+	// --
 	override public function getData():Any 
 	{
 		return data;

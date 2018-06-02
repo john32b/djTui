@@ -53,7 +53,9 @@ class TerminalObj implements ITerminal
 	// Move the cursor to X,Y 
 	public function move(x:Int, y:Int):ITerminal
 	{
-		t.move(x, y); 
+		// Terminal starts at (1,1)
+		// While djTui starts at (0,0) so :
+		t.move(x + 1, y + 1);
 		return this;
 	}
 	
