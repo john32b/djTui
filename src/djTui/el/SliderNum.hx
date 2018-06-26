@@ -30,7 +30,7 @@ class SliderNum extends BaseMenuItem
 	   @param	_min Minimum Value
 	   @param	_max Maximum Value
 	   @param	_inc Increment
-	   @param	_cur Starting Index
+	   @param	_st  Starting Index
 	**/
 	public function new(sid:String, _min:Float, _max:Float, _inc:Float = 1, _st:Float = 0) 
 	{

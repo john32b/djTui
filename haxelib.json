@@ -2,7 +2,7 @@
   "name": "djTui",
   "url" : "",
   "license": "",
-  "tags": ["TUI","graphic interface","terminal"],
+  "tags": ["TUI","graphic","interface","terminal"],
   "description": "A simple TUI framework with an agnostic renderer.",
   "version": "0.1.0",
   "classPath": "src/",

@@ -1,28 +1,19 @@
-package adapter;
+package djTui.adaptors.djNode;
 
 import djNode.Keyboard;
-import djTui.ext.IInput;
+import djTui.adaptors.IInput;
 
 /**
- * Inputs Adaptor
- * ...
- * @author John Dimi
+ * Input Adaptor for use with djNode
  */
 class InputObj implements IInput
 {
-	// KEYS:
-	// up,down,left,right
-	// enter,back,esc,
-	// pageup,pagedown,
-	// tab
 	
 	// Callback with a key pressed
 	public var onKey:String->Void;
 	
-	
-	public function new() 
-	{
-	}
+	// --
+	public function new() {}
 	
 	// Filter and adopt some calls
 	function _onKey(k:String)
@@ -50,7 +41,6 @@ class InputObj implements IInput
 		else
 		
 			onKey(k);
-		
 	}//---------------------------------------------------;
 	
 	public function start()

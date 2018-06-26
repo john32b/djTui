@@ -73,7 +73,6 @@ class PopupOption extends BaseMenuItem
 		}// --
 	}//---------------------------------------------------;
 	
-	
 	override function onKey(k:String):Void 
 	{
 		if (k == "space" || k == "enter")

@@ -2,7 +2,7 @@ package djTui;
 import djTui.BaseElement;
 import djTui.el.Label;
 import djTui.Styles.WMSkin;
-import haxe.extern.EitherType;
+import haxe.Timer;
 
 /**
  * 
@@ -11,10 +11,11 @@ import haxe.extern.EitherType;
  * - Managed by the WM
  * - Holds and manages baseElements and derivatives 
  * 
- * User Callbacks via 'callbacks' object :
+ * Callback Statuses via the 'callbacks' object :
  * 
  *		escape : Esc key got pressed
  * 		focus  : A new element has been focused
+ * 		unfocus: The window has been unfocused  ! Window Only !
  * 		fire   : Element was activated
  * 		change : Element was changed
  * 		open   : Window was just opened
@@ -23,7 +24,7 @@ import haxe.extern.EitherType;
 class Window extends BaseElement 
 {
 	
-	//
+	// Window title, automatically adds an element
 	public var title(default, set):String;
 	
 	// The actual Label holding the title
@@ -52,7 +53,8 @@ class Window extends BaseElement
 	var lastAdded:BaseElement; // DEV: Shorthand for display_list.last()
 	
 	// -- Pushes status updates to Window Manager :
-	// 			focus	: Window was just focused
+	//    Will push custom window statuses and
+	//    all children element statuses as
 	@:allow(djTui.WM)
 	var callback_wm:String->Window->Void;
 	
@@ -60,16 +62,16 @@ class Window extends BaseElement
 	// All children will use this
 	public var skin:WMSkin;
 	
-	//====================================================;
-	// FLAGS
-	// It is best to set flags right after new()
-	//====================================================;
+	/// FLAGS :
+	/// It is best to set flags right after new()
 	
 	// DO NOT allow focus to leave from this window
 	public var flag_focus_lock:Bool = false;
 	
-	// Is this window/panel a subpanel? ( like a popup list )
-	public var flag_is_sub:Bool = false;
+	// Is this window/panel a subpanel? (e.g. a popup vlist)
+	// ~ Used internally , in cases where when a popup closes it focuses last element ~
+	@:allow(djTui.WM)
+	var flag_is_sub:Bool = false;
 	
 	// If true, when this window gets focus, will try to focus last element focused
 	@:allow(djTui.WM)
@@ -79,20 +81,30 @@ class Window extends BaseElement
 
 	/**
 	   Create a Window.
-	   ! IMPORTANT, After creating a window set its size.
-	   @param	_borderStyle Border Style 0,1,2 ( none, light, thick )
+	   @param	_w Window Width
+	   @param	_h Window Height
+	   @param	_border Border Style [0,1,2]  ( none, light, thick )
 	   @param	_skin You can set a custom style for this window and its children
 	**/
-	public function new(_borderStyle:Int = 1, ?_skin:WMSkin)
+	public function new(?sid:String, _w:Int = 5, _h:Int = 5, _border:Int = 1, _skin:WMSkin = null)
 	{
-		display_list = [];	// <- Important to be before super();
-		super();
-		type = ElementType.window;
-		setColors(WM.skin.win_fg, WM.skin.win_bg);
-		borderStyle = _borderStyle;
-		skin = _skin;
-		if (skin == null) skin = WM.skin;
-		padding(1, 1);
+		display_list = [];	// <- Important to be before super(), because it triggers a setter.
+		
+		if (sid != null)
+		{
+			WM.DB.set(sid, this);
+		}
+		
+		super(sid);
+		type = ElementType.window; 
+		borderStyle = _border;
+		skin = _skin != null?_skin:WM.skin;
+		setColor(skin.win_fg, skin.win_bg);
+		size(_w, _h);
+		if (borderStyle > 0)
+			padding(2, 2);
+		else
+			padding(1, 1);
 		callbacks = function(_, _){ }; // Make it not crash, because it's going to get called
 	}//---------------------------------------------------;
 	
@@ -102,7 +114,7 @@ class Window extends BaseElement
 	   @param	sid the SID of the element 
 	   @return
 	**/
-	public function getSID(sid:String):BaseElement
+	public function getEl(sid:String):BaseElement
 	{
 		// Note, this is faster than an array.filter, because it will not parse all the elements
 		for (el in display_list) if (el.SID == sid) return el;
@@ -155,7 +167,7 @@ class Window extends BaseElement
 	}//---------------------------------------------------;
 	
 	/**
-	   - Add an element to the window, without worrying about positioning
+	   - Adds an element to the window, without worrying about positioning.
 	   - Call addStacked() to add and align an element (prefered)
 	   @param	el
 	**/
@@ -172,7 +184,8 @@ class Window extends BaseElement
 		el.parent = this;
 		el.onAdded();
 		el.visible = visible;
-		el.focusSetup(false);	// Setup colors, in supported elements, default to unfocused
+		if (el.flag_focusable)
+			el.focusSetup(false);	// Setup colors, in supported elements, default to unfocused
 		if (visible) el.draw();
 	}//---------------------------------------------------;
 	
@@ -265,6 +278,38 @@ class Window extends BaseElement
 	
 	
 	/**
+	   Open the window with a simple animation
+	   AutoFocuses it
+	**/
+	public function openAnimated()
+	{
+		var st = [0.3, 0.6];
+		var t = new Timer(80);
+		var c:Int = 0;
+		t.run = function()
+		{
+			var w:Int = Math.ceil(st[c] * width);
+			var h:Int = Math.ceil(st[c] * height);
+			var xx:Int = Math.ceil(x + (width - w) / 2);
+			var yy:Int = Math.ceil(y + (height - h) / 2);
+			
+			_readyCol();
+			WM.D.rect(xx, yy, w, h);
+			if (borderStyle > 0) 
+			{
+				//WM.T.bg(skin.tui_bg).fg(skin.accent_fg);
+				WM.D.border(xx, yy, w, h, borderStyle);
+			}
+			
+			if (++c == st.length) {
+				t.stop();
+				open(true);
+			}
+		}
+	}//---------------------------------------------------;
+	
+	
+	/**
 		Align this window to the WM Viewport
 	**/
 	public function screenCenter()
@@ -310,6 +355,7 @@ class Window extends BaseElement
 		active = null;
 		super.unfocus();
 		lockDraw = false;
+		callbacks("unfocus", this);
 	}//---------------------------------------------------;
 	
 	
@@ -404,6 +450,7 @@ class Window extends BaseElement
 				
 			default:
 				
+				// TODO: This can cause bugs on windows with VLists + other elements
 				if (key == "up") focusPrev(); else
 				if (key == "down") focusNext(false);
 				
@@ -412,9 +459,17 @@ class Window extends BaseElement
 		}
 	}//---------------------------------------------------;
 	
-	
+	/**
+	   Called when any child element pushes a status
+	   @param	st Status Message
+	   @param	el The element that fired the status
+	**/
 	function onElementCallback(st:String, el:BaseElement)
 	{
+		#if (debug && true)
+		trace('> Element Callback : From:${el.SID}, Status:$st, Data:"${el.getData()}"');
+		#end
+		
 		switch(st)
 		{
 			case "focus":
@@ -428,11 +483,26 @@ class Window extends BaseElement
 			case "focus_next":
 				focusNext(false);
 				
+			default:
+				
+				// Check for Links
+				if (el.type == ElementType.button)
+				{
+					if (el.SID.charAt(0) == "@") // It's a link
+					{
+						// REQUEST TO SWITCH TO NEW PAGE/BANKs
+						WM.STATE.goto(el.SID.substr(1));
+						return;
+					}
+				}
+				
 		}
 		
 		// Pipe callbacks to user
 		callbacks(st, el);
 		
+		// Pipe callbacks to the global WM if set
+		if (WM.globalWindowCallbacks != null) WM.globalWindowCallbacks(st, el);
 	}//---------------------------------------------------;
 	
 	//====================================================;
@@ -464,19 +534,19 @@ class Window extends BaseElement
 			removeChild(title_el);
 		}
 		
-		if (title.length > width - 4) {
-			title_el = new Label(title, width - 4);
+		if (title.length > inWidth - 2) {
+			title_el = new Label(title, inWidth - 2);
 			// TODO: Animate it ??
 		}else
 		{
 			title_el = new Label('| ' + title + ' |');
 		}
-		title_el.setColors(WM.skin.win_hl, colorBG);
+		
+		title_el.setColor(skin.win_hl, colorBG);
 		title_el.pos(x +  Std.int((width / 2) - (title_el.width / 2)), y);
 		addChild(title_el);
 		
 		return val;
-		
 	}//---------------------------------------------------;
 
 }// -- end class --

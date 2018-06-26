@@ -9,6 +9,7 @@ import haxe.Timer;
  * - A label is by default not focusable
  * - Set WIDTH==0 to enable autosize
  * - You can change the text after creating the object
+ * - use setColor() to set colors
  */ 
 
 class Label extends BaseMenuItem
@@ -17,7 +18,7 @@ class Label extends BaseMenuItem
 	public var text(default, set):String;
 	
 	// When padding etc, use this alignment
-	var align:String;
+	var textAlign:String;
 	
 	// Timer used for animations
 	var timer:Timer;
@@ -26,24 +27,27 @@ class Label extends BaseMenuItem
 	var anim_blink:Bool; // current blink status, true for on
 	var anim_scroll:Int;
 	var anim_active_call:Void->Void;
+
+	// Target width. 0 for Autosize
+	var targetWidth:Int;
 	
 	/**
 	   Creates a Label Element
-		@param	_txt	The Text of the Label
-		@param	_width 	You can force a width, it will be padded with " " to reach it
-						If string is longer it will be cut
-		@param _align   Alignment within the label itself.
+		@param	Text			The Text of the Label
+		@param	TargetWidth 	You can force a width, it will be padded with " " to reach it
+								If string is longer it will be cut
+		@param Align   			Alignment within the label itself. Enabled onlt 
+								when target width is set
 	**/
-	public function new(_txt:String, _width:Int = 0, _align:String = "left")
+	public function new(Text:String, TargetWidth:Int = 0, Align:String = "left")
 	{
 		super();
 		type = ElementType.label;
 		flag_focusable = false;
-		align = _align;
-		width = _width;
-		if (width == 0) width = _txt.length;
+		targetWidth = TargetWidth;
+		textAlign = Align;
 		height = 1;
-		text = _txt; // -> setter
+		text = Text; // -> setter
 		anim_blink = false;
 		anim_scroll = 0;
 	}//---------------------------------------------------;
@@ -52,12 +56,15 @@ class Label extends BaseMenuItem
 	// 		 and it's not available at new()
 	override function onAdded():Void 
 	{
-		setColors(parent.skin.win_fg);
+		super.onAdded();
+		if (colorFG == null) setColor(parent.skin.win_fg);
 	}//---------------------------------------------------;
 		
-	// -- Scroll the label TEXT withing the render Area
-	// - Will loop through
-	// - call stop() sto stop
+	/**
+	   Scroll the label TEXT within the render/width Area
+	   - Will loop/wrap on itself
+	   @param	freq Update Frequenct in milliseconds
+	*/
 	public function scroll(freq:Int = 200):Label
 	{
 		stop();
@@ -81,8 +88,8 @@ class Label extends BaseMenuItem
 		return this;
 	}//---------------------------------------------------;
 	
-	// -- Start blinking the label
-	// - call stop() to stop
+	/** Start blinking the label
+	 */
 	public function blink(freq:Int = 300):Label
 	{
 		stop();
@@ -105,8 +112,8 @@ class Label extends BaseMenuItem
 		return this;
 	}//---------------------------------------------------;
 
-	// --
-	// Stop blinking and set text to empty
+	/** Stop blinking and set text to empty
+	 */
 	public function blinkOff()
 	{
 		stop();
@@ -115,7 +122,8 @@ class Label extends BaseMenuItem
 		draw();
 	}//---------------------------------------------------;
 	
-	// Stop all animations
+	/** Stop all animations
+	 */
 	public function stop()
 	{
 		anim_active_call = null;
@@ -125,13 +133,15 @@ class Label extends BaseMenuItem
 		}
 	}//---------------------------------------------------;
 		
-	// Stop Any animation and reset text to empty
+	/** Stop Any animation and reset text to empty
+	 */
 	override public function reset() 
 	{
 		text = "";
 		stop();
 	}//---------------------------------------------------;
 	
+	// --
 	override function set_visible(val):Bool
 	{
 		if (visible == val) return val;
@@ -147,17 +157,48 @@ class Label extends BaseMenuItem
 		return val;
 	}//---------------------------------------------------;
 	
+	/** 
+	 * SETTER 
+	 - Sets the text of the label */
 	function set_text(val)
 	{
+		
+		/* If you are to rename a Label, and the new text is shorter than
+		   the old text, clear the space behind it, so the text doesn't overlap */
+		if (text != null && targetWidth == 0 && cast(val, String).length < text.length && visible)
+		{
+			clear();
+		}
+		
 		text = val;
-		rText = StrTool.padString(text, width, align);
+		
+		if (targetWidth > 0)
+		{
+			rText = StrTool.padString(text, targetWidth, textAlign);
+		}else
+		{
+			rText = text;
+		}
+		
+		width = rText.length;
+		
 		// Restart the animation, if any
 		if (anim_active_call != null) anim_active_call();
 		if (visible) draw();
 		return val;
 	}//---------------------------------------------------;
 
+	// --
+	override public function setData(val:Any) 
+	{
+		text = val;
+	}//---------------------------------------------------;
 	
-}//-- end Label --//
+	override public function getData():Any 
+	{
+		return text;
+	}//---------------------------------------------------;
+	
+}//-- end class
 
 

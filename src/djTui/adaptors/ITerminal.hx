@@ -1,15 +1,21 @@
-package djTui.ext;
+package djTui.adaptors;
 
 /**
- * = Generic Terminal Renderer, 
- * - You must create a specific class to implement it 
- * - on your desired target (openfl, nodejs, ..)
+ * - Generic Adapter interface for Printing Characters 
+ *
+ * - You must create an object that implements this
+ * 	 on your desired target (openfl, nodejs, ..)
+ *   and pass it to WM
  * 
- * The String Color IDs : 
+ * NOTES : ------------------------------
+ *
+ *  String Color IDs : 
+ * 
  * 		black, white, gray, darkgray
  * 		red, darkred, green, darkgreen 
  * 		blue, darkblue, yellow, darkyellow 
  * 		cyan, darkcyan, magenta, darkmagenta
+ * 
  */
 interface ITerminal
 {

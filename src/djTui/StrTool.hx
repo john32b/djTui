@@ -162,11 +162,10 @@ class StrTool
 
 	/**
 	 * Creates a new string filled with a character X many times.
-	 * @deprecated You can use StringTools.lpad instead.
-	 * 
 	 * @param	width How many times the char will be repeated in the string.
 	 * @param	char Character to be repeated.
 	 */
+	@:deprecated("Use StringTools.lpad")
 	public static function repeatStr(length:Int,char:String):String
 	{
 		var ar = new Array<String>();

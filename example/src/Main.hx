@@ -2,10 +2,9 @@ package;
 
 import djNode.BaseApp;
 import djNode.tools.LOG;
-import adapter.*;
 import djTui.*;
 import djTui.el.*;
-import djTui.ext.*;
+import djTui.adaptors.djNode.*;
 
 /**
  * ...
@@ -29,80 +28,106 @@ class Main extends BaseApp
 	}//---------------------------------------------------;
 	
 	// --
+	// This is the user code entry point :
 	override function onStart() 
 	{
-		// This is the user code entry point :
-		// ..
 		
-		T.pageDown();	// Need a pagedown for the windows CLI
+		// Initialize the Terminal
+		T.pageDown();	
 		T.clearScreen();
 		T.cursorHide();
+		//--
 		
+		// Create/Init the Window Manager
 		WM.create(
 			new InputObj(), 
-			new TerminalObj(), 80, 25
+			new TerminalObj(), 80, 25, 1
 		);
 		
-		WM.flag_tab_switch_windows = true;
+		WM.T.fg("yellow");
+		WM.D.drawGrid(0, 0, [ "40|40|13", "50|30|10"], 1, 2);
 		
-		var w1 = new Window();
-			w1.size(20, 15);
-			WM.center(w1);
-			
-		var w2 = new Window();
-			w2.size(15, 10);
-			w2.posNext(w1, 2);
-			w2.addLine(new Label("! BLINK !").blink());
-			w2.addLine(new Label("---------"));
-			w2.addLine(new Label("Scroll_1234_").scroll());
-			w2.addLine(new Button("t", "Test"));
-			w2.open();
-			
-		w1.addLine(new Label("Short", 3), "right");
-		w1.addLine(new Label("Center Label with a long width", w1.inWidth, "center"));
-		w1.addLine(new Button("","Button Link", false));
-		w1.addLine(new Button(""," ... ", false));
-		w1.addLine(new Label("Toggle :"));
-		w1.addLine(new Toggle());
-		//w1.addLine(new Label("Number selector :"));
-		w1.addLine(new SliderNum("", 1, 10));
-		//w1.addLine(new Label("One OF"));
-		w1.addLine(new SliderOption('', ['one', 'two', 'three']));
-		w1.addLine(new Button("close", "CLOSE"));
-		w1.addLine(new Button("open", "OPEN"));
-		w1.addLine(new TextInput('',w1.inWidth));
+		// -- Add some things
+		
+		WM.globalWindowCallbacks = onWindowCallbacks;
+		
+		var win1 = new Window( -3, 15, 2);
+			win1.padding(3, 3);
+			win1.pos(0, 3);
+		var list = new VList("l1", win1.inWidth, 4);
+			list.setData([
+			"Labels >",
+			"Buttons >",
+			"Toggles -",
+			"Options -",
+			"Options -",
+			"Options -",
+			"Quit +"
+			]);
+		win1.addStack(list);
+		win1.addStack(new Button("", "test"));
+
 	
-		w1.open(true);
-		w1.title = "Main win";
-		
-		w1.callbacks = function(a, b)
-		{
-			if (a == "fire")
-			{
-				if (b.SID == "close") w2.close();
-				if (b.SID == "open") w2.open();
-			}
-		}
-		
-		
-		// --
-		T.reset();
-		T.move(4, WM.height - 2);
-		T.print("-- Arrow keys to choose, ENTER to select --");
-		T.move(4, WM.height - 1);
-		T.print("   -- TAB to switch between windows --");
+		//- Button window
+		var win2 = new Window("win_btn", -3, 15);
+			win2.posNext(win1, 2);
+			win2.title = "Button Test";
+			// add some buttons
+			win2.addStack(new Button("", "Link", 0 ).colorIdle("red", "green").colorFocus("white", "blue"));
+			win2.addStack(new Button("l1", "Link with a rather long text", 0 ));
+			win2.addStack(new Button("rl", "Reset Link", 1 ));
+			win2.addStack(new Button("cc", "Confirm", 2 ).confirm(true));
+			win2.addStack(new Button("tolab", "Goto Other WIN >>", 3 ));
+			win2.addStack(new Button("", "4", 4, win2.inWidth ));
+			
+		//- Labels Window
+		var win3 = new Window("win_lab", -3, 15);
+			win3.posNext(win1, 2);
+			win3.flag_focusable = true;
+			win3.title = "Labels";
+			win3.addStackCentered([
+			new Label("Label1"), new Label("Label2").setColor("red", "yellow")]);
+			win3.addStackCentered([
+			new Label("one"), new Label("two"), new Label("three"), new Button("t","ttt")]);
+
+			
+		WM.STATE.create("main", [win1, win2]);
+		WM.STATE.goto("main");
 		
 	}//---------------------------------------------------;
-	
-	
+
+
+	function onWindowCallbacks(s:String, el:BaseElement)
+	{
+		if (s == "fire") // Only buttons can fire
+		{
+			if (el.SID == "rl")
+			{
+				trace("Reset Link Graphic");
+				el.parent.getEl("l1");
+				//var btn:Button = cast WM.DB.get("win_btn").getEl("l1");
+				// One way or another
+				var btn:Button = cast el.parent.getEl("l1");
+				btn.text = "random";
+			}
+			else if (el.SID == "tolab")
+			{
+				el.parent.close();
+				WM.DB.get("win_lab").openAnimated();
+			}
+		}
+		if ( s == "unfocus")
+		{
+			trace("Window Unfocus");
+		}
+	}//---------------------------------------------------;
+
 	// --
 	override function onExit() 
 	{
-		T.reset();
-		T.move(0, WM.height);
+		T.move(0, WM.height); // Hack for real terminals
 		super.onExit();
 	}//---------------------------------------------------;
-	
 	
 	// --
 	static function main()  {

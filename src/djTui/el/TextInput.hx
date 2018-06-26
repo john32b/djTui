@@ -51,9 +51,9 @@ class TextInput extends BaseMenuItem
 	override function focusSetup(focus:Bool):Void 
 	{
 		if (focus) {
-			setColors(parent.skin.accent_blur_fg, parent.skin.accent_fg);
+			setColor(parent.skin.accent_blur_fg, parent.skin.accent_fg);
 		}else {
-			setColors(parent.skin.accent_blur_fg, parent.skin.accent_blur_bg);
+			setColor(parent.skin.accent_blur_fg, parent.skin.accent_blur_bg);
 		}
 		if (focus) caret_start(); else caret_stop();
 	}//---------------------------------------------------;
@@ -132,6 +132,11 @@ class TextInput extends BaseMenuItem
 	override public function getData():Any 
 	{
 		return text;
+	}//---------------------------------------------------;
+	
+	override public function setData(val:Any) 
+	{
+		text = val;
 	}//---------------------------------------------------;
 	
 }// --

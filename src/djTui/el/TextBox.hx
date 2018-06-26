@@ -1,6 +1,7 @@
 package djTui.el;
 
 import djTui.BaseElement;
+import djTui.Styles.PrintColor;
 
 /**
  * A TEXTBOX that display lines of text
@@ -12,9 +13,8 @@ import djTui.BaseElement;
  * DEV NOTE:
  * - If height==0 it will be autocalculated on first data set
  */
-class TextBox extends BaseElement 
+class TextBox extends BaseElement
 {
-	
 	// Holds the Final Rendered String
 	var lines:Array<String>;
 	
@@ -34,9 +34,19 @@ class TextBox extends BaseElement
 	// How many slots to display lines
 	var slots_count:Int;
 	
+	// NOTE: Set the colors right after new();
+	
+	/** If set, the scrollbar will get this color when the textbox is focused */
+	public var color_scrollbar_focus:String;
+	
+	/** Set a custom scrollbar color.*/
+	public var color_scrollbar_idle:String;	
+	
+	/** Used in cases where a scrollbar is needed but element is not yet added to a window */
+	var flag_add_scrollbar:Bool = false;
+	
 	/**
 	   Create a new TextBox
-	   
 	   @param	_width Width of the lines
 	   @param	_height If 0 will be autocalculated on next setData()
 	   @param	sid SID
@@ -65,21 +75,36 @@ class TextBox extends BaseElement
 			default:
 		}
 	}//---------------------------------------------------;
+
+	override function onAdded():Void 
+	{
+		if (colorFG == null) setColor(parent.skin.win_fg);
+		
+		if (color_scrollbar_idle == null)
+		{
+			color_scrollbar_idle = parent.skin.win_fg;
+		}
+		
+		if (flag_add_scrollbar) 
+		{
+			addScrollbar();
+		}
+	}//---------------------------------------------------;
 	
 	// --
 	override function focusSetup(focus:Bool):Void 
 	{
-		if (focus) 
+		if (scrollbar != null && color_scrollbar_focus != null)
 		{
-			setColors(parent.skin.accent_blur_fg, parent.skin.accent_fg);
-		}else {
-			setColors(parent.skin.accent_blur_fg, parent.skin.accent_blur_bg);
-		}
-		
-		if (scrollbar != null) 
-		{
-			scrollbar.focusSetup(focus);
-			scrollbar.draw(); //<- scrollbar has a separate draw call
+			if (focus)
+			{
+				scrollbar.setColor(color_scrollbar_focus);
+			}else
+			{
+				scrollbar.setColor(color_scrollbar_idle);
+			}
+			
+			scrollbar.draw(); //<- Must call draw to apply color changes
 		}
 	}//---------------------------------------------------;
 	
@@ -128,9 +153,18 @@ class TextBox extends BaseElement
 	function addScrollbar()
 	{
 		if (scrollbar != null) return;
+		
+		if (parent == null) 
+		{
+			flag_add_scrollbar = true; // add it later
+			return;
+		}
+		
 		scrollbar = new ScrollBar(height);
 		scrollbar.posNext(this);
 		parent.addChild(scrollbar);
+		scrollbar.setColor(color_scrollbar_idle);
+		flag_add_scrollbar = false;
 	}//---------------------------------------------------;
 	
 	/**

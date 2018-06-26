@@ -1,12 +1,12 @@
-package adapter;
+package djTui.adaptors.djNode;
 
+import djTui.adaptors.ITerminal;
 import djNode.BaseApp;
-import djTui.ext.ITerminal;
 import djNode.Terminal;
 
 /**
+ * Adapter for a real terminal for use with djNode
  * ...
- * @author John Dimi
  */
 class TerminalObj implements ITerminal
 {
@@ -110,4 +110,5 @@ class TerminalObj implements ITerminal
 		// Not supported
 		return this;
 	}
-}
+	
+}// -- end class

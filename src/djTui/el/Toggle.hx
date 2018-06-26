@@ -12,12 +12,12 @@ class Toggle extends BaseMenuItem
 	//  Hold current state
 	var data:Bool;
 	
-	public function new()
+	public function new(?sid:String, current:Bool = false)
 	{
-		super();
+		super(sid);
 		size(5, 1);
 		type = ElementType.toggle;
-		setData(false);
+		setData(current);
 	}//---------------------------------------------------;
 	
 	override public function setData(val:Any) 
@@ -25,6 +25,11 @@ class Toggle extends BaseMenuItem
 		data = val;
 		if (data) rText = '[ X ]';
 		else rText = '[   ]';	
+	}//---------------------------------------------------;
+
+	override public function getData():Any 
+	{
+		return data;
 	}//---------------------------------------------------;
 	
 	override function onKey(k:String):Void 

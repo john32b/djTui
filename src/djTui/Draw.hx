@@ -8,18 +8,17 @@ package djTui;
 class Draw 
 {
 
-	
 	public function new() 
 	{
 	}//---------------------------------------------------;
 
 	
 	/**
-	   Fill a rectangle. Colors from what is already set in WM.T
-	   @param	x
-	   @param	y
-	   @param	width
-	   @param	height
+	   Fill a rectangle with current terminal colors
+	   @param	x Screen X to start drawing
+	   @param	y Screen Y to start drawing
+	   @param	width Total Width
+	   @param	height Total Height
 	   @param	char Character fill, Defaults to " "
 	   @return
 	**/
@@ -36,24 +35,24 @@ class Draw
 	
 	/**
 	   Draw a border with current terminal colors
-	   @param	x
-	   @param	y
-	   @param	width
-	   @param	height
-	   @param	style A border style index (0-2), see `Styles.hx`
+	   @param	x Screen X to start drawing
+	   @param	y Screen Y to start drawing
+	   @param	width Total Width
+	   @param	height Total Height
+	   @param	style A border style index (1...n), see `Styles.hx` for available styles
 	   @return
 	**/
 	public function border(x:Int, y:Int, width:Int, height:Int, style:Int = 1)
 	{
 		var bs:String = Styles.border[style]; // shorthand
-		// Draw the Top:
+		// Top
 		lineH(x + 1, y, width - 2, bs.charAt(1));
-		// Draw the Body:
+		// Sides
 		lineV(x, y + 1, height - 2, bs.charAt(6));
 		lineV(x + width - 1, y + 1, height - 2, bs.charAt(7));
-		// Draw the bottom:
+		// Bottom:
 		lineH(x + 1, y + height - 1, width - 2, bs.charAt(4));// , bs[3], bs[5]
-		// Draw the four corners :
+		// Four corners :
 		WM.T.move(x, y).print(bs.charAt(0)).moveR(width - 2, 0).print(bs.charAt(2));
 		WM.T.move(x, y + height - 1).print(bs.charAt(3)).moveR(width - 2, 0).print(bs.charAt(5));
 	}//---------------------------------------------------;
@@ -115,6 +114,7 @@ class Draw
 				e.g. [ "20|20|3" , "15|25|2" ] (20,20 = width of the 2 cells, height = 3)
 	   @param	Sin Style index from global border style in 'Styles.hx' for outer border
 	   @param	Sout Style index from global border style in 'Styles.hx' for outer border
+
 	**/
 	public function drawGrid(x:Int, y:Int, rows:Array<String>, Sin:Int, Sout:Int)
 	{

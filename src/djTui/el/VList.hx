@@ -1,10 +1,13 @@
 package djTui.el;
+import djTui.Styles.PrintColor;
 
 /**
  * Vertical List of Strings
- * - Takes a Textbox and adds cursor navigation
- * - sends status updates (fire,change)
- * - useful for selecting an element from many
+ * - Scrolls elements vertically in a list like a textbox
+ * - Basically a Textbox with cursor navigation
+ * - Sends status callbacks (fire,change)
+ * - Useful for selecting an element from many
+ * 
  */
 class VList extends TextBox 
 {
@@ -15,27 +18,42 @@ class VList extends TextBox
 	// Current slot the cursor/highlighted element is at
 	var index_slot:Int;
 	
-	// # USER SET
 	// Scroll the view when the cursor is this much from the edge
 	public var scrollPad:Int = 1;
 	
+	// The color the highlighted element gets.
+	var color_cursor:PrintColor;
+	
 	// --
-	public function new(sid:String, _width:Int, _height:Int)
+	public function new(sid:String, _width:Int, _slots:Int)
 	{
-		super(_width, _height, sid);
+		super(_width, _slots, sid);
 		type = ElementType.vlist;
 		flag_focusable = true;
 	}//---------------------------------------------------;
 	
-	// - Mostly safeguards
+	
+	// - safeguards and colors
 	override function onAdded():Void 
 	{
 		super.onAdded();
+		
 		if (scrollPad > Math.floor(slots_count / 2) - 1) {
 			scrollPad = Math.floor(slots_count / 2) - 1;
 		}
+		
+		if (color_cursor == null) {
+			setColorCursor(colorBG, colorFG);
+		}
+			
 	}//---------------------------------------------------;
 
+	public function setColorCursor(fg:String, bg:String)
+	{
+		color_cursor = {fg:fg, bg:bg};
+	}//---------------------------------------------------;
+	
+	
 	// --
 	override public function draw():Void 
 	{
@@ -75,6 +93,7 @@ class VList extends TextBox
 		return index;
 	}//---------------------------------------------------;
 	
+
 	// --
 	// Set the currently selected index,
 	// moves the cursor.
@@ -116,7 +135,7 @@ class VList extends TextBox
 	// Draw the highlighted element (cursor)
 	function cursor_draw()
 	{
-		WM.T.reset().fg("yellow").bg("black");
+		WM.T.reset().fg(color_cursor.fg).bg(color_cursor.bg);
 		drawSlotIndex(index_slot);
 	}//---------------------------------------------------;
 	

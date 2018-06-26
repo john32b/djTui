@@ -1,14 +1,17 @@
 package djTui.el;
+import djTui.BaseElement;
+import djTui.Styles.PrintColor;
 
 /**
- * ...
+ * Basic scrollbar
+ * KISS, no self-color management
  */
 class ScrollBar extends BaseElement
 {
 	private static var SYMBOL_BAR:String = "│";
 	private static var SYMBOL_IND:String = "█";
 	
-	// This is set externally, set to [0-1]
+	/** Call this to set and update/draw the ratio (0-1) */
 	public var scroll_ratio(default, set):Float = 0;
 	
 	public function new(_height:Int = 8) 
@@ -18,18 +21,13 @@ class ScrollBar extends BaseElement
 		flag_focusable = false;
 	}//---------------------------------------------------;
 	
-	// --
-	override function focusSetup(focus:Bool):Void 
+	override function onAdded():Void 
 	{
-		if (focus)
-		{
-			setColors(parent.skin.accent_bg, parent.skin.accent_fg);
-		}else
-		{
-			setColors(parent.skin.win_fg, null);
-		}
+		super.onAdded();
+		if (colorFG == null) setColor(parent.skin.win_fg);
 	}//---------------------------------------------------;
 	
+	// -
 	function set_scroll_ratio(val)
 	{
 		if (scroll_ratio == val) return val;

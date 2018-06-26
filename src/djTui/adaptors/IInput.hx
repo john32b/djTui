@@ -1,6 +1,12 @@
-package djTui.ext;
+package djTui.adaptors;
 
 /**
+ * - Generic Adapter interface for Getting Input
+ * 
+ * - You MUST create an object that implements this 
+ *   interface and passit to WM
+ * 
+ * NOTES : ------------------------------
  * 
  * KeyCode IDs :
  * 

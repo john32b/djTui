@@ -6,8 +6,6 @@ import djTui.el.Button;
 import djTui.el.TextBox;
 
 
-
-
 /**
  * A simple messagebox window
  * 
@@ -16,7 +14,6 @@ import djTui.el.TextBox;
  */
 class MessageBox extends Window 
 {
-	
 	// 0 - OK
 	// 1 - OK - CANCEL
 	// 2 - YES - NO
@@ -32,8 +29,11 @@ class MessageBox extends Window
 	// 1: NO,CANCEL
 	public var resultCallback:Int->Void;
 
-	// Will close the popup when user selects somethig
+	/** Will close the popup when user selects something */
 	public var flag_auto_close:Bool = true;
+	
+	// Global button style for the buttpns
+	public static var BUTTON_STYLE:Int = 2;
 	
 	/**
 	   Create a messagabox window. Does not add it to the WM
@@ -44,30 +44,30 @@ class MessageBox extends Window
 	**/
 	public function new(text:String, _type:Int, ?_resCallback:Int->Void, _width:Int = 30 ) 
 	{
-		super(2);
+		super(5, 5, 2,WM.skin_popup);
 		mbType = _type;
 		resultCallback = _resCallback;
 		flag_focus_lock = true;
-		
+		flag_is_sub = true;
+		padding(2, 1);
 		// - Create textbox
 		tbox = new TextBox(_width - 2, 0);
 		tbox.setData(text);
 		tbox.flag_focusable = false;
 		
 		// - Create Buttons
-		
 		buttons = [];
 		
 		switch(mbType)
 		{
 			case 0: 
-				button("OK");
+				add_b("OK");
 			case 1:
-				button("OK");
-				button("CANCEL");
+				add_b("OK");
+				add_b("CANCEL");
 			case 2:
-				button("YES");
-				button("NO");
+				add_b("YES");
+				add_b("NO");
 			default:
 		}
 		
@@ -97,10 +97,27 @@ class MessageBox extends Window
 		
 	}//---------------------------------------------------;
 	
-	function button(name:String)
+	// Quickly add a button
+	function add_b(name:String)
 	{
-		var b = new Button(null, name, true, 4);
+		var b = new Button(null, name, BUTTON_STYLE);
 		buttons.push(b);
+	}//---------------------------------------------------;
+	
+	
+	/**
+	   Quickly create and open a MessageBox at the center of the screen
+	   This is the same as creating and opening
+	   @param	text
+	   @param	_type 0:OK | 1:OK,CANCEL | 2:YES,NO
+	   @param	_resCallback fn(int) -> index of button clicked
+	   @param	_width
+	**/
+	public static function create(text:String, _type:Int, ?_resCallback:Int->Void, _width:Int = 30)
+	{
+		var m = new MessageBox(text, _type, _resCallback, _width);
+			m.screenCenter();
+			m.openAnimated();
 	}//---------------------------------------------------;
 	
 }// --

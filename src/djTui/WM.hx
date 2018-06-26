@@ -1,38 +1,47 @@
 
 package djTui;
 
-import djTui.ext.IInput;
-import djTui.ext.ITerminal;
+import djTui.adaptors.*;
 import djTui.Styles.WMSkin;
+import djTui.WindowState.WindowStateManager;
 
 
 /**
  * Window Manager
  * --------------
  * - Holds and Manages Windows
- * - Add windows with .addWindow()
+ * - Provides Terminal and Draw interface
+ * - Provides a Window State Manager
  */
 
 class WM 
 {
-	
 	public inline static var VERSION:String = "0.1";
 	
 	// A created Terminal Renderer
-	public static var T:ITerminal;
+	public static var T(default, null):ITerminal;
 
 	// Drawing operations objects
-	public static var D:Draw;
+	public static var D(default, null):Draw;
 
 	// A created Input Renderer
-	static var I:IInput;
+	static var I(default, null):IInput;
+	
+	// A global statemanager
+	public static var STATE(default, null):WindowStateManager;
+	
+	// A simple DataBase that holds ALL static windows
+	public static var DB(default, null):Map<String,Window>;
 	
 	// Current width and height of the WM
 	public static var width(default, null):Int;
 	public static var height(default, null):Int;
 	
-	// Currently Active Skin
-	public static var skin:WMSkin;
+	// Default SKIN/THEME for all windows
+	public static var skin(default, null):WMSkin;
+
+	// Default SKIN/THEME for all popups
+	public static var skin_popup(default, null):WMSkin;
 	
 	// Holds all the windows currently on the desktop/TUI
 	static var win_list:Array<Window>;
@@ -43,6 +52,11 @@ class WM
 	// Pointer to the last active window, useful to have when closing windows
 	static var active_last:Window;
 	
+	/** IF set will pipe ANY window callback to here */
+	public static var globalWindowCallbacks:String->BaseElement->Void;
+	
+	/// FLAGS :
+	
 	// If true, pressing tab will switch between windows
 	public static var flag_tab_switch_windows:Bool = false;
 	
@@ -51,17 +65,21 @@ class WM
 	/**
 	   Create/Init the Window Manager
 	   NOTE: Create the WM before creating any windows
-	   @param	r
-	   @param	width Max Width to utilize
-	   @param	height Max Height to utilize
+	   @param	i Implementation of an Input Adaptor
+	   @param	t Implementation of a Terminal Adaptor
+	   @param	_w Max Width to utilize
+	   @param	_h Max Height to utilize
+	   @param	_skn Skin Index from the predeclared in "styles.hx"
 	**/
-	public static function create(i:IInput, t:ITerminal, _w:Int = 0, _h:Int = 0)
+	public static function create(i:IInput, t:ITerminal, _w:Int = 0, _h:Int = 0, _skn:Int = 0 )
 	{
 		width = _w;  height = _h;
 		
 		I = i;
 		T = t;
 		D = new Draw();
+		DB = new Map();
+		STATE = new WindowStateManager();
 		
 		if (width <= 0) width = T.MAX_WIDTH;
 		if (height <= 0) height = T.MAX_HEIGHT;
@@ -70,7 +88,8 @@ class WM
 		
 		Styles.init();
 		
-		skin = Styles.skins[0];	// Default Skin
+		skin = Reflect.copy(Styles.skins[_skn]);
+		skin_popup = Reflect.copy(Styles.skins[0]);
 		
 		// --
 		
@@ -85,9 +104,43 @@ class WM
 		trace(' - Viewport Width = $width , Height = $height');
 	}//---------------------------------------------------;
 	
+	/**
+	   Sets a background color and resets the screen
+	   Do this right after new()
+	   WARNING : It actually replaces the current skin's BG color 
+	**/
+	public static function setBgColor(col:String)
+	{
+		skin.tui_bg = col;
+		clearBG();
+	}//---------------------------------------------------;
+	
+	
+	/**
+	   Sets a new theme/skin ~ Redraws everything ~
+	   You can either choose a predefined skin ( found in Styles.hx )
+	   Or set a custom style object
+	**/
+	public static function setSkin(?ind:Int, ?sk:WMSkin)
+	{
+		if (ind != null)
+		{
+			skin = Reflect.copy(Styles.skins[ind]);	// Default Skin
+		}
+		else
+		{
+			if (sk != null)
+			{
+				skin = sk;
+			}
+		}
+		clearBG();
+		for (i in win_list) i.draw();
+	}//---------------------------------------------------;
 	
 	/**
 	   Close all windows and redraw the bg
+	   Note : Skips user `close` callback 
 	**/
 	public static function closeAll()
 	{
@@ -95,6 +148,7 @@ class WM
 		active = active_last = null;
 		for (w in win_list) w.visible = false;
 		clearBG();
+		STATE.current = null;
 	}//---------------------------------------------------;
 	
 	
@@ -123,7 +177,7 @@ class WM
 		if (w.y < 0) w.pos(w.x, 0); else
 		if (w.y + w.height > height) w.pos(w.x, height - w.height);
 		
-		trace('Adding Window UID:{w.UID}, SID:${w.SID}');
+		trace('Adding Window : UID:${w.UID}, SID:${w.SID}');
 		trace(' - Size: ${w.width} | ${w.height} ');
 		trace(' - Pos: ${w.x} | ${w.y} ');
 		
@@ -184,7 +238,6 @@ class WM
 	// INTERNAL 
 	//====================================================;
 	
-	
 	/**
 	   Focus Next Window on the list ( if any )
 	**/
@@ -217,7 +270,7 @@ class WM
 				w.draw();
 			}
 		}
-		
+		// If closing active window, focus
 		if (active == win) 
 		{
 			active = null;
@@ -230,7 +283,6 @@ class WM
 		}
 		
 	}//---------------------------------------------------;
-	
 	
 	static function windowOverlapsWithAny(win:Window)
 	{
@@ -271,8 +323,8 @@ class WM
 	// --
 	static function onWindowCallbacks(status:String, win:Window)
 	{
-		switch(status)
-		{
+		switch(status) {
+				
 			case "focus":
 				if (active == win) return;
 				if (active != null) active.unfocus();
@@ -294,4 +346,5 @@ class WM
 			default:
 		}
 	}//---------------------------------------------------;
+	
 }//- end class-
