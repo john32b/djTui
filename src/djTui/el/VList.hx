@@ -25,9 +25,9 @@ class VList extends TextBox
 	var color_cursor:PrintColor;
 	
 	// --
-	public function new(sid:String, _width:Int, _slots:Int)
+	public function new(?sid:String, _width:Int, _slots:Int)
 	{
-		super(_width, _slots, sid);
+		super(sid, _width, _slots);
 		type = ElementType.vlist;
 		flag_focusable = true;
 	}//---------------------------------------------------;
@@ -48,11 +48,11 @@ class VList extends TextBox
 			
 	}//---------------------------------------------------;
 
+	/** Set the highlighted element color */
 	public function setColorCursor(fg:String, bg:String)
 	{
 		color_cursor = {fg:fg, bg:bg};
 	}//---------------------------------------------------;
-	
 	
 	// --
 	override public function draw():Void 

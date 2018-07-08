@@ -48,13 +48,13 @@ class PopupOption extends BaseMenuItem
 	
 	// --
 	function createPopup(_width:Int, slots:Int)
-	{
+	{		
 		if (_width < WIN_MIN_WIDTH) _width = WIN_MIN_WIDTH;
 		// --
 		win = new Window(1);
 		win.padding(1, 1).size(_width, slots + 2);
 		win.flag_focus_lock = true;
-		win.flag_is_sub = true;
+		
 		// --
 		list = new VList("list", win.inWidth, win.height - 2);
 		win.addStack(list);
@@ -79,6 +79,7 @@ class PopupOption extends BaseMenuItem
 		{
 			win.pos(x + 1, y - Math.floor(win.height / 3));
 			list.cursor_to(index);
+			parent.flag_once_focusLast = true;
 			win.open(true);
 		}
 	}//---------------------------------------------------;

@@ -15,7 +15,7 @@ class WindowState
 	var list:Array<Window>;
 	
 	// A unique identifier/name
-	var SID(default, null):String;
+	public var SID(default, null):String;
 	
 	/**
 	   Create a Window State

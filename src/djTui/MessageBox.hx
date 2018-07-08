@@ -48,7 +48,6 @@ class MessageBox extends Window
 		mbType = _type;
 		resultCallback = _resCallback;
 		flag_focus_lock = true;
-		flag_is_sub = true;
 		padding(2, 1);
 		// - Create textbox
 		tbox = new TextBox(_width - 2, 0);

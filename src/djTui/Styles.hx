@@ -4,9 +4,16 @@ package djTui;
  * Manage everything style related
  * -------------------------------
  * 
- * NOTES :  https://en.wikipedia.org/wiki/Box-drawing_character
+ * Skins:
+ * ------
+ * You can set skins here for easy indexing
  * 
- * ASCII Symbols :
+ * 
+ * NOTES :  
+ * 	
+ * 	- https://en.wikipedia.org/wiki/Box-drawing_character
+ * 
+ *  - ASCII Symbols :
  * 
  * 	■ ▌ ▐ ▀ ▄ █ ▬ ▓ ▒ ░ ☺ ☻
  *  ▼ ▲ ◄ ► » « ◘ ◙ 
@@ -54,23 +61,22 @@ class Styles
 	// Border Connection Symbols, used in Draw.DrawGrid()
 	public static var bCon(default, null):Array<String>;
 	
-	// All skins
+	// All skins WM and Popup skins
 	public static var skins(default, null):Array<WMSkin>;
 	
 	public static function init()
 	{
 		//-- Default Borders ::
 		
-		
 		// borders : up row, bottom row, left, right
 		border = [ 
-			'',
-			'┌─┐└─┘││', // 1: all thin
-			'╔═╗╚═╝║║', // 2: all thick
-			'╓─╖╙─╜║║', // 3: thin horizontal
-			'╒═╕╘═╛││', // 4: thin vertical
-		    '/-\\\\=/||', // 5: simple characters
-		    '█▀██▄█▌▐',   // 6: simple blocks
+			'        ', 	// 0: blank
+			'┌─┐└─┘││', 	// 1: all thin
+			'╔═╗╚═╝║║', 	// 2: all thick
+			'╓─╖╙─╜║║', 	// 3: thin horizontal
+			'╒═╕╘═╛││', 	// 4: thin vertical
+		    '/-\\\\=/||', 	// 5: simple characters
+		    '█▀██▄█▌▐',   	// 6: simple blocks
 		];
 		
 
@@ -86,9 +92,10 @@ class Styles
 		//-- Default Tui Skins ::
 		skins = [];
 		
+		// Default Normal
 		skins[0] = {
 			win_fg :"white",
-			win_bg : "green",
+			win_bg : "blue",
 			win_hl : "yellow",
 			disabled_fg : "gray",
 			accent_bg : "red",
@@ -97,6 +104,7 @@ class Styles
 			accent_blur_fg : "black"
 		}
 		
+		// Default Popup
 		skins[1] = {
 			win_fg :"red",
 			win_bg : "black",
@@ -111,10 +119,10 @@ class Styles
 	
 	/**
 	   Returns special symbols for connecting the Standard Border Styles
-	   WARNING: For Only works with line Borders ( styles 1-4 )
-	   @param	from 1 or 2 (inside)
-	   @param	to 1 or 2 (border)
-	   @param	d up, down, left, right, X ( 0,1,2,3,4)
+	   WARNING: Only works with line Borders ( styles 1-4 )
+	   @param	from Style for (inside) 1 or 2
+	   @param	to   Style for (border) 1 or 2
+	   @param	d    Connection Type : up, down, left, right, X ( 0,1,2,3,4 )
 	   
 	**/
 	public static function connectBorder(from:Int, to:Int, d:Int):String

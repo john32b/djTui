@@ -165,13 +165,14 @@ class StrTool
 	 * @param	width How many times the char will be repeated in the string.
 	 * @param	char Character to be repeated.
 	 */
-	@:deprecated("Use StringTools.lpad")
+	@:deprecated("Use StringTools.lpad, it's basically the same maybe faster.")
 	public static function repeatStr(length:Int,char:String):String
 	{
-		var ar = new Array<String>();
+		/*var ar = new Array<String>();
 		while (length-->0)
 			ar.push(char);
-		return ar.join("");
+		return ar.join("");*/
+		return StringTools.lpad("", char, length);
 	}//---------------------------------------------------;
 	
 	

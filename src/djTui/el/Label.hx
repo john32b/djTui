@@ -45,8 +45,8 @@ class Label extends BaseMenuItem
 		type = ElementType.label;
 		flag_focusable = false;
 		targetWidth = TargetWidth;
-		textAlign = Align;
 		height = 1;
+		textAlign = Align;
 		text = Text; // -> setter
 		anim_blink = false;
 		anim_scroll = 0;
@@ -180,7 +180,7 @@ class Label extends BaseMenuItem
 			rText = text;
 		}
 		
-		width = rText.length;
+		width = rText.length; // Either targetwidth or whatever text length is
 		
 		// Restart the animation, if any
 		if (anim_active_call != null) anim_active_call();

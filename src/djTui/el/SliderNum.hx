@@ -52,7 +52,7 @@ class SliderNum extends BaseMenuItem
 	{
 		if (isFocused)
 		{
-			rText = StrTool.repeatStr(ARROW_PAD, ' ') + 
+			rText = StringTools.lpad("", " ", ARROW_PAD) +
 					StrTool.padString('$data', width - ARROW_PAD, 'left');
 		}else
 		{

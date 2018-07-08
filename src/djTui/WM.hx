@@ -52,13 +52,22 @@ class WM
 	// Pointer to the last active window, useful to have when closing windows
 	static var active_last:Window;
 	
-	/** IF set will pipe ANY window callback to here */
-	public static var globalWindowCallbacks:String->BaseElement->Void;
+	
+	/// Callbacks :
+	
+	/** IF set will pipe ANY window element callback to here */
+	public static var onElementCallback:String->BaseElement->Void = null;
+
+	/** Set this to push keystrokes */
+	public static var onKey:String->Void = null;
 	
 	/// FLAGS :
 	
 	// If true, pressing tab will switch between windows
 	public static var flag_tab_switch_windows:Bool = false;
+	
+	// If true, when coming back to windows with 'TAB' will focus the previously focused element ( if any )
+	public static var flag_win_remember_focused_elem:Bool = true;
 	
 	//====================================================;
 	
@@ -69,9 +78,9 @@ class WM
 	   @param	t Implementation of a Terminal Adaptor
 	   @param	_w Max Width to utilize
 	   @param	_h Max Height to utilize
-	   @param	_skn Skin Index from the predeclared in "styles.hx"
+	   @param	_skn Skin Index from the predeclared in "styles.hx" POPUP Skin will be this +1
 	**/
-	public static function create(i:IInput, t:ITerminal, _w:Int = 0, _h:Int = 0, _skn:Int = 0 )
+	public static function create(i:IInput, t:ITerminal, _w:Int = 0, _h:Int = 0, _skn:Int = 0, _sknP:Int = 1 )
 	{
 		width = _w;  height = _h;
 		
@@ -89,11 +98,11 @@ class WM
 		Styles.init();
 		
 		skin = Reflect.copy(Styles.skins[_skn]);
-		skin_popup = Reflect.copy(Styles.skins[0]);
+		skin_popup = Reflect.copy(Styles.skins[_sknP]);
 		
 		// --
 		
-		I.onKey = onKey;
+		I.onKey = _onKey;
 		I.start();
 		
 		// - Init and ClearBG
@@ -117,23 +126,13 @@ class WM
 	
 	
 	/**
-	   Sets a new theme/skin ~ Redraws everything ~
-	   You can either choose a predefined skin ( found in Styles.hx )
-	   Or set a custom style object
+	   Sets a new theme/skin for Windows and Popups
+	   ! IMPORTANT ! Do this right after creating the WM
 	**/
-	public static function setSkin(?ind:Int, ?sk:WMSkin)
+	public static function setSkins(mainSkin:WMSkin, ?popupSkin:WMSkin)
 	{
-		if (ind != null)
-		{
-			skin = Reflect.copy(Styles.skins[ind]);	// Default Skin
-		}
-		else
-		{
-			if (sk != null)
-			{
-				skin = sk;
-			}
-		}
+		skin = mainSkin;
+		if (popupSkin != null) skin_popup = popupSkin;
 		clearBG();
 		for (i in win_list) i.draw();
 	}//---------------------------------------------------;
@@ -277,7 +276,6 @@ class WM
 			
 			if (active_last != null) 
 			{
-				if (win.flag_is_sub) active_last.flag_once_focusLast = true;
 				active_last.focus();
 			}
 		}
@@ -299,15 +297,21 @@ class WM
 	// EVENTS 
 	//====================================================;
 	// --
-	static function onKey(key:String)
+	static function _onKey(key:String)
 	{
 		if (flag_tab_switch_windows && key == "tab")
 		{
-			// Send tab to modal windows
+			// If a window is already locked, don't switch windows
+			// just send 'tab' to that window
 			if (active != null && active.flag_focus_lock)
 			{
 				active.onKey('tab');
 				return;
+			}
+			
+			if (active != null && flag_win_remember_focused_elem)
+			{
+				active.flag_once_focusLast = true;
 			}
 			
 			focusNext();
@@ -321,6 +325,7 @@ class WM
 	}//---------------------------------------------------;
 	
 	// --
+	// Callbacks Windows will push specifically to the WM
 	static function onWindowCallbacks(status:String, win:Window)
 	{
 		switch(status) {
@@ -345,6 +350,7 @@ class WM
 				
 			default:
 		}
+		
 	}//---------------------------------------------------;
 	
 }//- end class-

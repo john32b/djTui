@@ -29,7 +29,7 @@ class BaseMenuItem extends BaseElement
 	var color_idle:PrintColor;
 	var color_focus:PrintColor;
 	
-	/** If true will colorize the background on the default colors .
+	/** If true will colorize the BG when idle.
 	 *  SET IT before adding to a window */
 	public var flag_solid_bg:Bool;
 	

@@ -32,9 +32,9 @@ class TextInput extends BaseMenuItem
 	
 	/**
 	   @param	sid
-	   @param	_width Visual Width
-	   @param	_maxl  Max input Length, must be smaller than width
-	   @param	_allow [number,all]
+	   @param	_width Visual Width of the InputBox
+	   @param	_maxl  Max characters input Length, ( Must be smaller than width )
+	   @param	_allow [number,all] What type of data to allow, numbers or everything
 	**/
 	
 	public function new(?sid:String, _width:Int = 8, _maxl:Int = 0, _allow:String = "all") 

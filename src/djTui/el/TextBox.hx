@@ -6,9 +6,8 @@ import djTui.Styles.PrintColor;
 /**
  * A TEXTBOX that display lines of text
  * 
- * - scrollable
- * - automatic scrollbar
- * - reports custom status callbacks
+ * - Scrollable, with an automatic scrollbar
+ * - You can set 'color_scrollbar_focus' and 'color_scrollbar_idle' to customize scrollbar
  * 
  * DEV NOTE:
  * - If height==0 it will be autocalculated on first data set
@@ -18,7 +17,7 @@ class TextBox extends BaseElement
 	// Holds the Final Rendered String
 	var lines:Array<String>;
 	
-	// Current scroll multiplier (0 -> 1)
+	// Current scroll multiplier (0 ... 1)
 	public var scroll_ratio(default, null):Float;
 	
 	// From what index to start displaying lines
@@ -51,11 +50,11 @@ class TextBox extends BaseElement
 	   @param	_height If 0 will be autocalculated on next setData()
 	   @param	sid SID
 	**/
-	public function new(_width:Int, _height:Int = 0, ?sid:String)
+	public function new(?sid:String, _width:Int, _height:Int = 0)
 	{
 		super(sid);
 		type = ElementType.textbox;
-		size(_width - 1, _height);
+		size(_width - 1, _height); // NOTE: -1 because of the scrollbar
 		slots_count = height;
 		flag_focusable = false;
 		reset(); // Init vars

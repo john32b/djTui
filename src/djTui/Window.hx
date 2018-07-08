@@ -10,12 +10,13 @@ import haxe.Timer;
  * ------------
  * - Managed by the WM
  * - Holds and manages baseElements and derivatives 
+ * - Default 'TAB' is to cycle between elements and exit to next window, unless "flag_focus_lock" is set
  * 
  * Callback Statuses via the 'callbacks' object :
  * 
  *		escape : Esc key got pressed
- * 		focus  : A new element has been focused
- * 		unfocus: The window has been unfocused  ! Window Only !
+ * 		focus  : Element/Window has been focused ; (check element.type or SID)
+ * 		unfocus: Element/Window has been unfocused ; (check element type or SID)
  * 		fire   : Element was activated
  * 		change : Element was changed
  * 		open   : Window was just opened
@@ -31,7 +32,7 @@ class Window extends BaseElement
 	var title_el:Label;
 	
 	// Currently Active Borderstyle
-	public var borderStyle:Int;
+	public var borderStyle(default, set):Int;
 	
 	// Padding at the edges, must accomodate for border
 	var padX:Int;
@@ -63,26 +64,22 @@ class Window extends BaseElement
 	public var skin:WMSkin;
 	
 	/// FLAGS :
-	/// It is best to set flags right after new()
+	// It is best to set flags right after new()
 	
 	// DO NOT allow focus to leave from this window
 	public var flag_focus_lock:Bool = false;
 	
-	// Is this window/panel a subpanel? (e.g. a popup vlist)
-	// ~ Used internally , in cases where when a popup closes it focuses last element ~
-	@:allow(djTui.WM)
-	var flag_is_sub:Bool = false;
-	
+
 	// If true, when this window gets focus, will try to focus last element focused
-	@:allow(djTui.WM)
-	var flag_once_focusLast:Bool = false;
+	// ! Will only apply once ! So it's needed to be set every time 
+	public var flag_once_focusLast:Bool = false;
 	
 	//====================================================;
 
 	/**
 	   Create a Window.
-	   @param	_w Window Width
-	   @param	_h Window Height
+	   @param	_w Window Width ( Negative integers to set to FULLWIDTH/N )
+	   @param	_h Window Height ( Negative integers to set to FULLHEIGH/N )
 	   @param	_border Border Style [0,1,2]  ( none, light, thick )
 	   @param	_skin You can set a custom style for this window and its children
 	**/
@@ -105,6 +102,7 @@ class Window extends BaseElement
 			padding(2, 2);
 		else
 			padding(1, 1);
+
 		callbacks = function(_, _){ }; // Make it not crash, because it's going to get called
 	}//---------------------------------------------------;
 	
@@ -140,6 +138,10 @@ class Window extends BaseElement
 	**/
 	override public function size(_w:Int, _h:Int):BaseElement 
 	{
+		#if debug
+		if (_w == 0 || _h == 0) throw "ERROR, Window size cannot be 0";
+		#end
+		
 		if (_w < 0)
 		{
 			_w = Math.floor(WM.width / -_w);
@@ -156,7 +158,7 @@ class Window extends BaseElement
 	
 
 	/**
-	   Set padding for the window. Returns self for chaining
+	   Set padding for the edges of the window. Returns self for chaining
 	   @param	xx Sides
 	   @param	yy Top/Bottom
 	   @return
@@ -173,12 +175,6 @@ class Window extends BaseElement
 	**/
 	public function addChild(el:BaseElement)
 	{
-		#if debug
-		if (width == 0 || height == 0) {
-			throw "Window with zero size";
-		}
-		#end
-		
 		display_list.push(el);
 		el.callbacks = onElementCallback;
 		el.parent = this;
@@ -186,7 +182,7 @@ class Window extends BaseElement
 		el.visible = visible;
 		if (el.flag_focusable)
 			el.focusSetup(false);	// Setup colors, in supported elements, default to unfocused
-		if (visible) el.draw();
+		if (visible && !lockDraw) el.draw();
 	}//---------------------------------------------------;
 	
 	// --
@@ -195,7 +191,7 @@ class Window extends BaseElement
 		if (display_list.remove(el))
 		{
 			el.visible = false;
-			if (visible) draw();
+			if (visible && !lockDraw) draw();
 		}
 	}//---------------------------------------------------;
 
@@ -261,7 +257,12 @@ class Window extends BaseElement
 	**/
 	public function close()
 	{
+		if (visible == false) return;
 		visible = false; //-> will trigger children
+		
+		// Will unfocus any active element
+		unfocus(); 
+		
 		callback_wm("close", this);
 		callbacks("close", this);	// push to user
 	}//---------------------------------------------------;
@@ -327,7 +328,7 @@ class Window extends BaseElement
 	{
 		if (!flag_focusable) return;
 		callback_wm("focus", this);	// << Send this first to unfocus/draw any other windows
-		lockDraw = true;
+		lockDraw = true; // Skip drawing the whole window again
 		super.focus();
 		lockDraw = false;
 		// Focus an element
@@ -351,8 +352,8 @@ class Window extends BaseElement
 		if (!isFocused) return;
 		if (active != null) active.unfocus();
 		active_last = active;
-		lockDraw = true;
 		active = null;
+		lockDraw = true;
 		super.unfocus();
 		lockDraw = false;
 		callbacks("unfocus", this);
@@ -360,6 +361,7 @@ class Window extends BaseElement
 	
 	
 	// --
+	// Draws the entire window along with children
 	override public function draw():Void 
 	{
 		if (lockDraw || !visible) return;
@@ -370,6 +372,7 @@ class Window extends BaseElement
 		WM.D.rect(x, y, width, height);
 		
 		// Draw Border
+		// DEV : Drawing of the border occurs on borderstyle setter as well
 		if (borderStyle > 0)
 		{
 			WM.D.border(x, y, width, height, borderStyle);
@@ -377,7 +380,7 @@ class Window extends BaseElement
 		// Draw Children
 		for (el in display_list)
 		{	
-			if (!el.lockDraw) el.draw();
+			if (!el.lockDraw) el.draw(); // Todo, also !visible?
 		}
 		
 	}//---------------------------------------------------;
@@ -436,9 +439,10 @@ class Window extends BaseElement
 				
 				if (isLastFocusableElement())
 				{
-					if (flag_focus_lock) focusNext(true); 
+					if (flag_focus_lock) 
+						focusNext(true); 
 					else
-					callback_wm("focus_next", this);
+						callback_wm("focus_next", this);
 				}
 				else
 				{
@@ -467,7 +471,7 @@ class Window extends BaseElement
 	function onElementCallback(st:String, el:BaseElement)
 	{
 		#if (debug && true)
-		trace('> Element Callback : From:${el.SID}, Status:$st, Data:"${el.getData()}"');
+		trace('> Element Callback : From:${el.SID}, Status:$st, Data:"${el.getData()}", Owner:${el.parent.SID}');
 		#end
 		
 		switch(st)
@@ -483,32 +487,41 @@ class Window extends BaseElement
 			case "focus_next":
 				focusNext(false);
 				
-			default:
-				
-				// Check for Links
-				if (el.type == ElementType.button)
-				{
-					if (el.SID.charAt(0) == "@") // It's a link
-					{
-						// REQUEST TO SWITCH TO NEW PAGE/BANKs
-						WM.STATE.goto(el.SID.substr(1));
-						return;
-					}
-				}
-				
+			default:	
 		}
 		
 		// Pipe callbacks to user
 		callbacks(st, el);
 		
 		// Pipe callbacks to the global WM if set
-		if (WM.globalWindowCallbacks != null) WM.globalWindowCallbacks(st, el);
+		if (WM.onElementCallback != null) WM.onElementCallback(st, el);
 	}//---------------------------------------------------;
 	
 	//====================================================;
 	// GETTER, SETTERS
 	//====================================================;
 	
+	/**
+	   If borderstyle too large it will be set to the first one
+	**/
+	function set_borderStyle(val):Int
+	{
+		if (borderStyle == val) return val;
+			borderStyle = val;
+			
+		if (borderStyle > Styles.border.length - 1) borderStyle = 1;
+		
+		if (visible && !lockDraw)
+		{
+			_readyCol();
+			WM.D.border(x, y, width, height, borderStyle);
+			if (title_el != null) title_el.draw();
+		}
+		
+		return val;
+	}//---------------------------------------------------;
+
+	// --
 	override function set_visible(val):Bool
 	{
 		if (visible != val) 
@@ -529,6 +542,8 @@ class Window extends BaseElement
 	{
 		title = val;
 		
+		lockDraw = true;
+		
 		if (title_el != null) 
 		{
 			removeChild(title_el);
@@ -545,6 +560,18 @@ class Window extends BaseElement
 		title_el.setColor(skin.win_hl, colorBG);
 		title_el.pos(x +  Std.int((width / 2) - (title_el.width / 2)), y);
 		addChild(title_el);
+		
+		lockDraw = false;
+		
+		// Experimental :
+		// Draw the top border and the title
+		if (visible) 
+		{
+			_readyCol();
+			// NOTE: DO NOT DRAW OVER THE CORNERS!!!
+			WM.D.lineH(x+1, y, width-2, Styles.border[borderStyle].charAt(1));
+			title_el.draw();
+		}
 		
 		return val;
 	}//---------------------------------------------------;

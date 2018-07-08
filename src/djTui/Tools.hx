@@ -38,4 +38,17 @@ class Tools
 		return into;
 	}//---------------------------------------------------;
 	
-}
+	
+	//--
+	public static function isEmpty(str:String):Bool
+	{
+		return (str==null || str.length==0);
+	}//---------------------------------------------------;
+	
+	
+	public static function randAr<T>(ar:Array<T>):T
+	{
+		return ar[Std.random(ar.length)];
+	}
+	
+}// --

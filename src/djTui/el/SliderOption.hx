@@ -73,7 +73,7 @@ class SliderOption extends BaseMenuItem
 	{
 		if (isFocused)
 		{
-			rText = StrTool.repeatStr(ARROW_PAD, ' ') + 
+			rText = StringTools.lpad("", " ", ARROW_PAD) +
 					StrTool.padString(options[index], width - ARROW_PAD, 'left');
 		}else
 		{
