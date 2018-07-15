@@ -162,12 +162,19 @@ class Label extends BaseMenuItem
 	 - Sets the text of the label */
 	function set_text(val)
 	{
+		if (Tools.isEmpty(val))
+		{
+			text = null;
+			width = 0;
+			if (visible) clear();
+			return val;
+		}
 		
 		/* If you are to rename a Label, and the new text is shorter than
 		   the old text, clear the space behind it, so the text doesn't overlap */
 		if (text != null && targetWidth == 0 && cast(val, String).length < text.length && visible)
 		{
-			clear();
+			clear();	
 		}
 		
 		text = val;
@@ -182,9 +189,12 @@ class Label extends BaseMenuItem
 		
 		width = rText.length; // Either targetwidth or whatever text length is
 		
-		// Restart the animation, if any
-		if (anim_active_call != null) anim_active_call();
-		if (visible) draw();
+		// Restart the animation, if any and draw
+		if (visible)
+		{
+			if (anim_active_call != null) anim_active_call();
+			draw();
+		}
 		return val;
 	}//---------------------------------------------------;
 
@@ -197,6 +207,17 @@ class Label extends BaseMenuItem
 	override public function getData():Any 
 	{
 		return text;
+	}//---------------------------------------------------;
+
+	/**
+	   Re-Set the width to this
+	**/
+	public function setWidth(w:Int):Label
+	{
+		if (width == w) return this;
+		targetWidth = w;
+		if (text != null) text = text; // cause a redraw
+		return this;
 	}//---------------------------------------------------;
 	
 }//-- end class

@@ -169,20 +169,34 @@ class Window extends BaseElement
 	}//---------------------------------------------------;
 	
 	/**
-	   - Adds an element to the window, without worrying about positioning.
+	   - Adds an element to the window
+	   - Element should have its size set before adding to a window
 	   - Call addStacked() to add and align an element (prefered)
 	   @param	el
 	**/
-	public function addChild(el:BaseElement)
+	public function addChild(el:BaseElement):BaseElement
 	{
 		display_list.push(el);
 		el.callbacks = onElementCallback;
 		el.parent = this;
+		
+		#if debug 
+			// Check Overflows
+			if (el.x + el.width > x + width - padX) {
+				trace('ERROR: Element sid:${el.SID} width is too large for window.');
+			}
+			
+			if (el.y + el.height >= y + height) {
+				trace('ERROR: Element sid:${el.SID} Y pos overflow.');
+			}
+		#end
+		
 		el.onAdded();
 		el.visible = visible;
 		if (el.flag_focusable)
 			el.focusSetup(false);	// Setup colors, in supported elements, default to unfocused
 		if (visible && !lockDraw) el.draw();
+		return el;
 	}//---------------------------------------------------;
 	
 	// --
@@ -201,7 +215,7 @@ class Window extends BaseElement
 	   @param	yPad Padding form the element above it
 	   @param	align left|center|right|none
 	**/
-	public function addStack(el:BaseElement, yPad:Int = 0, align:String = "left")
+	public function addStack(el:BaseElement, yPad:Int = 0, align:String = "left"):BaseElement
 	{
 		switch(align)
 		{
@@ -221,6 +235,7 @@ class Window extends BaseElement
 		
 		addChild(el);
 		lastAdded = el;
+		return el;
 	}//---------------------------------------------------;
 	
 	/**

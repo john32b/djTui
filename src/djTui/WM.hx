@@ -176,9 +176,7 @@ class WM
 		if (w.y < 0) w.pos(w.x, 0); else
 		if (w.y + w.height > height) w.pos(w.x, height - w.height);
 		
-		trace('Adding Window : UID:${w.UID}, SID:${w.SID}');
-		trace(' - Size: ${w.width} | ${w.height} ');
-		trace(' - Pos: ${w.x} | ${w.y} ');
+		trace('Adding Window : UID:${w.UID}, SID:${w.SID} | Size: (${w.width},${w.height}) | Pos: ${w.x},${w.y} ');
 		
 		// --
 		if (win_list.indexOf(w) == -1)

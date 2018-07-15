@@ -28,10 +28,10 @@ class PopupOption extends BaseMenuItem
 	/**
 	   @param	sid  --
 	   @param	src  Array with choices
-	   @param	init Initial Index
-	   @param	slits Force this many slots to the popup window list
+	   @param	start Initial Index
+	   @param	slots Force this many slots to the popup window list
 	**/
-	public function new(sid:String, src:Array<String>, init:Int = 0, slots:Int = 4)
+	public function new(sid:String, src:Array<String>, slots:Int = 4, start:Int = 0)
 	{
 		super(sid);
 		type = ElementType.option;
@@ -41,7 +41,7 @@ class PopupOption extends BaseMenuItem
 			for (i in 0...options.length){
 				if (options[i].length > maxW) maxW = options[i].length;
 			}
-		setData(init);
+		setData(start);
 		size(maxW + 2, 1);
 		createPopup(maxW, slots);
 	}//---------------------------------------------------;

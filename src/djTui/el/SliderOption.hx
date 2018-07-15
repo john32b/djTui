@@ -21,9 +21,9 @@ class SliderOption extends BaseMenuItem
 	/**
 	   @param	sid  --
 	   @param	src  Array with choices
-	   @param	init Initial Index
+	   @param	start Initial Index
 	**/
-	public function new(sid:String, src:Array<String>, init:Int = 0)
+	public function new(sid:String, src:Array<String>, start:Int = 0)
 	{
 		super(sid);	
 		ar_stat = [false, false];
@@ -36,7 +36,7 @@ class SliderOption extends BaseMenuItem
 			}
 		index_max = options.length - 1;
 		size(maxW + ARROW_PAD * 2, 1);
-		setData(init);
+		setData(start);
 	}//---------------------------------------------------;
 	
 	override function focusSetup(focus:Bool):Void 

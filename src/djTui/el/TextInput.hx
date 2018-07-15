@@ -9,7 +9,8 @@ import haxe.Timer;
  */
 class TextInput extends BaseMenuItem 
 {
-	
+
+	static var DEFAULT_WIDTH:Int = 8;
 	static var CARET_SYMBOL:String = "█";
 	public static var BANK_LETTERS:String = "QAZWSXEDCRFVTGBYHNUJMIKOLPqazwsxedcrfvtgbyhnujmikolp";
 	public static var BANK_NUMBERS:String = "1234567890";
@@ -37,14 +38,15 @@ class TextInput extends BaseMenuItem
 	   @param	_allow [number,all] What type of data to allow, numbers or everything
 	**/
 	
-	public function new(?sid:String, _width:Int = 8, _maxl:Int = 0, _allow:String = "all") 
+	public function new(sid:String, _width:Int = 0, _maxl:Int = 0, _allow:String = "all") 
 	{
 		super(sid);
 		type = ElementType.input;
-		width = _width;
+		size(_width, 1);
+		if (width == 0) width = DEFAULT_WIDTH;
 		maxLength = _maxl - 1;
 		if (_allow == "number") validKeys = BANK_NUMBERS;
-		else validKeys = BANK_LETTERS + BANK_NUMBERS;
+			else validKeys = BANK_LETTERS + BANK_NUMBERS;
 		text = "";
 	}//---------------------------------------------------;
 	

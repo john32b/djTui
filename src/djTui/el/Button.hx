@@ -12,8 +12,9 @@ import djTui.Tools;
  * - Text that can be highlighted and selected
  * - Button style for displaying text inside button like symbols [ ] 
  * - Callbacks "fire" status when selected
+ * - You can capture events using Window.Callbacks ( the window owning this button)
+ * - You can also call .onPush() to quickly set a callback when the button is pushed
  * - Buttons will always be `center` aligned within target width
- * 
  * 
  * EXTRA Functionality 
  * -------------
@@ -74,6 +75,9 @@ class Button extends BaseMenuItem
 		?close:Bool		// close self window upon being selected
 	}
 	
+	
+	// Extra function called when this button is pushed
+	var extra_onPush:Void->Void;
 	
 	/**
 	   Creates a button/clickable text link
@@ -256,6 +260,7 @@ class Button extends BaseMenuItem
 		}//- (xtr null check)
 		
 		callbacks("fire", this);
+		if (extra_onPush != null) extra_onPush();
 	}//---------------------------------------------------;
 	
 	
@@ -280,12 +285,27 @@ class Button extends BaseMenuItem
 		else if (k == "right") callbacks("focus_next", this);
 	}//---------------------------------------------------;
 	
+	/**
+	   Chain this to quickly add a function to be called when this button is pushed
+	**/
+	public function onPush(fn:Void->Void):Button
+	{
+		extra_onPush = fn;
+		return this;
+	}//---------------------------------------------------;
+	
 
 	/** 
 	 * SETTER 
 	 - Sets the text of the button */
 	function set_text(val)
 	{
+		#if debug
+		if (Tools.isEmpty(val)) {
+			throw "Button text can't be empty";
+		}
+		#end
+		
 		/* If for whatever reason you want to rename a button, and the new text is shorter
 		   than the old text, clear the space behind it, so the text doesn't overlap */
 		if (text != null && targetWidth == 0 && cast(val, String).length < text.length && visible)

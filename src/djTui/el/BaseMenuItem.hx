@@ -91,13 +91,5 @@ class BaseMenuItem extends BaseElement
 		WM.T.reset().fg(colorFG).bg(colorBG);
 		WM.T.move(x, y).print(rText);
 	}//---------------------------------------------------;
-	
-	
-	#if debug
-	override public function toString():String
-	{
-		return 'Type:${type.getName()}, SID:$SID, x:$x, y:$y';
-	}//---------------------------------------------------;
-	#end
-	
+		
 }//--

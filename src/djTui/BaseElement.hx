@@ -203,7 +203,7 @@ class BaseElement
 	{
 		return
 		Type.getClassName(Type.getClass(this)) + 
-		' - UID:$UID, x:$x, y:$y, width:$width, height:$height';
+		': SID:$SID, UID:$UID, pos($x,$y), size($width,$height)';
 	}//---------------------------------------------------;
 	
 	// @ virtual

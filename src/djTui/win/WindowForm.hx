@@ -6,6 +6,7 @@ import djTui.adaptors.djNode.InputObj;
 import djTui.Styles.WMSkin;
 import djTui.el.Button;
 import djTui.el.Label;
+import djTui.el.PopupOption;
 import djTui.el.SliderNum;
 import djTui.el.SliderOption;
 import djTui.el.TextInput;
@@ -29,12 +30,13 @@ class WindowForm extends Window
 	// Current alignment type for when adding 
 	var align:String;
 	// If align=="fix". The element divider relative X from window 0,0
-	var align_divider:Int;
+	var align_fix_start:Int;
 	// X Padding of the elements
 	var align_padx:Int;
 
 	// When an element is focused, colorize the label with this color (fg+bg)
 	var colorLabelFocus:PrintColor;
+	
 	
 	//====================================================;
 	
@@ -63,18 +65,18 @@ class WindowForm extends Window
 	   Set the alignment of LABEL + ELEMENT
 	   @param	_align [none, fixed, center]
 	   @param	_padx X Padding between LABEL + ELEMENT
-	   @param	_dividerPos Only valid if type==fixed. Sets the first column (labels) length
+	   @param	_fixedStart Only valid if type==fixed. Sets the first column (labels) length
 							If NEGATIVE it autosize to a ratio of window width
 	**/
-	public function setAlign(_align:String, _padx:Int = 1, _dividerPos:Int = -2):WindowForm
+	public function setAlign(_align:String, _padx:Int = 1, _fixedStart:Int = -2):WindowForm
 	{
 		align = _align;
 		align_padx = _padx;
-		align_divider = _dividerPos;
+		align_fix_start = _fixedStart;
 
-		if (align_divider < 0)
+		if (align_fix_start < 0)
 		{
-			align_divider = Math.floor(inWidth/ -align_divider);
+			align_fix_start = Math.floor(inWidth/ -align_fix_start);
 		}
 		
 		#if debug
@@ -83,7 +85,7 @@ class WindowForm extends Window
 		}
 		#end
 		
-		trace('> Alignment set align:$align, padX:$align_padx, divider:$align_divider');
+		trace('> Alignment set align:$align, padX:$align_padx, divider:$align_fix_start');
 		
 		return this;
 	}//---------------------------------------------------;
@@ -105,15 +107,17 @@ class WindowForm extends Window
 				addStack(l);
 				el.posNext(l, align_padx);
 				addChild(el);
-			case "fixed":
 				
+			case "fixed":
+				l.setWidth(align_fix_start - padX - align_padx);
 				addStack(l);
-				// TODO RESET_WIDTH
-				el.pos(x + align_divider, l.y);
+				el.pos(x + align_fix_start, l.y);
 				addChild(el);
 				
 			case "center":
 				addStackCentered([l, el], 0, align_padx);
+				trace("ADD CENTER");
+				trace(el);
 			default:
 		}
 	}//---------------------------------------------------;
@@ -121,7 +125,7 @@ class WindowForm extends Window
 	/**
 	   When an element is focused, colorize its label with this color
 	   set NULL on both for no color change.
-	   ! CALL THIS BEFORE ADDING ANYTHING
+	   ! CALL THIS BEFORE ADDING ANYTHING !
 	   @param	fg Foreground Color
 	   @param	bg Background Color ( can be null )
 	**/
@@ -136,10 +140,11 @@ class WindowForm extends Window
 			};
 	}//---------------------------------------------------;
 	
-	// --
+	/**
+	   Override standard callbacks to add label highlight
+	**/
 	override function onElementCallback(st:String, el:BaseElement) 
 	{
-		
 		// Capture element focus to handle label coloring
 		if (st == "focus")
 		{
@@ -165,36 +170,46 @@ class WindowForm extends Window
 	
 	
 	/**
-	   Add an encoded form ( CSV encoded )
-	   - label,text
-	   - button,sid,text
-	   
-	   @param	str type,sid,.....
+	   Quickly add a menu item using a special encoded string
+		- input,sid,maxChars,type
+		- button,sid,text,btnStyle,fullwidth(1:0)
+		- label,text,fullWidth(1:0),alignMode
+		- toggle,sid,start
+		- slNum,sid,min,max,inc,startValue
+		- slOpt,sid,el1|el2|...,startIndex
+		- popOpt,sid,sid,el1|el2|...,slots,startIndex
+		
+	   @param label The Text of the label that preceeds the menu item
+	   @param enc The encoded string  "type,sid,Class Conscructor Parameters"
+			e.g. "button,sid01,2,10" // is like calling new button("sid01,2,10");
 	**/
-	public function addEnc2(str:String)
+	public function addQ(labelText:String, enc:String)
 	{
-		var b = str.split(',');
 		var e:BaseElement = null;
-		switch(b[0])
+		var s:Array<String> = enc.split(',');
+		var i = function(n:Int){return Std.parseInt(s[n]); };
+		var w2 = width - align_fix_start - padX;
+		
+		switch(s[0])
 		{
 			case 'button':
-				e = new Button(b[1], b[2]);
+				e = new Button(s[1], s[2], i(3), i(4) == 1?w2:0);
 			case 'label':
-				e = new Label(b[1], inWidth);
+				e = new Label(s[1], i(2) == 1?w2:0, s[3]);
 			case 'input':
-				e = new TextInput(b[1], inWidth);
-			case 'sliderNum':
-				e = new SliderNum(b[1], Std.parseInt(b[3]), Std.parseInt(b[4]), Std.parseInt(b[5]));
-			case 'sliderOpt':
-				e = new SliderOption(b[1], b[2].split('|'));
-			case 'popupOpt':
+				e = new TextInput(s[1], align == "fixed"?w2:0, i(2), s[3]);
 			case 'toggle':
-				e = new Toggle(b[1], b[3]=="true");
+				e = new Toggle(s[1], s[2] == "true");
+			case 'slNum':
+				e = new SliderNum(s[1], i(2), i(3), i(4));
+			case 'slOpt':
+				e = new SliderOption(s[1], s[2].split('|'), i(3));
+			case 'popOpt':
+				e = new PopupOption(s[1], s[2].split('|'), i(3), i(4));
 			default:
 				throw "Unsupported";
 		}
-		addStack(e);
-		
+		add(labelText, e);
 	}//---------------------------------------------------;
 	
 }// --
