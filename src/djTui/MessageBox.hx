@@ -14,6 +14,7 @@ import djTui.el.TextBox;
  */
 class MessageBox extends Window 
 {
+	// MessageBox Type
 	// 0 - OK
 	// 1 - OK - CANCEL
 	// 2 - YES - NO
@@ -32,7 +33,7 @@ class MessageBox extends Window
 	/** Will close the popup when user selects something */
 	public var flag_auto_close:Bool = true;
 	
-	// Global button style for the buttpns
+	// Global button style for the buttons
 	public static var BUTTON_STYLE:Int = 2;
 	
 	/**
@@ -44,12 +45,14 @@ class MessageBox extends Window
 	**/
 	public function new(text:String, _type:Int, ?_resCallback:Int->Void, _width:Int = 30 ) 
 	{
-		super(5, 5, 2,WM.skin_popup);
+		super();
+		setStyle(WM.global_skin_pop, 2);
 		mbType = _type;
 		resultCallback = _resCallback;
 		flag_focus_lock = true;
 		padding(2, 1);
-		// - Create textbox
+		
+		// - Create the textbox
 		tbox = new TextBox(_width - 2, 0);
 		tbox.setData(text);
 		tbox.flag_focusable = false;
@@ -100,6 +103,7 @@ class MessageBox extends Window
 	function add_b(name:String)
 	{
 		var b = new Button(null, name, BUTTON_STYLE);
+		b.flag_leftright_escape = true;
 		buttons.push(b);
 	}//---------------------------------------------------;
 	

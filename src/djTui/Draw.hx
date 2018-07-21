@@ -109,14 +109,17 @@ class Draw
 		  for the full box width/height
 	   @param	x Outer Border Screen Location X
 	   @param	y Outer Border Screen Location Y
-	   @param	rows [ "width|width|...|height" , "width|width|...|height" ... ]
+	   @param	rowsStr [ "width|width|...|height" , "width|width|...|height" ... ]
 				Every string is a row,
 				e.g. [ "20|20|3" , "15|25|2" ] (20,20 = width of the 2 cells, height = 3)
+	   @param	rowsInt [ [width,width,height] , [width,width...,height] ]
+				works like `rowsStr` but with INT values
+				WARNING. You can either set rowsSTR or rowsInt, NOT BOTH!
 	   @param	Sin Style index from global border style in 'Styles.hx' for outer border
 	   @param	Sout Style index from global border style in 'Styles.hx' for outer border
 
 	**/
-	public function drawGrid(x:Int, y:Int, rows:Array<String>, Sin:Int, Sout:Int)
+	public function drawGrid(x:Int, y:Int, ?rowsStr:Array<String>, ?rowsInt:Array<Array<Int>>, Sin:Int, Sout:Int)
 	{
 		// Total Width and Height
 		var W:Int = 0;
@@ -124,16 +127,32 @@ class Draw
 		var boxes:Array<Array<Int>> = [];
 		var boxH:Array<Int> = [];
 
-		// First pass, read arguments
-		for (r in 0...rows.length){
-			boxes[r] = rows[r].split('|').map(function(s){return Std.parseInt(s);});
-			boxH[r] = boxes[r].pop();
+		#if debug
+		if (rowsStr != null && rowsInt != null)
+		{
+			trace("ERROR: You only need to set one raw data type.");
+			throw "drawGrid Error";
 		}
+		#end
+		
+		// First pass, read arguments
+		if (rowsStr != null)
+			for (r in 0...rowsStr.length){
+			boxes[r] = rowsStr[r].split('|').map(function(s){return Std.parseInt(s);});
+			boxH[r] = boxes[r].pop();
+			}
+		
+		if (rowsInt != null)
+			for (r in 0...rowsInt.length){
+			boxes[r] = rowsInt[r];
+			boxH[r] = boxes[r].pop();
+			}	
+		
 		for (w in boxes[0]) W += w;
 		for (h in boxH) H += h;
 		
 		// --
-		border(x, y, W, H, Sout);
+		if (Sout > 0) border(x, y, W, H, Sout);
 		
 		var currentRowTop:Int = y;
 	

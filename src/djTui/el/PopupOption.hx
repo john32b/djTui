@@ -12,16 +12,10 @@ class PopupOption extends BaseMenuItem
 	
 	// The source options 
 	var options:Array<String>;
-
 	// Hold the currently selected index
 	var index:Int;
-	
-	// Max Width the number string can get to
-	var maxW:Int;
-	
 	// The popup window
 	var win:Window;
-	
 	// The list on the window
 	var list:VList;
 	
@@ -36,22 +30,27 @@ class PopupOption extends BaseMenuItem
 		super(sid);
 		type = ElementType.option;
 		options = src.copy(); // safer this way
-		// -- calculate the max width of options
-			maxW = options[0].length;
+		height = 1;
+			// -- Calculate the max width of options
+			var maxW = options[0].length;
 			for (i in 0...options.length){
 				if (options[i].length > maxW) maxW = options[i].length;
 			}
+		createPopup(maxW + 1, slots);
+		setSideSymbolPad(0, 1);
+		setSideSymbols('[', ']');
 		setData(start);
-		size(maxW + 2, 1);
-		createPopup(maxW, slots);
+		
 	}//---------------------------------------------------;
 	
 	// --
 	function createPopup(_width:Int, slots:Int)
 	{		
 		if (_width < WIN_MIN_WIDTH) _width = WIN_MIN_WIDTH;
+		
 		// --
 		win = new Window(1);
+		win.setStyle(WM.global_skin_pop, 1);
 		win.padding(1, 1).size(_width, slots + 2);
 		win.flag_focus_lock = true;
 		
@@ -77,28 +76,20 @@ class PopupOption extends BaseMenuItem
 	{
 		if (k == "space" || k == "enter")
 		{
-			win.pos(x + 1, y - Math.floor(win.height / 3));
+			// Open the popup and put it relative to current control.
 			list.cursor_to(index);
 			parent.flag_once_focusLast = true;
+			win.pos(x + 1, y - Math.floor(win.height / 3));
 			win.open(true);
 		}
 	}//---------------------------------------------------;
-	
-	override public function draw():Void 
-	{
-		super.draw();
-		WM.T.move(x, y).print("[");
-		WM.T.move(x + options[index].length + 1, y).print("]");
-	}//---------------------------------------------------;
-	
 	
 	// --
 	// Sets current selected INDEX
 	override public function setData(val:Any) 
 	{
 		index = val;
-		rText = ' ' + 
-				StrTool.padString(options[index], maxW + 1, "left");
+		text = options[index];
 	}//---------------------------------------------------;
 	
 	// --

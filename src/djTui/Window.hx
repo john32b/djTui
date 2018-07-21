@@ -1,5 +1,6 @@
 package djTui;
 import djTui.BaseElement;
+import djTui.el.Button;
 import djTui.el.Label;
 import djTui.Styles.WMSkin;
 import haxe.Timer;
@@ -31,10 +32,15 @@ class Window extends BaseElement
 	// The actual Label holding the title
 	var title_el:Label;
 	
-	// Currently Active Borderstyle
+	/** This window border index. Defaults to WM.globalBorder 
+	 * NOTE: Mind the padding when setting this to and from 0 */
 	public var borderStyle(default, set):Int;
 	
-	// Padding at the edges, must accomodate for border
+	/** This window skin, defaults to WM.globalSkin */
+	public var skin:WMSkin;
+	
+	// Padding of elements from the edges
+	// Applied to automatic positioning functions like addStack()
 	var padX:Int;
 	var padY:Int;
 	
@@ -58,34 +64,30 @@ class Window extends BaseElement
 	//    all children element statuses as
 	@:allow(djTui.WM)
 	var callback_wm:String->Window->Void;
-	
-	// Every window can have its own skin/style
-	// All children will use this
-	public var skin:WMSkin;
+
 	
 	/// FLAGS :
 	// It is best to set flags right after new()
 	
 	// DO NOT allow focus to leave from this window
 	public var flag_focus_lock:Bool = false;
-	
 
 	// If true, when this window gets focus, will try to focus last element focused
 	// ! Will only apply once ! So it's needed to be set every time 
 	public var flag_once_focusLast:Bool = false;
 	
-	//====================================================;
 
 	/**
-	   Create a Window.
+	   Create a Window
+	   @param	sid Optional String ID. If set then this window will be stored to WM.DB for quick retrieval 
 	   @param	_w Window Width ( Negative integers to set to FULLWIDTH/N )
 	   @param	_h Window Height ( Negative integers to set to FULLHEIGH/N )
-	   @param	_border Border Style [0,1,2]  ( none, light, thick )
-	   @param	_skin You can set a custom style for this window and its children
 	**/
-	public function new(?sid:String, _w:Int = 5, _h:Int = 5, _border:Int = 1, _skin:WMSkin = null)
+	public function new(?sid:String, _w:Int = 5, _h:Int = 5)
 	{
-		display_list = [];	// <- Important to be before super(), because it triggers a setter.
+		// DEVNOTE: Don't mess with the ordering, it matters
+		
+		display_list = [];
 		
 		if (sid != null)
 		{
@@ -93,19 +95,45 @@ class Window extends BaseElement
 		}
 		
 		super(sid);
+		
 		type = ElementType.window; 
-		borderStyle = _border;
-		skin = _skin != null?_skin:WM.skin;
-		setColor(skin.win_fg, skin.win_bg);
-		size(_w, _h);
-		if (borderStyle > 0)
+		
+		// Make it not crash, because it's going to get called
+		callbacks = function(_, _){ }; 
+				
+		setStyle(WM.global_skin, WM.global_border);
+		
+		if (borderStyle > 0) 
 			padding(2, 2);
-		else
+			else
 			padding(1, 1);
 
-		callbacks = function(_, _){ }; // Make it not crash, because it's going to get called
+		size(_w, _h);
 	}//---------------------------------------------------;
 	
+	/**
+	   Sets the Skin and Border for this window. 
+	   Both optional parameters so you can just set one of them if you want
+	   @param	_skin A skin object -> Currently DOES NOT apply the new skin. So set this first thing first
+	   @param	_border Border index from `Styles.border` -> Will also apply the border
+	   @return
+	**/
+	public function setStyle(?_skin:WMSkin, ?_border:Int):Window
+	{
+		if (_skin != null)
+		{
+			skin = _skin;
+			// DevNote: Color in windows, doesn't do anything?
+			setColor(skin.win_fg, skin.win_bg); 
+		}
+		
+		if (_border != null)
+		{
+			set_borderStyle(_border);
+		}
+		
+		return this;
+	}//---------------------------------------------------;
 	
 	/**
 	   Search and return an element with target SID
@@ -128,6 +156,7 @@ class Window extends BaseElement
 		x += dx;
 		y += dy;
 		for (i in display_list) i.move(dx, dy);
+		if (visible) draw();
 		return this;
 	}//---------------------------------------------------;
 	
@@ -517,7 +546,7 @@ class Window extends BaseElement
 	//====================================================;
 	
 	/**
-	   If borderstyle too large it will be set to the first one
+	   If borderstyle index out of bounds, it will be set to the first one
 	**/
 	function set_borderStyle(val):Int
 	{
@@ -563,13 +592,12 @@ class Window extends BaseElement
 		{
 			removeChild(title_el);
 		}
+
+		title_el = new Label("| " + title + " |");
 		
-		if (title.length > inWidth - 2) {
-			title_el = new Label(title, inWidth - 2);
-			// TODO: Animate it ??
-		}else
+		if (title.length > inWidth - 4)
 		{
-			title_el = new Label('| ' + title + ' |');
+			title_el.setTextWidth(inWidth - 4, "center");
 		}
 		
 		title_el.setColor(skin.win_hl, colorBG);

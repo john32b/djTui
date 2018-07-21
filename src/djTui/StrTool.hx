@@ -175,6 +175,15 @@ class StrTool
 		return StringTools.lpad("", char, length);
 	}//---------------------------------------------------;
 	
+	/**
+	   Returns an empty string
+	   @param	len Length of the string
+	   @return
+	**/
+	public static function empty(len:Int):String
+	{
+		return StringTools.lpad("", " ", len);
+	}//---------------------------------------------------;
 	
 	/**
 	 * Loops a string to itself, useful for scrolling effects

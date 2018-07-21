@@ -2,8 +2,8 @@ package djTui.win;
 
 import djTui.BaseElement;
 import djTui.Styles.PrintColor;
-import djTui.adaptors.djNode.InputObj;
 import djTui.Styles.WMSkin;
+import djTui.el.BaseMenuItem;
 import djTui.el.Button;
 import djTui.el.Label;
 import djTui.el.PopupOption;
@@ -16,10 +16,10 @@ import djTui.el.Toggle;
  * A class for easily creating Forms ( LABEL + Menu Element )
  * 
  * - adds menu elements with a label associated with them
- * - easy insertion of elements using Encoded String, use add()
  * - use setAlign(..) to set alignment
- * - use setLabelColors(..); to set label coloring
- * 
+ * - use setLabelColors(..); to set label colorin
+ * - use add(..); to add element + Label
+ * - use addQ(..); to quickly add an element + Label
  */
 class WindowForm extends Window 
 {
@@ -29,14 +29,13 @@ class WindowForm extends Window
 
 	// Current alignment type for when adding 
 	var align:String;
-	// If align=="fix". The element divider relative X from window 0,0
+	// If align=="fixed". The element divider relative X from window 0,0
 	var align_fix_start:Int;
 	// X Padding of the elements
 	var align_padx:Int;
 
 	// When an element is focused, colorize the label with this color (fg+bg)
 	var colorLabelFocus:PrintColor;
-	
 	
 	//====================================================;
 	
@@ -47,9 +46,9 @@ class WindowForm extends Window
 	   @param	_borderStyle
 	   @param	_skin
 	**/
-	public function new(?_sid:String, _w:Int = 15, _h:Int = 8, _borderStyle:Int = 1, ?_skin:WMSkin)
+	public function new(?_sid:String, _w:Int = 15, _h:Int = 8)
 	{
-		super(_sid, _w, _h, _borderStyle, _skin);
+		super(_sid, _w, _h);
 
 		labelMap = new Map();
 		
@@ -81,7 +80,8 @@ class WindowForm extends Window
 		
 		#if debug
 		if (["fixed", "center", "none"].indexOf(align) < 0) {
-			throw "Alignment Type Error : " + align;
+			trace('Alignment Mode "$_align" not valid.');
+			throw "WindowForm.SetAlign()";
 		}
 		#end
 		
@@ -109,15 +109,13 @@ class WindowForm extends Window
 				addChild(el);
 				
 			case "fixed":
-				l.setWidth(align_fix_start - padX - align_padx);
+				l.setTextWidth(align_fix_start - padX - align_padx);
 				addStack(l);
 				el.pos(x + align_fix_start, l.y);
 				addChild(el);
 				
 			case "center":
 				addStackCentered([l, el], 0, align_padx);
-				trace("ADD CENTER");
-				trace(el);
 			default:
 		}
 	}//---------------------------------------------------;
@@ -183,9 +181,9 @@ class WindowForm extends Window
 	   @param enc The encoded string  "type,sid,Class Conscructor Parameters"
 			e.g. "button,sid01,2,10" // is like calling new button("sid01,2,10");
 	**/
-	public function addQ(labelText:String, enc:String)
+	public function addQ(labelText:String, enc:String):BaseMenuItem
 	{
-		var e:BaseElement = null;
+		var e:BaseMenuItem = null;
 		var s:Array<String> = enc.split(',');
 		var i = function(n:Int){return Std.parseInt(s[n]); };
 		var w2 = width - align_fix_start - padX;
@@ -197,7 +195,7 @@ class WindowForm extends Window
 			case 'label':
 				e = new Label(s[1], i(2) == 1?w2:0, s[3]);
 			case 'input':
-				e = new TextInput(s[1], align == "fixed"?w2:0, i(2), s[3]);
+				e = new TextInput(s[1], align == "fixed"?w2-1:0, s[2]);
 			case 'toggle':
 				e = new Toggle(s[1], s[2] == "true");
 			case 'slNum':
@@ -210,6 +208,7 @@ class WindowForm extends Window
 				throw "Unsupported";
 		}
 		add(labelText, e);
+		return e;
 	}//---------------------------------------------------;
 	
 }// --

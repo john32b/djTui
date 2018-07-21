@@ -10,8 +10,9 @@ import djTui.WindowState.WindowStateManager;
  * Window Manager
  * --------------
  * - Holds and Manages Windows
- * - Provides Terminal and Draw interface
+ * - Provides some Terminal and Input Interfaces
  * - Provides a Window State Manager
+ * - AutoHolds a DataBase of created Windows
  */
 
 class WM 
@@ -36,13 +37,7 @@ class WM
 	// Current width and height of the WM
 	public static var width(default, null):Int;
 	public static var height(default, null):Int;
-	
-	// Default SKIN/THEME for all windows
-	public static var skin(default, null):WMSkin;
-
-	// Default SKIN/THEME for all popups
-	public static var skin_popup(default, null):WMSkin;
-	
+		
 	// Holds all the windows currently on the desktop/TUI
 	static var win_list:Array<Window>;
 	
@@ -52,6 +47,20 @@ class WM
 	// Pointer to the last active window, useful to have when closing windows
 	static var active_last:Window;
 	
+	/// Global Styles :
+	
+	/** SKIN/THEME for all windows. Unless overriden in window.
+	 */
+	public static var global_skin:WMSkin;
+
+	/** SKIN/THEME for all popups. Unless overriden in window.
+	 */
+	public static var global_skin_pop:WMSkin;
+	
+	/** Border style for all windows. Unless override in window
+	    Stores index, Check `Styles.border` for styles.
+	 */
+	public static var global_border:Int = 1;
 	
 	/// Callbacks :
 	
@@ -97,17 +106,15 @@ class WM
 		
 		Styles.init();
 		
-		skin = Reflect.copy(Styles.skins[_skn]);
-		skin_popup = Reflect.copy(Styles.skins[_sknP]);
+		global_skin = Reflect.copy(Styles.skins[_skn]);
+		global_skin_pop = Reflect.copy(Styles.skins[_sknP]);
 		
 		// --
-		
 		I.onKey = _onKey;
 		I.start();
 		
 		// - Init and ClearBG
 		closeAll();
-		
 		// -
 		trace('== Window Manager Created =');
 		trace(' - Viewport Width = $width , Height = $height');
@@ -120,22 +127,10 @@ class WM
 	**/
 	public static function setBgColor(col:String)
 	{
-		skin.tui_bg = col;
+		global_skin.tui_bg = col;
 		clearBG();
 	}//---------------------------------------------------;
 	
-	
-	/**
-	   Sets a new theme/skin for Windows and Popups
-	   ! IMPORTANT ! Do this right after creating the WM
-	**/
-	public static function setSkins(mainSkin:WMSkin, ?popupSkin:WMSkin)
-	{
-		skin = mainSkin;
-		if (popupSkin != null) skin_popup = popupSkin;
-		clearBG();
-		for (i in win_list) i.draw();
-	}//---------------------------------------------------;
 	
 	/**
 	   Close all windows and redraw the bg
@@ -157,7 +152,7 @@ class WM
 	static function clearBG()
 	{
 		T.reset();
-		if (skin.tui_bg != null) T.bg(skin.tui_bg);
+		if (global_skin.tui_bg != null) T.bg(global_skin.tui_bg);
 		D.rect(0, 0, width, height);
 	}//---------------------------------------------------;
 	
@@ -256,7 +251,7 @@ class WM
 		win_list.remove(win);
 		
 		// Draw a <black> hole where the window was
-		T.reset(); if (skin.tui_bg != null) T.bg(skin.tui_bg);
+		T.reset(); if (global_skin.tui_bg != null) T.bg(global_skin.tui_bg);
 		D.rect(win.x, win.y, win.width, win.height);
 		
 		// If there are any windows behind it, re-draw them

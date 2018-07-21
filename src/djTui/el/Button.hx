@@ -37,29 +37,12 @@ import djTui.Tools;
 class Button extends BaseMenuItem 
 {
 	// Button Style Symbols
-	static var S = [ "<>", "[]" , "{}" , "()", "«»" ];
+	// Index starting at 1
+	static var SMB = [ "[]" , "{}" , "()", "<>"];
 	
 	// Confirmation default question
 	static var CONF_DEF = "Are you sure?";
-	
-	/** Global for all buttons, padding between symbol and text, 0 for no space. e.g. [BUTTON]
-	    Set this before creating any button */
-	public static var SYMBOL_PAD:Int = 1;
-	
-	/** The source text, ( not the rendered text )
-	    You can assign new values to this, ~uses setter~ */
-	public var text(default, set):String;
-	
-	// Enable button symbol mode
-	// False for normal link mode
-	var flag_btnStyle:Bool;
-	
-	// Current button symbol index
-	var btn_smb:Int;
-	
-	// Target width for the button. 0 for Autosize
-	var targetWidth:Int;
-	
+		
 	/**
 	   Stores extra functionality parameters
 	**/
@@ -79,28 +62,38 @@ class Button extends BaseMenuItem
 	// Extra function called when this button is pushed
 	var extra_onPush:Void->Void;
 	
+	
+	/** If true, will request next/previous element focus upon left/right keys
+	 *  Useful in cases where you put buttons in a single line */
+	public var flag_leftright_escape:Bool = false;
+	
 	/**
 	   Creates a button/clickable text link
 	   @param	sid SID You can include SPECIAL functionality here. It's the same as calling extra(..) later
 	   @param	Text The text to display
 	   @param	BtnStyle IF > 0 Will enable Button Style text with symbol. "1:<>,2:[],3:{},4:(),5:«»"
-	   @param   TargetWidth 0 for Autosize
+	   @param   textWidth 0 for Autosize
 	**/
-	public function new(sid:String, Text:String, BtnStyle:Int = 0, TargetWidth:Int = 0)
+	public function new(sid:String, Text:String, BtnStyle:Int = 0, Width:Int = 0)
 	{
 		super(sid);
 		#if debug
-			if (BtnStyle > 5) BtnStyle = 5;
+			if (BtnStyle > SMB.length) BtnStyle = SMB.length;
 		#end
 		type = ElementType.button;
 		height = 1;
-		targetWidth = TargetWidth; // autosize
-		btn_smb = BtnStyle;
-		flag_btnStyle = BtnStyle > 0;
+		textWidth = Width;
+		
+		if (BtnStyle > 0)
+		{
+			var s = BtnStyle -1;
+			setSideSymbolPad(1, 1);
+			setSideSymbols(SMB[s].charAt(0), SMB[s].charAt(1));
+		}
+		
 		text = Text;
 		
-		// - Capture Tags on SID
-		
+		// - In case of special TAGS on the SID, apply them
 		if (sid != null)
 		{
 			if (['#', '@'].indexOf(sid.charAt(0)) >= 0)
@@ -108,7 +101,6 @@ class Button extends BaseMenuItem
 				extra(sid); // Initialize # and @
 							// For the full functionalities you must call extra() explicitly
 			}
-			
 		}
 	}//---------------------------------------------------;
 
@@ -263,7 +255,6 @@ class Button extends BaseMenuItem
 		if (extra_onPush != null) extra_onPush();
 	}//---------------------------------------------------;
 	
-	
 	// --
 	override function onKey(k:String):Void 
 	{
@@ -278,11 +269,15 @@ class Button extends BaseMenuItem
 			}
 		}
 		
-		// NOTE: 
+		// DEVNOTE: 
 		// right and left keys will not get pushed to this object
 		// when inside a <ButtonGrid>
-		else if (k == "left") callbacks("focus_prev", this);
-		else if (k == "right") callbacks("focus_next", this);
+		if (flag_leftright_escape)
+		{
+			if (k == "left") callbacks("focus_prev", this);
+				else if (k == "right") callbacks("focus_next", this);
+		}
+
 	}//---------------------------------------------------;
 	
 	/**
@@ -292,58 +287,6 @@ class Button extends BaseMenuItem
 	{
 		extra_onPush = fn;
 		return this;
-	}//---------------------------------------------------;
-	
-
-	/** 
-	 * SETTER 
-	 - Sets the text of the button */
-	function set_text(val)
-	{
-		#if debug
-		if (Tools.isEmpty(val)) {
-			throw "Button text can't be empty";
-		}
-		#end
-		
-		/* If for whatever reason you want to rename a button, and the new text is shorter
-		   than the old text, clear the space behind it, so the text doesn't overlap */
-		if (text != null && targetWidth == 0 && cast(val, String).length < text.length && visible)
-		{
-			clear();
-		}
-		
-		text = val;
-		
-		if (flag_btnStyle)
-		{
-			rText = S[btn_smb].charAt(0);
-			if (targetWidth > 0)
-			{
-				rText += StrTool.padString(text, targetWidth - 2, "center");
-			}else
-			{
-				var pad = StringTools.lpad("", " ", SYMBOL_PAD); 
-				rText +=  pad + text + pad;
-			}
-			rText += S[btn_smb].charAt(1);
-		}
-		else
-		{
-			if (targetWidth > 0)
-			{
-				rText = StringTools.rpad(rText, " ", targetWidth);
-			}else
-			{
-				rText = text;
-			}
-		}
-		
-		width = rText.length;
-		
-		if (visible) draw();
-		
-		return val;
 	}//---------------------------------------------------;
 	
 }// --

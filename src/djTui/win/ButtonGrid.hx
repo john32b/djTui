@@ -5,12 +5,12 @@ import djTui.Styles.WMSkin;
 import djTui.el.Button;
 
 /**
- * A Table/grid of buttons where you can select 
- * between them using the arrow keys
+ * A Table/grid of buttons where you can select between them using the arrow keys
  * --
- * NOTES:
- * 	- new().padding().size(); 	in this order only
- *  - primarily used for adding buttons, but you can add anything else with put();
+ * - Multiple columns
+ * - new().padding().size(); 	in this order only 
+ * - primarily used for adding buttons, but you can add anything else with put();
+ * 	
  */
 class ButtonGrid extends Window 
 {
@@ -35,27 +35,32 @@ class ButtonGrid extends Window
 	// If true, will loop on the edges
 	public var flag_loop:Bool = false;
 
-	// - Styles
-	var btn_style:Int = 0;			// Check Button.hx button style symbols
-	var btn_width:Int = 0;			// Force Button width
+	// - Global Button Styles for All Buttons
+	var btn_style:Int = 0;		// Index. Check `Button.hx` button style symbols
+	var btn_width:Int = 0;		// Force Button width
+	var btn_padOut:Int = 0;		// Symbol Pad Outer
+	var btn_padIn:Int = 0;		// Symbol Pad Inner
+	
+	// - Drawable separator
+	var sep_enable:Bool = false;
+	var sep_symbol:String;
 	
 	/**
-	   @param	_w Width
-	   @param	_h Height
+	   @param	_w Width -
+	   @param	_h Height -
 	   @param	columns How many columns
 	   @param	elementPad Vertical Padding between elements
-	   @param	_borderStyle Border Style
-	   @param	_skin Color Theme
 	**/
-	public function new(?_sid:String, _w:Int = 10, _h:Int = 10, columns:Int = 2, elementPad:Int = 1, _borderStyle:Int = 1, ?_skin:WMSkin)
+	public function new(?_sid:String, _w:Int = 20, _h:Int = 10, columns:Int = 2, elementPad:Int = 1)
 	{
-		super(_sid, _w, _h, _borderStyle, _skin);
-		
 		col_pos = [];
 		col_el = [];
 		c_x = 0; c_y = 0;
 		pad_el = elementPad;
 		col_count = columns;
+		
+		// DevNote: Need to be last, because it trigers size() and col_pos needs to be initialized.
+		super(_sid, _w, _h); 
 	}//---------------------------------------------------;
 
 	/**
@@ -63,11 +68,31 @@ class ButtonGrid extends Window
 	   ~ Call this before adding elements
 	   @param	buttonStyle Common button style for all buttons?
 	   @param	buttonWidth 0 for auto, other for forced width
+	   @param	padOut Symbol pad Outer
+	   @param	padIn Symbol pad Inner
 	**/
-	public function setStyle(buttonStyle:Int, buttonWidth:Int = 0)
+	public function setButtonStyle(buttonStyle:Int, buttonWidth:Int, padOut:Int, padIn:Int):ButtonGrid
 	{
 		btn_style = buttonStyle;
 		btn_width = buttonWidth;
+		btn_padOut = padOut;
+		btn_padIn = padIn;
+		return this;
+	}//---------------------------------------------------;
+	
+	/**
+	   Enables drawing of vertical separators between columns
+	   @param	style Index in`styles.hx`.border to get the vertical symbol from. Defaults to border style
+	**/
+	public function enableSeparators(style:Int = 0):ButtonGrid
+	{
+		sep_enable = true;
+		if (style == 0)
+		{
+			if (borderStyle > 0) style = borderStyle; else style = 1;
+		}
+		sep_symbol = Styles.border[style].charAt(7);
+		return this;
 	}//---------------------------------------------------;
 	
 	/**
@@ -100,6 +125,11 @@ class ButtonGrid extends Window
 	{
 		var b = new Button(_sid, text, btn_style, btn_width);
 		
+		if (btn_style > 0)
+		{
+			b.setSideSymbolPad(btn_padOut, btn_padIn);
+		}
+		
 		putEl(col, b);
 		
 		if (_sid == null)
@@ -116,7 +146,7 @@ class ButtonGrid extends Window
 	**/
 	public function putEl(col:Int, el:BaseElement)
 	{
-		var xx = x + col_pos[col];
+		var xx = x + col_pos[col] + 1;
 		var yy = y + padY;
 		
 		if (col_el[col] == null)
@@ -205,10 +235,25 @@ class ButtonGrid extends Window
 	// Adjust pointer location
 	override public function focus() 
 	{
+		if (!flag_once_focusLast || active_last == null)
+		{
+			c_x = 0;
+			c_y = 0;
+		}
 		super.focus();
-		c_x = 0;
-		c_y = 0;
 	}//---------------------------------------------------;
 	
+
+	override public function draw():Void 
+	{
+		super.draw();
+		if (sep_enable)
+		{
+			for (i in 1...col_count)
+			{
+				WM.D.lineV(x + col_pos[i], y + padY, height - (padY * 2), sep_symbol);
+			}
+		}
+	}//---------------------------------------------------;
 	
 }// --

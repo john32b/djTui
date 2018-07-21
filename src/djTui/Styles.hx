@@ -13,10 +13,10 @@ package djTui;
  * 	
  * 	- https://en.wikipedia.org/wiki/Box-drawing_character
  * 
- *  - ASCII Symbols :
+ *  - Useful ASCII Symbols :
  * 
  * 	■ ▌ ▐ ▀ ▄ █ ▬ ▓ ▒ ░ ☺ ☻
- *  ▼ ▲ ◄ ► » « ◘ ◙ 
+ *  ▼ ▲ ◄ ► » « ◘ ◙ ○ ☼ → ← ↔ ↑ ↓ ↨ ∟ ™ ® ©
  * 
 **/
 
@@ -64,8 +64,17 @@ class Styles
 	// All skins WM and Popup skins
 	public static var skins(default, null):Array<WMSkin>;
 	
+	// Store some LEFT-RIGHT Arrow Styles
+	public static var arrowsLR(default, null):Array<String>;
+	
 	public static function init()
 	{
+
+		// -- Some global ARROW Symbols
+		arrowsLR = [
+			'<>', '◄►', '←→', '«»'
+		];
+		
 		//-- Default Borders ::
 		
 		// borders : up row, bottom row, left, right
