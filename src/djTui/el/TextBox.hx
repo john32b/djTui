@@ -27,22 +27,17 @@ class TextBox extends BaseElement
 	// Autocalculated, the index the textbox can scroll to
 	var scroll_max:Int;
 	
-	// Will be added to the parent window automatically?
-	var scrollbar:ScrollBar;
-	
 	// How many slots to display lines
 	var slots_count:Int;
-	
-	// NOTE: Set the colors right after new();
-	
-	/** If set, the scrollbar will get this color when the textbox is focused */
-	public var color_scrollbar_focus:String;
-	
-	/** Set a custom scrollbar color.*/
-	public var color_scrollbar_idle:String;	
+
+	// Will be added to the parent window automatically
+	var scrollbar:ScrollBar;
 	
 	/** Used in cases where a scrollbar is needed but element is not yet added to a window */
 	var flag_add_scrollbar:Bool = false;
+	
+	/** Hide the scrollbar on unfocus. FALSE to always show. TRUE to show when focused. */
+	public var flag_scrollbar_autohide:Bool = true;
 	
 	/**
 	   Create a new TextBox
@@ -56,7 +51,6 @@ class TextBox extends BaseElement
 		type = ElementType.textbox;
 		size(_width - 1, _height); // NOTE: -1 because of the scrollbar
 		slots_count = height;
-		flag_focusable = false;
 		reset(); // Init vars
 	}//---------------------------------------------------;
 	
@@ -77,12 +71,7 @@ class TextBox extends BaseElement
 
 	override function onAdded():Void 
 	{
-		if (colorFG == null) setColor(parent.skin.win_fg);
-		
-		if (color_scrollbar_idle == null)
-		{
-			color_scrollbar_idle = parent.skin.win_fg;
-		}
+		if (colorFG == null) setColor(parent.style.textbox);
 		
 		if (flag_add_scrollbar) 
 		{
@@ -93,18 +82,38 @@ class TextBox extends BaseElement
 	// --
 	override function focusSetup(focus:Bool):Void 
 	{
-		if (scrollbar != null && color_scrollbar_focus != null)
+		if (parent.style.textbox_focus != null)
 		{
 			if (focus)
 			{
-				scrollbar.setColor(color_scrollbar_focus);
-			}else
+				setColor(parent.style.textbox_focus);
+			}else{
+				setColor(parent.style.textbox);
+			}
+		}
+		
+		if (scrollbar != null)
+		{
+			// Hack: Don't actually remove the scrollbar,
+			//       rather paint it all a single color, it's easier this way
+			if (flag_scrollbar_autohide && !focus)
 			{
-				scrollbar.setColor(color_scrollbar_idle);
+				scrollbar.setColor(colorBG, colorBG);
+				scrollbar.draw();
+			}else
+			
+			if (parent.style.scrollbar_focus != null)
+			{
+				if (focus)
+					scrollbar.setColor(parent.style.scrollbar_focus);
+				else
+					scrollbar.setColor(parent.style.scrollbar_idle);
+				
+				scrollbar.draw(); //<- Must call draw to apply color changes
 			}
 			
-			scrollbar.draw(); //<- Must call draw to apply color changes
 		}
+		
 	}//---------------------------------------------------;
 	
 	override public function draw():Void 
@@ -161,8 +170,10 @@ class TextBox extends BaseElement
 		
 		scrollbar = new ScrollBar(height);
 		scrollbar.posNext(this);
+
 		parent.addChild(scrollbar);
-		scrollbar.setColor(color_scrollbar_idle);
+		
+		scrollbar.setColor(parent.style.scrollbar_idle);
 		flag_add_scrollbar = false;
 	}//---------------------------------------------------;
 	
@@ -207,10 +218,11 @@ class TextBox extends BaseElement
 		
 	}//---------------------------------------------------;
 	
-	// Return the whole bunch of data
+	// --
+	// Returns scroll percent?
 	override public function getData():Any 
 	{
-		return lines;
+		return scroll_offset;
 	}//---------------------------------------------------;
 	
 	/**

@@ -1,8 +1,9 @@
 package djTui;
 import djTui.BaseElement;
+import djTui.el.Border;
 import djTui.el.Button;
 import djTui.el.Label;
-import djTui.Styles.WMSkin;
+import djTui.Styles.WinStyle;
 import haxe.Timer;
 
 /**
@@ -32,20 +33,30 @@ class Window extends BaseElement
 	// The actual Label holding the title
 	var title_el:Label;
 	
-	/** This window border index. Defaults to WM.globalBorder 
-	 * NOTE: Mind the padding when setting this to and from 0 */
+	/** This window border index. Defaults to `Style.border` but can be overriden
+	 *  NOTES: - Mind the padding when setting this to and from 0 
+	 * 		   - Check `styles.hx` for available border styles
+	 **/
 	public var borderStyle(default, set):Int;
+
+	// The border element responsible for drawing the border
+	var border_el:Border;
 	
-	/** This window skin, defaults to WM.globalSkin */
-	public var skin:WMSkin;
+	/**
+	   This window style, defaults to `WM.global_style`
+	   NOTE: If you want to modify the style call .modifyStyle()
+	**/
+	public var style(default, set):WinStyle;
 	
 	// Padding of elements from the edges
 	// Applied to automatic positioning functions like addStack()
 	var padX:Int;
 	var padY:Int;
 	
-	// Effective width, inside the window (calculates padding)
+	// Effective width, inside the window
 	public var inWidth(get, null):Int;
+	// Effective height, inside the window
+	public var inHeight(get, null):Int;
 	
 	// Holds all the elements that are visible inside the window
 	var display_list:Array<BaseElement>;
@@ -81,7 +92,7 @@ class Window extends BaseElement
 	   Create a Window
 	   @param	sid Optional String ID. If set then this window will be stored to WM.DB for quick retrieval 
 	   @param	_w Window Width ( Negative integers to set to FULLWIDTH/N )
-	   @param	_h Window Height ( Negative integers to set to FULLHEIGH/N )
+	   @param	_h Window Height ( Negative integers to set to FULLHEIGHT/N )
 	**/
 	public function new(?sid:String, _w:Int = 5, _h:Int = 5)
 	{
@@ -100,8 +111,14 @@ class Window extends BaseElement
 		
 		// Make it not crash, because it's going to get called
 		callbacks = function(_, _){ }; 
-				
-		setStyle(WM.global_skin, WM.global_border);
+		
+		// Create a border element, even if the window will not have border style.
+		border_el = new Border();
+		addChild(border_el);
+		
+		// DevNote: Setting the style will also set the `borderStyle`
+		// If you want to alter a specific window style, you can call `` which will clone the style
+		style = WM.global_style_win;	
 		
 		if (borderStyle > 0) 
 			padding(2, 2);
@@ -112,27 +129,21 @@ class Window extends BaseElement
 	}//---------------------------------------------------;
 	
 	/**
-	   Sets the Skin and Border for this window. 
-	   Both optional parameters so you can just set one of them if you want
-	   @param	_skin A skin object -> Currently DOES NOT apply the new skin. So set this first thing first
-	   @param	_border Border index from `Styles.border` -> Will also apply the border
-	   @return
+	   Will modify specific fields of the style object
+	  ! IMPORTANT : Call this before adding child elements.
+		e.g. window.modifyStyle( { text:"red",bg:"black"} );
+	  ! EXPERIMENTAL : You can call this after adding elements,
+		but it is buggy.
+	   @param	o Object with field names and values conforming to `Styles.WinStyle`
 	**/
-	public function setStyle(?_skin:WMSkin, ?_border:Int):Window
+	public function modifyStyle(o:Dynamic)
 	{
-		if (_skin != null)
-		{
-			skin = _skin;
-			// DevNote: Color in windows, doesn't do anything?
-			setColor(skin.win_fg, skin.win_bg); 
-		}
+		var t = Reflect.copy(style);
+		Tools.copyFields(o, t);
+		style = t; // Sets and applies
 		
-		if (_border != null)
-		{
-			set_borderStyle(_border);
-		}
-		
-		return this;
+		// Experimental: Works but not in all cases
+		for (i in display_list) i.focusSetup(i.isFocused);
 	}//---------------------------------------------------;
 	
 	/**
@@ -182,6 +193,9 @@ class Window extends BaseElement
 		}
 		
 		super.size(_w, _h);
+		
+		border_el.size(_w, _h);
+		
 		return this;
 	}//---------------------------------------------------;
 	
@@ -222,8 +236,12 @@ class Window extends BaseElement
 		
 		el.onAdded();
 		el.visible = visible;
+		
 		if (el.flag_focusable)
-			el.focusSetup(false);	// Setup colors, in supported elements, default to unfocused
+		{
+			el.focusSetup(isFocused);	// Setup colors, in supported elements.
+		}
+		
 		if (visible && !lockDraw) el.draw();
 		return el;
 	}//---------------------------------------------------;
@@ -233,7 +251,7 @@ class Window extends BaseElement
 	{
 		if (display_list.remove(el))
 		{
-			el.visible = false;
+			el.visible = false; // Important to trigger any custom setters
 			if (visible && !lockDraw) draw();
 		}
 	}//---------------------------------------------------;
@@ -278,14 +296,14 @@ class Window extends BaseElement
 		// Calculate starting Y
 		var yloc:Int = 0;
 		if (lastAdded == null) {
-			yloc= y + padY;
+			yloc = y + padY;
 		}else {
 			yloc = lastAdded.y + lastAdded.height + yPad;
 		}
 		// Calculate total width.etc
 		var totalWidth:Int = 0;
 		for (i in el) totalWidth += i.width;
-		totalWidth += (el.length - 1) * xPad;
+		totalWidth += (el.length - 1) * xPad; // Add In-between padding to total width
 		var startX:Int = x + Std.int(width / 2 - totalWidth / 2);
 		for (i in 0...el.length)
 		{
@@ -342,7 +360,6 @@ class Window extends BaseElement
 			WM.D.rect(xx, yy, w, h);
 			if (borderStyle > 0) 
 			{
-				//WM.T.bg(skin.tui_bg).fg(skin.accent_fg);
 				WM.D.border(xx, yy, w, h, borderStyle);
 			}
 			
@@ -367,11 +384,27 @@ class Window extends BaseElement
 	   - Focus this window
 	   - Unfocuses any other focused window
 	   - Focuses first focusable element
+	   - Does not draw the window again
+	   - The WM automatically draws it on "focus" signal and only if it must be drawn fully
 	**/
 	override public function focus() 
 	{
 		if (!flag_focusable) return;
-		callback_wm("focus", this);	// << Send this first to unfocus/draw any other windows
+		
+		if (style.borderColor_focus != null) 
+		{
+			border_el.setColor(style.borderColor_focus);
+			border_el.draw();
+		}
+		
+		if (style.titleColor_focus != null && title_el != null)
+		{
+			title_el.setColor(style.titleColor_focus);
+			title_el.draw();
+		}
+		
+		callback_wm("focus", this);	// << This will unfocus/draw other windows and draw self if needed
+		
 		lockDraw = true; // Skip drawing the whole window again
 		super.focus();
 		lockDraw = false;
@@ -386,6 +419,7 @@ class Window extends BaseElement
 			// Focus the first selectable element :
 			BaseElement.focusNext(display_list, null);
 		}
+		
 	}//---------------------------------------------------;
 	
 	/**
@@ -394,6 +428,19 @@ class Window extends BaseElement
 	override public function unfocus() 
 	{
 		if (!isFocused) return;
+		
+		if (style.borderColor_focus != null) 
+		{
+			border_el.setColor(style.borderColor);
+			border_el.draw();
+		}
+		
+		if (style.titleColor_focus != null && title_el != null)
+		{
+			title_el.setColor(style.titleColor);
+			title_el.draw();
+		}
+		
 		if (active != null) active.unfocus();
 		active_last = active;
 		active = null;
@@ -401,6 +448,7 @@ class Window extends BaseElement
 		super.unfocus();
 		lockDraw = false;
 		callbacks("unfocus", this);
+		
 	}//---------------------------------------------------;
 	
 	
@@ -410,18 +458,10 @@ class Window extends BaseElement
 	{
 		if (lockDraw || !visible) return;
 		
-		_readyCol();
-		
 		// Draw the window background
+		_readyCol();
 		WM.D.rect(x, y, width, height);
 		
-		// Draw Border
-		// DEV : Drawing of the border occurs on borderstyle setter as well
-		if (borderStyle > 0)
-		{
-			WM.D.border(x, y, width, height, borderStyle);
-		}
-		// Draw Children
 		for (el in display_list)
 		{	
 			if (!el.lockDraw) el.draw(); // Todo, also !visible?
@@ -546,6 +586,19 @@ class Window extends BaseElement
 	//====================================================;
 	
 	/**
+	   Sets a new window style + border included in the style object
+	**/
+	function set_style(val):WinStyle
+	{
+		if (style == val) return val;
+		style = val;
+		border_el.setColor(style.borderColor);
+		borderStyle = style.borderStyle; // setter
+		setColor(style.text, style.bg);
+		return style;
+	}//---------------------------------------------------;
+	
+	/**
 	   If borderstyle index out of bounds, it will be set to the first one
 	**/
 	function set_borderStyle(val):Int
@@ -554,11 +607,12 @@ class Window extends BaseElement
 			borderStyle = val;
 			
 		if (borderStyle > Styles.border.length - 1) borderStyle = 1;
+
+		border_el.style = borderStyle;
 		
 		if (visible && !lockDraw)
 		{
-			_readyCol();
-			WM.D.border(x, y, width, height, borderStyle);
+			border_el.draw();
 			if (title_el != null) title_el.draw();
 		}
 		
@@ -582,6 +636,12 @@ class Window extends BaseElement
 	}//---------------------------------------------------;
 	
 	// --
+	function get_inHeight()
+	{
+		return Std.int(height - padY - padY);
+	}//---------------------------------------------------;
+	
+	// --
 	function set_title(val)
 	{
 		title = val;
@@ -600,7 +660,7 @@ class Window extends BaseElement
 			title_el.setTextWidth(inWidth - 4, "center");
 		}
 		
-		title_el.setColor(skin.win_hl, colorBG);
+		title_el.setColor(style.titleColor);
 		title_el.pos(x +  Std.int((width / 2) - (title_el.width / 2)), y);
 		addChild(title_el);
 		
@@ -610,13 +670,17 @@ class Window extends BaseElement
 		// Draw the top border and the title
 		if (visible) 
 		{
-			_readyCol();
+			//_readyCol();
 			// NOTE: DO NOT DRAW OVER THE CORNERS!!!
-			WM.D.lineH(x+1, y, width-2, Styles.border[borderStyle].charAt(1));
+			//WM.D.lineH(x + 1, y, width - 2, Styles.border[borderStyle].charAt(1));
+			border_el.drawTop();
 			title_el.draw();
 		}
 		
 		return val;
 	}//---------------------------------------------------;
 
+	
+	
+	
 }// -- end class --

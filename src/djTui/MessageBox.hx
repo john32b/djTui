@@ -1,7 +1,6 @@
 package djTui;
 
 import djTui.BaseElement;
-import djTui.Styles.WMSkin;
 import djTui.el.Button;
 import djTui.el.TextBox;
 
@@ -46,7 +45,7 @@ class MessageBox extends Window
 	public function new(text:String, _type:Int, ?_resCallback:Int->Void, _width:Int = 30 ) 
 	{
 		super();
-		setStyle(WM.global_skin_pop, 2);
+		style = WM.global_style_pop;
 		mbType = _type;
 		resultCallback = _resCallback;
 		flag_focus_lock = true;

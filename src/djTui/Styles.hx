@@ -4,37 +4,17 @@ package djTui;
  * Manage everything style related
  * -------------------------------
  * 
- * Skins:
- * ------
- * You can set skins here for easy indexing
+ * - Default window styles
+ * - Default borders and decorative symbols
  * 
  * 
  * NOTES :  
- * 	
  * 	- https://en.wikipedia.org/wiki/Box-drawing_character
- * 
  *  - Useful ASCII Symbols :
- * 
- * 	■ ▌ ▐ ▀ ▄ █ ▬ ▓ ▒ ░ ☺ ☻
- *  ▼ ▲ ◄ ► » « ◘ ◙ ○ ☼ → ← ↔ ↑ ↓ ↨ ∟ ™ ® ©
+ * 		■ ▌ ▐ ▀ ▄ █ ▬ ▓ ▒ ░ ☺ ☻
+ *  	▼ ▲ ◄ ► » « ◘ ◙ ○ ☼ → ← ↔ ↑ ↓ ↨ ∟ ™ ® ©
  * 
 **/
-
-
-
-// Global Colors and Properties
-typedef WMSkin = 
-{
-	?tui_bg:String,		// Whole TUI bg color. null to nothing
-	win_fg:String, 		// Normal Text color
-	win_bg:String,		// Window BG color
-	win_hl:String,		// Some highlighted elements on the win, including the border
-	disabled_fg:String, 
-	accent_fg:String,
-	accent_bg:String,
-	accent_blur_fg:String,
-	accent_blur_bg:String,
-}//-
 
 
 
@@ -46,11 +26,38 @@ typedef PrintColor =
 }//--
 
 
+// Describe a window style along with some basic menu elements it can hold
+typedef WinStyle = 
+{
+	bg:String,			// Window background
+	text:String,		// Labels
+	
+	titleColor:PrintColor,
+	?titleColor_focus:PrintColor,
+	
+	borderStyle:Int,
+	borderColor:PrintColor,
+	?borderColor_focus:PrintColor,
+	
+	elem_focus:PrintColor,
+	elem_idle:PrintColor,
+	elem_disable:PrintColor,
+	
+	scrollbar_idle:PrintColor,
+	?scrollbar_focus:PrintColor,
+	
+	textbox:PrintColor,
+	?textbox_focus:PrintColor,
+	
+	vlist_cursor:PrintColor
+}// --
+
+
 
 /** Static class with some utilities
  */
 class Styles 
-{
+{	
 	// Some Inline Defaults:
 	public inline static var DEF_WINDOW_SIZE_X:Int = 20;
 	public inline static var DEF_WINDOW_SIZE_Y:Int = 8;
@@ -61,15 +68,16 @@ class Styles
 	// Border Connection Symbols, used in Draw.DrawGrid()
 	public static var bCon(default, null):Array<String>;
 	
-	// All skins WM and Popup skins
-	public static var skins(default, null):Array<WMSkin>;
+	// Hold some default Window Styles
+	public static var win(default, null):Map<String,WinStyle>;
 	
 	// Store some LEFT-RIGHT Arrow Styles
 	public static var arrowsLR(default, null):Array<String>;
 	
+	//====================================================;
+	
 	public static function init()
 	{
-
 		// -- Some global ARROW Symbols
 		arrowsLR = [
 			'<>', '◄►', '←→', '«»'
@@ -95,64 +103,76 @@ class Styles
 			'┬┴├┤┼',
 			'╦╩╠╣╬',
 			'╤╧╟╢╪', // inner thin,  outer thick
-			'╥╨╞╡╫'  // inner thick, outer thin
+			'╥╨╞╡╫', // inner thick, outer thin
+			'--||T',
+			'█▄▌▐█'
 		];
 		
 		//-- Default Tui Skins ::
-		skins = [];
+		win = new Map();
+		win.set("default", createWinStyle("green", "blue", "white", "black"));
+		win.set("default_pop", createWinStyle("green", "black", "white", "blue"));
 		
-		// Default Normal
-		skins[0] = {
-			win_fg :"white",
-			win_bg : "blue",
-			win_hl : "yellow",
-			disabled_fg : "gray",
-			accent_bg : "red",
-			accent_fg : "yellow",
-			accent_blur_bg : "cyan",
-			accent_blur_fg : "black"
-		}
-		
-		// Default Popup
-		skins[1] = {
-			win_fg :"red",
-			win_bg : "black",
-			win_hl : "green",
-			disabled_fg : "gray",
-			accent_bg : "magenta",
-			accent_fg : "yellow",
-			accent_blur_bg : "cyan",
-			accent_blur_fg : "black"
-		}
 	}//---------------------------------------------------;
 	
 	/**
 	   Returns special symbols for connecting the Standard Border Styles
-	   WARNING: Only works with line Borders ( styles 1-4 )
-	   @param	from Style for (inside) 1 or 2
-	   @param	to   Style for (border) 1 or 2
+	   You can mix and match only styles <1,2> to the <from,to> parameters
+	   @param	from Border ID for Inner
+	   @param	to   Border ID for Outer
 	   @param	d    Connection Type : up, down, left, right, X ( 0,1,2,3,4 )
 	   
 	**/
-	public static function connectBorder(from:Int, to:Int, d:Int):String
+	public static function connectBorder(from:Int, to:Int, t:Int):String
 	{
-		if (from == to)
-		{
-			return bCon[from].charAt(d);
-		}
-		
 		if (from == 1 && to == 2)
 		{
-			return bCon[3].charAt(d);
+			return bCon[3].charAt(t);
 		}
 		
 		if ( from == 2 && to == 1)
 		{
-			return bCon[4].charAt(d);
+			return bCon[4].charAt(t);
 		}
 		
 		// Default:
-		return bCon[from].charAt(d);
+		return bCon[from].charAt(t);
+	}//---------------------------------------------------;
+	
+	
+
+	/**
+	   Quickly Create a Window By using 4 colors as a guide
+	   @param A Accent FG
+	   @param B Accent BG
+	   @param C Foreground
+	   @param D Background
+	**/
+	public static function createWinStyle(A:String, B:String, C:String, D:String, BorderStyle:Int = 1):WinStyle
+	{
+		// No bg color converts to Window BG color
+		var s:WinStyle = 
+		{
+			bg : D,
+			text : C,
+			
+			titleColor : { fg : A },
+			
+			borderStyle : BorderStyle,
+			borderColor : { fg : C },
+			
+			elem_focus    : { fg : D, bg:A },
+			elem_idle     : { fg : C },
+			elem_disable  : { fg : B },
+			
+			scrollbar_idle  : { fg : C },
+			scrollbar_focus : { fg : A, bg : B},
+	
+			textbox : {fg : A },		
+			vlist_cursor : {fg:D, bg:A}
+		}
+		
+		return s;
 	}//---------------------------------------------------;
 	
 }//--

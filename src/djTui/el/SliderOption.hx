@@ -42,7 +42,9 @@ class SliderOption extends BaseMenuItem
 	override function focusSetup(focus:Bool):Void 
 	{
 		super.focusSetup(focus);
-		// DEVNOTE: Skip drawing since it will be drawn right after this function call
+		// DEVNOTE: 
+		// Need to updateText, because that function will place any side symbols.
+		// Skip drawing since it will be drawn right after this function call
 		lockDraw = true;
 		updateText();
 		lockDraw = false;

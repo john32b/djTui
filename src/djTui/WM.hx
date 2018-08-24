@@ -2,7 +2,7 @@
 package djTui;
 
 import djTui.adaptors.*;
-import djTui.Styles.WMSkin;
+import djTui.Styles.WinStyle;
 import djTui.WindowState.WindowStateManager;
 
 
@@ -38,8 +38,8 @@ class WM
 	public static var width(default, null):Int;
 	public static var height(default, null):Int;
 		
-	// Holds all the windows currently on the desktop/TUI
-	static var win_list:Array<Window>;
+	/** Holds all currently open windows */
+	public static var win_list(default, null):Array<Window>;
 	
 	// Pointer to currently active/focused window
 	static var active:Window;
@@ -49,18 +49,14 @@ class WM
 	
 	/// Global Styles :
 	
-	/** SKIN/THEME for all windows. Unless overriden in window.
-	 */
-	public static var global_skin:WMSkin;
-
-	/** SKIN/THEME for all popups. Unless overriden in window.
-	 */
-	public static var global_skin_pop:WMSkin;
+	/** THEME for all windows. Unless overriden in window. */
+	public static var global_style_win:WinStyle;
 	
-	/** Border style for all windows. Unless override in window
-	    Stores index, Check `Styles.border` for styles.
-	 */
-	public static var global_border:Int = 1;
+	/** THEME for all popups. Unless overriden in window. */
+	public static var global_style_pop:WinStyle;
+	
+	/** You can set the Background Color */
+	public static var backgroundColor(default, set):String = "black";
 	
 	/// Callbacks :
 	
@@ -87,9 +83,10 @@ class WM
 	   @param	t Implementation of a Terminal Adaptor
 	   @param	_w Max Width to utilize
 	   @param	_h Max Height to utilize
-	   @param	_skn Skin Index from the predeclared in "styles.hx" POPUP Skin will be this +1
+	   @param 	styleWin ID of a predefined Window Style
+	   @param 	stylePop ID of a predefined Window Popup Style
 	**/
-	public static function create(i:IInput, t:ITerminal, _w:Int = 0, _h:Int = 0, _skn:Int = 0, _sknP:Int = 1 )
+	public static function create(i:IInput, t:ITerminal, _w:Int = 0, _h:Int = 0, ?styleWin:String, ?stylePop:String)
 	{
 		width = _w;  height = _h;
 		
@@ -106,8 +103,11 @@ class WM
 		
 		Styles.init();
 		
-		global_skin = Reflect.copy(Styles.skins[_skn]);
-		global_skin_pop = Reflect.copy(Styles.skins[_sknP]);
+		if (styleWin == null) styleWin = "default";
+		if (stylePop == null) stylePop = "default_pop";
+		
+		global_style_win = Reflect.copy(Styles.win.get(styleWin));
+		global_style_pop = Reflect.copy(Styles.win.get(stylePop));
 		
 		// --
 		I.onKey = _onKey;
@@ -123,12 +123,13 @@ class WM
 	/**
 	   Sets a background color and resets the screen
 	   Do this right after new()
-	   WARNING : It actually replaces the current skin's BG color 
 	**/
-	public static function setBgColor(col:String)
+	public static function set_backgroundColor(col:String)
 	{
-		global_skin.tui_bg = col;
+		if (col == backgroundColor) return col;
+		backgroundColor = col;
 		clearBG();
+		return col;
 	}//---------------------------------------------------;
 	
 	
@@ -152,7 +153,7 @@ class WM
 	static function clearBG()
 	{
 		T.reset();
-		if (global_skin.tui_bg != null) T.bg(global_skin.tui_bg);
+		T.bg(backgroundColor);
 		D.rect(0, 0, width, height);
 	}//---------------------------------------------------;
 	
@@ -224,8 +225,7 @@ class WM
 		}while (++c < w_arr.length);
 		
 	}//---------------------------------------------------;
-	
-	
+		
 	//====================================================;
 	// INTERNAL 
 	//====================================================;
@@ -251,7 +251,7 @@ class WM
 		win_list.remove(win);
 		
 		// Draw a <black> hole where the window was
-		T.reset(); if (global_skin.tui_bg != null) T.bg(global_skin.tui_bg);
+		T.reset(); T.bg(backgroundColor);
 		D.rect(win.x, win.y, win.width, win.height);
 		
 		// If there are any windows behind it, re-draw them

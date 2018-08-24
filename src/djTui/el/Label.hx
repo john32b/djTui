@@ -48,8 +48,8 @@ class Label extends BaseMenuItem
 	override function onAdded():Void 
 	{
 		super.onAdded();
-		// If not userset, set a default
-		if (colorFG == null) setColor(parent.skin.win_fg);
+		// If not already userset, set a default
+		if (colorFG == null) setColor(parent.style.text);
 	}//---------------------------------------------------;
 		
 	/**

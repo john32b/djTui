@@ -59,8 +59,6 @@ class TextInput extends BaseMenuItem
 		setSideSymbols(":", "");
 		setTextWidth(maxChars + 1, "left"); //+1 is to accomodate for the blinking cursor
 		
-		flag_solid_bg = true;
-		
 		text = "";
 	}//---------------------------------------------------;
 	

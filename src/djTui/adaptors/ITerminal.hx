@@ -22,7 +22,6 @@ interface ITerminal
 	// Report client size:
 	public var MAX_WIDTH:Int;
 	public var MAX_HEIGHT:Int;
-	
 
 	// Save the current cursor position
 	public function saveCursor():Void;

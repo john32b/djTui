@@ -7,7 +7,7 @@ class Tools
 {
 
 	/**
-	 * Copy an object's fields into target object. Overwrites the target object's fields. 
+	 * <IN PLACE> Copy an object's fields into target object. Overwrites the target object's fields. 
 	 * Can work with Static Classes as well (as destination)
 	 * @param	node The Master object to copy fields from
 	 * @param	into The Target object to copy fields to
@@ -15,8 +15,6 @@ class Tools
 	 */
 	public static function copyFields(from:Dynamic, into:Dynamic):Dynamic
 	{
-		into = Reflect.copy(into);
-		
 		if (from == null)
 		{
 			// trace("Warning: No fields to copy from source, returning destination object");
@@ -26,7 +24,7 @@ class Tools
 		if (into == null) 
 		{
 			trace("Warning: No fields on the target, copying source object");
-			return Reflect.copy(from);
+			into = Reflect.copy(from);
 		}else
 		{
 			for (f in Reflect.fields(from)) {

@@ -43,7 +43,7 @@ class VList extends TextBox
 		}
 		
 		if (color_cursor == null) {
-			setColorCursor(colorBG, colorFG);
+			color_cursor = parent.style.vlist_cursor;
 		}
 			
 	}//---------------------------------------------------;

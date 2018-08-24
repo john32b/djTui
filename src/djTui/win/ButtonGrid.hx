@@ -1,7 +1,6 @@
 package djTui.win;
 
 import djTui.BaseElement;
-import djTui.Styles.WMSkin;
 import djTui.el.Button;
 
 /**
@@ -82,6 +81,7 @@ class ButtonGrid extends Window
 	
 	/**
 	   Enables drawing of vertical separators between columns
+	   ~ Call right after new()
 	   @param	style Index in`styles.hx`.border to get the vertical symbol from. Defaults to border style
 	**/
 	public function enableSeparators(style:Int = 0):ButtonGrid
@@ -249,6 +249,7 @@ class ButtonGrid extends Window
 		super.draw();
 		if (sep_enable)
 		{
+			_readyCol();
 			for (i in 1...col_count)
 			{
 				WM.D.lineV(x + col_pos[i], y + padY, height - (padY * 2), sep_symbol);

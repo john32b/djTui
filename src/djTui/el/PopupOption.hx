@@ -43,6 +43,12 @@ class PopupOption extends BaseMenuItem
 		
 	}//---------------------------------------------------;
 	
+	override function onAdded():Void 
+	{
+		super.onAdded();
+	}//---------------------------------------------------;
+	
+	
 	// --
 	function createPopup(_width:Int, slots:Int)
 	{		
@@ -50,15 +56,14 @@ class PopupOption extends BaseMenuItem
 		
 		// --
 		win = new Window(1);
-		win.setStyle(WM.global_skin_pop, 1);
 		win.padding(1, 1).size(_width, slots + 2);
 		win.flag_focus_lock = true;
 		
 		// --
 		list = new VList("list", win.inWidth, win.height - 2);
-		win.addStack(list);
 		list.setData(options);
 		
+		win.addStack(list);
 		win.callbacks = function(status, elem)
 		{
 			switch(status) {
@@ -80,6 +85,7 @@ class PopupOption extends BaseMenuItem
 			list.cursor_to(index);
 			parent.flag_once_focusLast = true;
 			win.pos(x + 1, y - Math.floor(win.height / 3));
+			win.style = parent.style; // Make sure the popup takes the parent window style
 			win.open(true);
 		}
 	}//---------------------------------------------------;

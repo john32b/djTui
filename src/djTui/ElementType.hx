@@ -1,7 +1,10 @@
 package djTui;
 
 
-
+/**
+   Describe the basic menu elements
+**/
+   
 enum ElementType 
 {
 	button;

@@ -24,7 +24,7 @@ class ScrollBar extends BaseElement
 	override function onAdded():Void 
 	{
 		super.onAdded();
-		if (colorFG == null) setColor(parent.skin.win_fg);
+		if (colorFG == null) setColor(parent.style.scrollbar_idle);
 	}//---------------------------------------------------;
 	
 	// -

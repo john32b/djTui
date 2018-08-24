@@ -18,6 +18,7 @@ import djTui.WM;
 **/
 class BaseElement
 {
+	// Global UID generator index
 	static var UID_GEN:Int = 1;
 	
 	// General use UniqueIDs
@@ -94,12 +95,20 @@ class BaseElement
 	
 	/** Set the general use colors for printing.
 	    if BG null then it will be the window color 
-		NOTE : Not guaranteed to work on ALL Menu Items
+		- Not guaranteed to work on ALL Menu Items
+		- You can either set a ColorPair or ColorString, not both
 	*/
-	public function setColor(fg:String, ?bg:String):BaseElement
+	public function setColor(?pair:Styles.PrintColor, ?fg:String, ?bg:String):BaseElement
 	{
-		colorFG = fg;
-		colorBG = bg;
+		if (pair != null) 
+		{
+			colorFG = pair.fg;
+			colorBG = pair.bg;
+		}else
+		{
+			colorFG = fg;
+			colorBG = bg;
+		}
 		if (colorBG == null && parent != null) colorBG = parent.colorBG;
 		return this;
 	}//---------------------------------------------------;
@@ -152,14 +161,14 @@ class BaseElement
 	   Called every time the focus changes
 	   Handles focus colors etc
 	**/
+	//@:allow(djTui.Window)
 	function focusSetup(focus:Bool):Void {}
 	
 	/**
 	   @virtual
 	   Called whenever the element needs to be drawn
-	   ~ be sure to check for 'lockDraw` on the implementation
 	**/
-	public function draw():Void {}
+	dynamic public function draw():Void {}
 	
 	
 	/** Will clear the entire element with the window background color 
@@ -168,7 +177,7 @@ class BaseElement
 	{
 		if (!lockDraw) 
 		{
-			WM.T.reset().bg(parent.skin.win_bg);
+			WM.T.reset().bg(colorBG);
 			WM.D.rect(x, y, width, height);
 		}
 	}//---------------------------------------------------;
@@ -182,12 +191,11 @@ class BaseElement
 				(y < el.y + el.height); 
 	}//---------------------------------------------------;
 	
-	// Helper, quickly reset and set colors
+	// Helper, quickly set drawing colors 
 	inline function _readyCol()
 	{
 		WM.T.reset().fg(colorFG).bg(colorBG);
 	}//---------------------------------------------------;
-	
 	
 	//====================================================;
 	// DATA, SETTERS, GETTERS
@@ -220,10 +228,17 @@ class BaseElement
 	// STATICS 
 	//====================================================;
 	
-	// Automatically focuses the next element in <ar> next from <active>
-	// Loops through the end until it reaches <active> again
-	// <active> can be null and it will search from the top
-	// @returns: Did it actually focus anything new
+	/**
+	   Focuses the next element from <active> in <array>. If <loop> is true, will loop through
+	   the end until it reaches <active> again.
+	   If <active> is `null` it will search from the top
+	   NOTE: This is a generic static because it's being used by the WM to switch windows
+	         and by Windows to switch elements.
+	   @param	ar Array of BaseElements
+	   @param	act Active Element, If Null will search from the beginning
+	   @param	loop If true will loop at the end once
+	   @return Did it actually focus anything new
+	**/
 	static public function focusNext(ar:Array<BaseElement>, act:BaseElement, loop:Bool = true):Bool
 	{
 		if (ar.length == 0) return false;

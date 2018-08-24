@@ -6,6 +6,7 @@ import djTui.Styles.PrintColor;
 /**
  * Generic Menu Item for SINGLE LINE elements
  * -----
+ * - General functions for *single line* menu elements
  * - This is meant to be extended into more specific items
  * - Offers Focused/Idle Colors handling
  * - Use setColorFocus() and setColorIdle() to set colors
@@ -41,10 +42,6 @@ class BaseMenuItem extends BaseElement
 	var color_idle:PrintColor;
 	var color_focus:PrintColor;
 	
-	/** If true will colorize the BG when idle.
-	 *  SET IT before adding to a window */
-	public var flag_solid_bg:Bool = false;
-	
 	// --
 	public function new(?sid:String) 
 	{
@@ -61,16 +58,12 @@ class BaseMenuItem extends BaseElement
 	{
 		if (color_idle == null)
 		{
-			color_idle = {fg:parent.skin.win_fg};
-			if (flag_solid_bg) 
-				//color_idle.bg = parent.skin.accent_blur_bg;
-				//color_idle.bg = "darkgray";
-				color_idle = {fg:"white", bg:"darkgray"};
+			color_idle = parent.style.elem_idle;
 		}
 		
 		if (color_focus == null)
 		{
-			color_focus = {fg:parent.skin.win_bg, bg:parent.skin.accent_fg};
+			color_focus = parent.style.elem_focus;
 		}
 	}//---------------------------------------------------;
 	
@@ -81,11 +74,11 @@ class BaseMenuItem extends BaseElement
 	{
 		if (focus) 
 		{
-			setColor(color_focus.fg, color_focus.bg);
+			setColor(color_focus);
 		}
 		else 
 		{
-			setColor(color_idle.fg, color_idle.bg);
+			setColor(color_idle);
 		}
 	}//---------------------------------------------------;
 	

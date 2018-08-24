@@ -2,7 +2,6 @@ package djTui.win;
 
 import djTui.BaseElement;
 import djTui.Styles.PrintColor;
-import djTui.Styles.WMSkin;
 import djTui.el.BaseMenuItem;
 import djTui.el.Button;
 import djTui.el.Label;
@@ -44,7 +43,6 @@ class WindowForm extends Window
 	   @param	_w Width
 	   @param	_h Height
 	   @param	_borderStyle
-	   @param	_skin
 	**/
 	public function new(?_sid:String, _w:Int = 15, _h:Int = 8)
 	{
@@ -56,7 +54,7 @@ class WindowForm extends Window
 		align_padx = 1;
 		
 		// Default color for when highlighting an element
-		setLabelFocusColor(skin.win_hl);
+		setLabelFocusColor(style.elem_focus.fg);
 	}//---------------------------------------------------;
 	
 	
@@ -97,6 +95,16 @@ class WindowForm extends Window
 	@:access(djTui.el.BaseMenuItem.color_focus)
 	public function add(labelText:String, el:BaseElement)
 	{
+		
+		#if debug // Check for overflow
+			if (lastAdded != null && lastAdded.y == y + height - padY - 1)
+			{
+				trace("ERROR: WindowForm can't fit anymore elements");
+				throw "WindowForm.add() overflow";
+			}
+		
+		#end
+		
 		var l = new Label(labelText);
 			l.color_focus = colorLabelFocus;
 		labelMap.set(el, l);
