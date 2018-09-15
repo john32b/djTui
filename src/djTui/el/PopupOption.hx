@@ -64,7 +64,7 @@ class PopupOption extends BaseMenuItem
 		list.setData(options);
 		
 		win.addStack(list);
-		win.callbacks = function(status, elem)
+		win.listen(function(status, elem)
 		{
 			switch(status) {
 				case "escape" : 
@@ -72,9 +72,9 @@ class PopupOption extends BaseMenuItem
 				case "fire" :
 					setData(elem.getData());
 					win.close();
-					callbacks("change", this);
+					callback("change");
 			}
-		}// --
+		});//--
 	}//---------------------------------------------------;
 	
 	override function onKey(k:String):Void 

@@ -10,6 +10,11 @@ class Border extends BaseElement
 {
 	public var style:Int;
 
+	/**
+	   Create a border element
+	   @param	sid	
+	   @param	st	Check `styles.hx` currently 0-6
+	**/
 	public function new(?sid:String,st:Int = 0) 
 	{
 		super(sid);
@@ -26,6 +31,9 @@ class Border extends BaseElement
 		WM.D.lineH(x + 1, y, width - 2, Styles.border[style].charAt(1));
 	}//---------------------------------------------------;
 	
+	/**
+	   Draw the whole border
+	**/
 	override public function draw():Void 
 	{
 		_readyCol();

@@ -14,7 +14,7 @@ import djTui.Styles.PrintColor;
  */
 class TextBox extends BaseElement
 {
-	// Holds the Final Rendered String
+	// Holds the Final Rendered Strings
 	var lines:Array<String>;
 	
 	// Current scroll multiplier (0 ... 1)
@@ -33,11 +33,14 @@ class TextBox extends BaseElement
 	// Will be added to the parent window automatically
 	var scrollbar:ScrollBar;
 	
-	/** Used in cases where a scrollbar is needed but element is not yet added to a window */
+	// Used in cases where a scrollbar is needed but element is not yet added to a window
 	var flag_add_scrollbar:Bool = false;
 	
 	/** Hide the scrollbar on unfocus. FALSE to always show. TRUE to show when focused. */
 	public var flag_scrollbar_autohide:Bool = true;
+	
+	/** Are there any lines */
+	public var flag_empty(default, null):Bool;
 	
 	/**
 	   Create a new TextBox
@@ -57,6 +60,8 @@ class TextBox extends BaseElement
 	// --
 	override function onKey(k:String):Void 
 	{
+		if (flag_empty) return;
+		
 		switch(k)
 		{
 			case "up": scrollUp();
@@ -139,20 +144,27 @@ class TextBox extends BaseElement
 		WM.T.move(x, y + i).print(lines[i + scroll_offset]);
 	}//---------------------------------------------------;
 	
-	// --
-	// Add a single line of content at the end of the list
+	/**
+	   Add a single line of content at the end of the list
+	**/
 	public function addLine(line:String)
 	{
 		#if debug
 			if (height == 0) throw "Set height before adding Lines";
 		#end
 		
+		flag_empty = false; // Just in case
+		
 		lines.push(StrTool.padString(line, width));
 		
 		// Max allowed scroll
 		scroll_max = lines.length - slots_count;
 		if (scroll_max < 0) scroll_max = 0;
-		if (scroll_max > 0) addScrollbar();
+		if (scroll_max > 0) 
+		{
+			addScrollbar();
+			scroll_offset = scroll_offset;
+		}
 		
 		if (visible) draw();
 	}//---------------------------------------------------;
@@ -216,13 +228,16 @@ class TextBox extends BaseElement
 		if (scroll_max < 0) scroll_max = 0;
 		if (scroll_max > 0) addScrollbar();
 		
+		flag_empty = (lines.length == 0);
 	}//---------------------------------------------------;
 	
-	// --
-	// Returns scroll percent?
+	/**
+	   Returns Scroll percent
+	   Devnote: No meaningful data to get from a textbox
+	**/
 	override public function getData():Any 
 	{
-		return scroll_offset;
+		return scroll_ratio;
 	}//---------------------------------------------------;
 	
 	/**
@@ -233,8 +248,10 @@ class TextBox extends BaseElement
 	{ 
 		if (val < 0) val = 0;
 		if (val > scroll_max) val = scroll_max;
-		if (scroll_offset == val) return val;
-		// >> New value
+		
+		// This is now off, in order to force recalculate, so don't add in the future
+			//if (scroll_offset == val) return val;
+			
 		scroll_offset = val;
 		scroll_ratio = scroll_offset / scroll_max;
 
@@ -249,6 +266,7 @@ class TextBox extends BaseElement
 		lines = [];
 		scroll_offset = 0;
 		scroll_ratio = 0;
+		flag_empty = true;
 		if (visible) draw();
 	}//---------------------------------------------------;
 	

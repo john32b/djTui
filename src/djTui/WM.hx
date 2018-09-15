@@ -60,7 +60,7 @@ class WM
 	
 	/// Callbacks :
 	
-	/** IF set will pipe ANY window element callback to here */
+	/** IF set will copy ANY window element callback to here */
 	public static var onElementCallback:String->BaseElement->Void = null;
 
 	/** Set this to push keystrokes */
@@ -73,6 +73,14 @@ class WM
 	
 	// If true, when coming back to windows with 'TAB' will focus the previously focused element ( if any )
 	public static var flag_win_remember_focused_elem:Bool = true;
+	
+	
+	#if debug
+	
+	// Applies to windows. Will trace all callback messages.
+	public static var flag_debug_trace_element_callbacks:Bool = false;
+	
+	#end
 	
 	//====================================================;
 	

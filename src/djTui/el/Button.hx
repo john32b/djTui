@@ -45,6 +45,7 @@ class Button extends BaseMenuItem
 		
 	/**
 	   Stores extra functionality parameters
+	   Access and setup with with .extra() function
 	**/
 	var xtr : {
 		?call:Int,		// 0 for State, 1 for Window
@@ -251,7 +252,7 @@ class Button extends BaseMenuItem
 			
 		}//- (xtr null check)
 		
-		callbacks("fire", this);
+		callback("fire");
 		if (extra_onPush != null) extra_onPush();
 	}//---------------------------------------------------;
 	
@@ -274,8 +275,8 @@ class Button extends BaseMenuItem
 		// when inside a <ButtonGrid>
 		if (flag_leftright_escape)
 		{
-			if (k == "left") callbacks("focus_prev", this);
-				else if (k == "right") callbacks("focus_next", this);
+			if (k == "left") callback("focus_prev");
+				else if (k == "right") callback("focus_next");
 		}
 
 	}//---------------------------------------------------;

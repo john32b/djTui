@@ -45,9 +45,9 @@ class BaseElement
 	/** Is this element currently focused */
 	public var isFocused(default, null):Bool = false;
 	
-	/** Pushes generic status messages 
-	    (status:element)->Void */
-	public var callbacks:String->BaseElement->Void; 
+	/** Pushes generic status messages. Is an <Array> so that it can have many listeners
+	    - ACCESS with listen(..) */
+	var callbacks:Array<String->BaseElement->Void>;
 	
 	/** All elements have a parent container ( a window ) */
 	public var parent(default, null):Window = null;
@@ -67,9 +67,11 @@ class BaseElement
 	{
 		UID = UID_GEN++;
 		SID = sid;
+		callbacks = [];
 		visible = false;	// everything starts as `not visible` until added to a window/WM
 		if (SID == null || SID == "") SID = 'id_$UID';
 	}//---------------------------------------------------;
+	
 	
 	// Move Relative
 	public function move(dx:Int, dy:Int):BaseElement
@@ -126,7 +128,7 @@ class BaseElement
 	{
 		if (isFocused || !flag_focusable) return;
 		isFocused = true;
-		callbacks('focus', this);
+		callback('focus');
 		focusSetup(isFocused);
 		draw(); 
 	}//---------------------------------------------------;
@@ -136,10 +138,29 @@ class BaseElement
 	{
 		if (!isFocused) return;
 		isFocused = false;
-		callbacks('unfocus', this);
+		callback('unfocus');
 		focusSetup(isFocused);
 		draw();
 	}//---------------------------------------------------;
+	
+	/**
+	   Pushes a callback listener. It will fire on various events
+	   @param	fn function( message , Element that sent the message )
+	**/
+	public function listen(fn:String->BaseElement->Void)
+	{
+		callbacks.push(fn);
+	}//---------------------------------------------------;
+	
+	/**
+	   Fire a message to all listeners
+	**/
+	function callback(msg:String, caller:BaseElement = null)
+	{
+		if (caller == null) caller = this;
+		for (i in callbacks) i(msg, caller);
+	}//---------------------------------------------------;
+	
 	
 	/**
 	   @virtual
@@ -177,7 +198,7 @@ class BaseElement
 	{
 		if (!lockDraw) 
 		{
-			WM.T.reset().bg(colorBG);
+			WM.T.reset().bg(parent.colorBG);
 			WM.D.rect(x, y, width, height);
 		}
 	}//---------------------------------------------------;

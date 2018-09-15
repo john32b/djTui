@@ -53,7 +53,7 @@ class Toggle extends BaseMenuItem
 		if (k == "enter" || k == "space")
 		{
 			setData(!data);
-			callbacks("change", this);
+			callback("change");
 		}
 	}//---------------------------------------------------;
 	

@@ -91,7 +91,7 @@ class SliderNum extends BaseMenuItem
 	function sd(d:Float)
 	{
 		setData(d);
-		callbacks("change", this);
+		callback("change");
 	}//---------------------------------------------------;
 	
 	// --

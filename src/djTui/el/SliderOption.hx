@@ -68,7 +68,7 @@ class SliderOption extends BaseMenuItem
 	function sd(d:Int)
 	{
 		setData(d);
-		callbacks("change", this);
+		callback("change");
 	}//---------------------------------------------------;
 	
 	

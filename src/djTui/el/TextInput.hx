@@ -118,7 +118,7 @@ class TextInput extends BaseMenuItem
 				if (text.length > 0) text = text.substr(0, -1);
 				draw();
 			case "enter":
-				callbacks("fire", this);
+				callback("fire");
 			case "space":
 				text += " ";
 				draw();

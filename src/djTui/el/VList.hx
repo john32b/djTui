@@ -58,12 +58,14 @@ class VList extends TextBox
 	override public function draw():Void 
 	{
 		super.draw();
-		if (isFocused) cursor_draw();
+		if (isFocused && !flag_empty) cursor_draw();
 	}//---------------------------------------------------;
 	
 	// --
 	override function onKey(k:String):Void 
 	{
+		if (flag_empty) return;
+		
 		switch(k)
 		{
 			case "up": cursor_up();
@@ -72,8 +74,8 @@ class VList extends TextBox
 			case "pageup": cursor_pageUp();
 			case "home": cursor_top();
 			case "end": cursor_bottom();
-			case "space": callbacks("fire", this);
-			case "enter": callbacks("fire", this);
+			case "space": callback("fire");
+			case "enter": callback("fire");
 			default:
 		}
 	}//---------------------------------------------------;
@@ -86,11 +88,30 @@ class VList extends TextBox
 		index_slot = 0;
 	}//---------------------------------------------------;
 	
-	// --
-	// Return currently selected index
+	/**
+	   Return currently selected index
+	**/
 	override public function getData():Any 
 	{
 		return index;
+	}//---------------------------------------------------;
+	
+	/**
+	   Add a single element at the bottom of the list
+	   @return Returns the index of the new element
+	**/
+	public function add(name:String):Int
+	{
+		addLine(name);
+		return lines.length - 1;
+	}//---------------------------------------------------;
+	
+	/**
+	   Quickly get the currently selected text
+	**/
+	public function getSelectedText():String
+	{
+		if (lines[index] != null) return lines[index]; return "";
 	}//---------------------------------------------------;
 	
 
@@ -126,12 +147,7 @@ class VList extends TextBox
 	// Quick Calls 
 	//====================================================;
 	
-	// Callback on change for current index
-	inline function cbChange()
-	{
-		callbacks("change", this);
-	}//---------------------------------------------------;
-	
+
 	// Draw the highlighted element (cursor)
 	function cursor_draw()
 	{
@@ -168,7 +184,7 @@ class VList extends TextBox
 			cursor_draw();
 		}
 		
-		cbChange();
+		callback("change");
 	}//---------------------------------------------------;
 	
 	// Move the cursor down by one
@@ -189,7 +205,7 @@ class VList extends TextBox
 			cursor_draw();
 		}
 
-		cbChange();
+		callback("change");
 	}//---------------------------------------------------;
 	
 	function cursor_top()
@@ -211,7 +227,7 @@ class VList extends TextBox
 			scrollTop(); // > don't forget, it will automatically call draw()
 		}
 		
-		cbChange();
+		callback("change");
 	}//---------------------------------------------------;
 	
 	function cursor_bottom()
@@ -242,7 +258,7 @@ class VList extends TextBox
 			scrollBottom();
 		}
 		
-		cbChange();
+		callback("change");
 	}//---------------------------------------------------;
 	
 	function cursor_pageUp()
@@ -273,7 +289,7 @@ class VList extends TextBox
 			index = scroll_offset + index_slot;
 		}
 		
-		cbChange();
+		callback("change");
 	}//---------------------------------------------------;
 	
 	function cursor_pageDown()
@@ -303,7 +319,7 @@ class VList extends TextBox
 			index = scroll_offset + index_slot;
 		}
 		
-		cbChange();
+		callback("change");
 	}//---------------------------------------------------;
 	
 }// --

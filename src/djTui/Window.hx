@@ -14,7 +14,7 @@ import haxe.Timer;
  * - Holds and manages baseElements and derivatives 
  * - Default 'TAB' is to cycle between elements and exit to next window, unless "flag_focus_lock" is set
  * 
- * Callback Statuses via the 'callbacks' object :
+ * Callback Statuses. Place a callback listener with .listen(..);
  * 
  *		escape : Esc key got pressed
  * 		focus  : Element/Window has been focused ; (check element.type or SID)
@@ -73,6 +73,7 @@ class Window extends BaseElement
 	// -- Pushes status updates to Window Manager :
 	//    Will push custom window statuses and
 	//    all children element statuses as
+	//  DEVNOTE: I don't use the `callbacks` pool on purpose. Don't change it.
 	@:allow(djTui.WM)
 	var callback_wm:String->Window->Void;
 
@@ -83,11 +84,11 @@ class Window extends BaseElement
 	// DO NOT allow focus to leave from this window
 	public var flag_focus_lock:Bool = false;
 
-	// If true, when this window gets focus, will try to focus last element focused
-	// ! Will only apply once ! So it's needed to be set every time 
+	/** If true, when this window gets focus, will try to focus last element focused
+	 *  ! Will only apply once ! So it's needed to be set every time  */
 	public var flag_once_focusLast:Bool = false;
 	
-
+	
 	/**
 	   Create a Window
 	   @param	sid Optional String ID. If set then this window will be stored to WM.DB for quick retrieval 
@@ -108,9 +109,6 @@ class Window extends BaseElement
 		super(sid);
 		
 		type = ElementType.window; 
-		
-		// Make it not crash, because it's going to get called
-		callbacks = function(_, _){ }; 
 		
 		// Create a border element, even if the window will not have border style.
 		border_el = new Border();
@@ -220,7 +218,7 @@ class Window extends BaseElement
 	public function addChild(el:BaseElement):BaseElement
 	{
 		display_list.push(el);
-		el.callbacks = onElementCallback;
+		el.listen(onElementCallback);
 		el.parent = this;
 		
 		#if debug 
@@ -326,7 +324,7 @@ class Window extends BaseElement
 		unfocus(); 
 		
 		callback_wm("close", this);
-		callbacks("close", this);	// push to user
+		callback("close");	// push to user
 	}//---------------------------------------------------;
 	
 	/**
@@ -336,7 +334,7 @@ class Window extends BaseElement
 	public function open(autoFocus:Bool = false)
 	{
 		WM.add(this, autoFocus);
-		callbacks("open", this);	// push to user
+		callback("open");
 	}//---------------------------------------------------;
 	
 	
@@ -447,8 +445,6 @@ class Window extends BaseElement
 		lockDraw = true;
 		super.unfocus();
 		lockDraw = false;
-		callbacks("unfocus", this);
-		
 	}//---------------------------------------------------;
 	
 	
@@ -472,23 +468,24 @@ class Window extends BaseElement
 	
 	// Focus next element, will loop through the edges
 	@:allow(djTui.WM)
-	function focusNext(loop:Bool = true)
+	function focusNext(loop:Bool = true):Bool
 	{
-		BaseElement.focusNext(display_list, active, loop);
+		return BaseElement.focusNext(display_list, active, loop);
 	}//---------------------------------------------------;
 
 	// Focus the previous element, will stop at index 0
-	function focusPrev()
+	function focusPrev():Bool
 	{
 		var ind = display_list.indexOf(active);
-		if (ind < 1) return;
+		if (ind < 1) return false;
 		while (ind--> 0)
 		{
 			if (display_list[ind].flag_focusable)
 			{
-				display_list[ind].focus(); return;
+				display_list[ind].focus(); return true;
 			}
 		}
+		return false;
 	}//---------------------------------------------------;
 	
 	// Checks if <active> is the last focusable on the window list
@@ -534,17 +531,18 @@ class Window extends BaseElement
 				}
 					
 			case 'esc':
-				callbacks('escape', this);
+				callback('escape');
 				
 			default:
 				
-				// TODO: This can cause bugs on windows with VLists + other elements
-				if (key == "up") focusPrev(); else
-				if (key == "down") focusNext(false);
+				// If it actually focused another element on the window return,
+				// else pass the key to the element itself.
+				if (key == "up" && focusPrev()) return;	
+				if (key == "down" && focusNext(false)) return;
 				
 				if (active != null) active.onKey(key);
-				
-		}
+		}// -
+		
 	}//---------------------------------------------------;
 	
 	/**
@@ -554,8 +552,9 @@ class Window extends BaseElement
 	**/
 	function onElementCallback(st:String, el:BaseElement)
 	{
-		#if (debug && true)
-		trace('> Element Callback : From:${el.SID}, Status:$st, Data:"${el.getData()}", Owner:${el.parent.SID}');
+		#if (debug)
+		if(WM.flag_debug_trace_element_callbacks)
+			trace('> Element Callback : From:${el.SID}, Status:$st, Data:"${el.getData()}", Owner:${el.parent.SID}');
 		#end
 		
 		switch(st)
@@ -575,7 +574,7 @@ class Window extends BaseElement
 		}
 		
 		// Pipe callbacks to user
-		callbacks(st, el);
+		callback(st, el);
 		
 		// Pipe callbacks to the global WM if set
 		if (WM.onElementCallback != null) WM.onElementCallback(st, el);
@@ -592,9 +591,9 @@ class Window extends BaseElement
 	{
 		if (style == val) return val;
 		style = val;
+		setColor(style.text, style.bg);	 // Sets window fg/bg color, some elements will read this.
 		border_el.setColor(style.borderColor);
 		borderStyle = style.borderStyle; // setter
-		setColor(style.text, style.bg);
 		return style;
 	}//---------------------------------------------------;
 	
