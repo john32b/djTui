@@ -20,7 +20,10 @@ class VList extends TextBox
 	
 	// Scroll the view when the cursor is this much from the edge
 	public var scrollPad:Int = 1;
-	
+
+	// The maximum index the cursor can get ( the number of elements )
+	var index_max(get, null):Int;
+
 	// The color the highlighted element gets.
 	var color_cursor:PrintColor;
 	
@@ -68,8 +71,10 @@ class VList extends TextBox
 		
 		switch(k)
 		{
-			case "up": cursor_up();
-			case "down": cursor_down();
+			case "up": if (index == 0) parent.focusPrev(); else cursor_up();
+			case "down": if (index == index_max) parent.focusNext(false); else cursor_down();
+			case "left": parent.focusPrev();
+			case "right":parent.focusNext(false);
 			case "pagedown": cursor_pageDown();
 			case "pageup": cursor_pageUp();
 			case "home": cursor_top();
@@ -103,7 +108,7 @@ class VList extends TextBox
 	public function add(name:String):Int
 	{
 		addLine(name);
-		return lines.length - 1;
+		return index_max;
 	}//---------------------------------------------------;
 	
 	/**
@@ -190,7 +195,7 @@ class VList extends TextBox
 	// Move the cursor down by one
 	function cursor_down()
 	{
-		if (index == lines.length - 1) return;
+		if (index == index_max) return;
 
 		index++;
 		
@@ -232,9 +237,9 @@ class VList extends TextBox
 	
 	function cursor_bottom()
 	{
-		
-		if (index == lines.length - 1) return;
-		index = lines.length - 1;
+	
+		if (index == index_max) return;
+		index = index_max;
 			
 		// Don't redraw everything if it doesn't have to
 		if (scroll_offset == scroll_max)
@@ -244,7 +249,7 @@ class VList extends TextBox
 			// For the occation where not all slots are populated
 			if (lines.length < slots_count)
 			{
-				index_slot = lines.length - 1;
+				index_slot = index_max;
 			}else
 			{
 				index_slot = slots_count - 1;
@@ -294,7 +299,7 @@ class VList extends TextBox
 	
 	function cursor_pageDown()
 	{
-		if (index == lines.length - 1) return;
+		if (index == index_max) return;
 		
 		// Just Put the cursor on the bottom
 		if (index_slot < slots_count - scrollPad - 1 && scroll_offset < scroll_max)
@@ -320,6 +325,11 @@ class VList extends TextBox
 		}
 		
 		callback("change");
+	}//---------------------------------------------------;
+	
+	function get_index_max()
+	{
+		return lines.length - 1;
 	}//---------------------------------------------------;
 	
 }// --

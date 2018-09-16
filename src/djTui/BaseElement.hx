@@ -61,6 +61,10 @@ class BaseElement
 	// If false then the element cannot be focused and will be skipped
 	public var flag_focusable:Bool = true;
 	
+	// Some Elements like the VLIST and TEXTBOX, handle leaving focus themselves
+	@:allow(djTui.Window)
+	var flag_lock_focus:Bool = false;
+	
 	//====================================================;
 	
 	public function new(?sid:String)

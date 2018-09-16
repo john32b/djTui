@@ -308,6 +308,11 @@ class Window extends BaseElement
 			el[i].pos(startX, yloc);
 			startX = el[i].x + el[i].width + xPad;
 			addChild(el[i]);
+			// Make buttons be able to exit focus with LEFT/RIGHT automatically
+			if (el[i].type  == ElementType.button)
+			{
+				cast(el[i], Button).flag_leftright_escape = true;
+			}
 		}
 		lastAdded = el[el.length - 1];
 	}//---------------------------------------------------;
@@ -480,12 +485,15 @@ class Window extends BaseElement
 	
 	// Focus next element, will loop through the edges
 	@:allow(djTui.WM)
+	@:allow(djTui.BaseElement)
 	function focusNext(loop:Bool = true):Bool
 	{
 		return BaseElement.focusNext(display_list, active, loop);
 	}//---------------------------------------------------;
 
 	// Focus the previous element, will stop at index 0
+	@:allow(djTui.WM)
+	@:allow(djTui.BaseElement)
 	function focusPrev():Bool
 	{
 		var ind = display_list.indexOf(active);
@@ -501,7 +509,7 @@ class Window extends BaseElement
 	}//---------------------------------------------------;
 	
 	// Checks if <active> is the last focusable on the window list
-	function isLastFocusableElement():Bool
+	function activeIsLastFocusable():Bool
 	{
 		var ai = display_list.indexOf(active);
 		var ni = display_list.length;
@@ -530,7 +538,9 @@ class Window extends BaseElement
 		{
 			case 'tab':	
 				
-				if (isLastFocusableElement())
+				// On TAB, it on the last element, try to focus the next WINDOW
+				// If can't focus next window, focus the first element on this window
+				if (activeIsLastFocusable())
 				{
 					if (flag_focus_lock) 
 						focusNext(true); 
@@ -547,12 +557,18 @@ class Window extends BaseElement
 				
 			default:
 				
-				// If it actually focused another element on the window return,
-				// else pass the key to the element itself.
-				if (key == "up" && focusPrev()) return;	
-				if (key == "down" && focusNext(false)) return;
+				if (active == null) return;
+		
+				if (!active.flag_lock_focus)
+				{
+					// [UP]/[DOWN] by default will change focus of elements
+					// If it actually focused another element on the window return,
+					// else pass the key to the element itself.
+					if (key == "up" && focusPrev()) return;	
+					if (key == "down" && focusNext(false)) return;	
+				}
 				
-				if (active != null) active.onKey(key);
+				active.onKey(key);
 		}// -
 		
 	}//---------------------------------------------------;
@@ -569,27 +585,19 @@ class Window extends BaseElement
 			trace('> Element Callback : From:${el.SID}, Status:$st, Data:"${el.getData()}", Owner:${el.parent.SID}');
 		#end
 		
-		switch(st)
+		// Pipe callbacks to the global WM if set
+		if (WM.onElementCallback != null) WM.onElementCallback(st, el);
+		
+		// Handle element special calls :
+		if (st == "focus")
 		{
-			case "focus":
-				if (active != null) active.unfocus();
-				active_last = active;
-				active = el;
-				
-			case "focus_prev":
-				focusPrev();
-				
-			case "focus_next":
-				focusNext(false);
-				
-			default:	
+			if (active != null) active.unfocus();
+			active_last = active;
+			active = el;
 		}
 		
 		// Pipe callbacks to user
 		callback(st, el);
-		
-		// Pipe callbacks to the global WM if set
-		if (WM.onElementCallback != null) WM.onElementCallback(st, el);
 	}//---------------------------------------------------;
 	
 	//====================================================;

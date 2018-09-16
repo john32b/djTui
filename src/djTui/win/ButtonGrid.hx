@@ -128,6 +128,7 @@ class ButtonGrid extends Window
 	public function add(col:Int, text:String, ?_sid:String)
 	{
 		var b = new Button(_sid, text, btn_style, btn_width);
+			b.flag_lock_focus = true;
 		
 		if (btn_style > 0)
 		{
@@ -183,21 +184,17 @@ class ButtonGrid extends Window
 	
 	override function onKey(key:String) 
 	{
-		// Capture the main directions first:
+		// Note: The generic handler will not process UP/DOWN, since the element is locked
+		super.onKey(key);
+		
 		switch(key)
 		{
-			case "up":
-				focusRelY(-1); return;
-			case "down":
-				focusRelY(1); return;
-			case "left":
-				focusRelX(-1); return;
-			case "right":
-				focusRelX(1); return;
+			case "up": 	 focusRelY(-1);
+			case "down": focusRelY(1);
+			case "left": focusRelX(-1);
+			case "right":focusRelX(1);
 			default:
 		}
-		
-		super.onKey(key);
 	}//---------------------------------------------------;
 	
 	// Focus relative to cursor at Y axis,

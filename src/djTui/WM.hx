@@ -68,16 +68,16 @@ class WM
 	
 	/// FLAGS :
 	
-	// If true, pressing tab will switch between windows
+	/** If true, pressing tab will switch between windows */
 	public static var flag_tab_switch_windows:Bool = false;
 	
-	// If true, when coming back to windows with 'TAB' will focus the previously focused element ( if any )
+	/** If true, when coming back to windows with 'TAB' will focus the previously focused element ( if any )
+	    Works if `flag_tab_switch_windows` is enabled */
 	public static var flag_win_remember_focused_elem:Bool = true;
-	
 	
 	#if debug
 	
-	// Applies to windows. Will trace all callback messages.
+	/** Applies to windows. Will trace all callback messages */
 	public static var flag_debug_trace_element_callbacks:Bool = false;
 	
 	#end

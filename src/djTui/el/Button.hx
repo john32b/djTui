@@ -275,8 +275,8 @@ class Button extends BaseMenuItem
 		// when inside a <ButtonGrid>
 		if (flag_leftright_escape)
 		{
-			if (k == "left") callback("focus_prev");
-				else if (k == "right") callback("focus_next");
+			if (k == "left") parent.focusPrev();
+				else if (k == "right") parent.focusNext(false);
 		}
 
 	}//---------------------------------------------------;

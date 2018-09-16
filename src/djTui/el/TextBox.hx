@@ -55,6 +55,8 @@ class TextBox extends BaseElement
 		size(_width - 1, _height); // NOTE: -1 because of the scrollbar
 		slots_count = height;
 		reset(); // Init vars
+		
+		flag_lock_focus = true; // Custom handle window next and previous element focus
 	}//---------------------------------------------------;
 	
 	// --
@@ -64,8 +66,10 @@ class TextBox extends BaseElement
 		
 		switch(k)
 		{
-			case "up": scrollUp();
-			case "down": scrollDown();
+			case "up": if (scroll_offset == 0) parent.focusPrev(); else scrollUp();
+			case "down": if (scroll_offset == scroll_max) parent.focusNext(false); else scrollDown();
+			case "right": parent.focusNext(false);
+			case "left": parent.focusPrev();
 			case "pagedown": scrollPageDown();
 			case "pageup": scrollPageUp();
 			case "home": scrollTop();
@@ -74,6 +78,7 @@ class TextBox extends BaseElement
 		}
 	}//---------------------------------------------------;
 
+	// --
 	override function onAdded():Void 
 	{
 		if (colorFG == null) setColor(parent.style.textbox);
@@ -275,6 +280,7 @@ class TextBox extends BaseElement
 		}
 		if (visible) draw();
 	}//---------------------------------------------------;
+	
 	
 	// Move lines down by one, reveal the top
 	public function scrollUp()

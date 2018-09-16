@@ -43,11 +43,13 @@ class Main extends BaseApp
 		);
 		
 		WM.flag_debug_trace_element_callbacks = true;
+		WM.flag_tab_switch_windows = true;
+		
 		
 		Tools.copyFields({
 			titleColor_focus:{fg:"blue", bg:"green"},
 			borderStyle:2,
-			//bg:"blue",c
+			//bg:"blue",
 			text:"gray",
 			textbox_focus: { fg:"white" },
 			textbox: { fg:"gray" },
@@ -61,18 +63,16 @@ class Main extends BaseApp
 		
 		// -- Add some things
 		
-		WM.flag_tab_switch_windows = true;
-		
 		//create_test_window_1();
 		
 		var w1 = getWindowForm_test();
 		//var w2 = getTextbox_test();
 		var w2 = create_test_window_1();
-		var w3 = getWindowNav_test();
+		var w3 = getWindowNav_test(); 
 		var w4 = getWindow_Vlist_test();
 		WM.addTiled([w1, w2]);
 		WM.addTiled([w3, w4], w1);
-		
+		w1.focus();
 		//w1.flag_focusable = false;
 		//w2.flag_focusable = false;
 		//w3.flag_focusable = false;
@@ -258,7 +258,6 @@ class Main extends BaseApp
 				new Button('new', "Delete All", 2).onPush(function(){l.reset();})]
 			);			
 			
-		/*
 		l.setData([
 			"PopupOption",
 			"SliderNum",
@@ -273,7 +272,6 @@ class Main extends BaseApp
 			"Button",
 			"Label"
 		]);
-		*/
 		
 		l.listen (function(a, b)
 		{
