@@ -46,13 +46,13 @@ class Main extends BaseApp
 		
 		Tools.copyFields({
 			titleColor_focus:{fg:"blue", bg:"green"},
-			borderStyle:1,
-			//bg:"blue",
+			borderStyle:2,
+			//bg:"blue",c
 			text:"gray",
 			textbox_focus: { fg:"white" },
 			textbox: { fg:"gray" },
 			scrollbar_focus:{fg:"white",bg:"red"}
-		},WM.global_style_win);
+		}, WM.global_style_win);
 		
 		//WM.backgroundColor = "darkblue";
 		
@@ -248,13 +248,15 @@ class Main extends BaseApp
 			//w.addStack(tt);
 			//tt.addLine("Hello World");
 			
-		var l = new VList(w.inWidth, w.inHeight);
+		var l = new VList(w.inWidth, w.inHeight-3);
 			l.flag_scrollbar_autohide = false;
-			w.addStack(l);
-			w.addStack(new Button('new', "NEW", 1).onPush(function(){
-				l.add("New Element " + Std.random(10)); })
-			, 0, "center");
 			
+			w.addStack(l);
+			w.addSeparator(1);
+			w.addStackCentered(
+				[new Button('new', "New", 2).onPush(function(){l.add("New Element " + Std.random(10)); }),
+				new Button('new', "Delete All", 2).onPush(function(){l.reset();})]
+			);			
 			
 		/*
 		l.setData([

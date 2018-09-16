@@ -313,6 +313,18 @@ class Window extends BaseElement
 	}//---------------------------------------------------;
 	
 	/**
+	   Add a horizontal line separator
+	   @param forceStyle Set a border style (0-6)
+	**/
+	public function addSeparator(forceStyle:Int = 0)
+	{
+		if (forceStyle == 0) forceStyle = borderStyle;
+		var s = StringTools.lpad("", Styles.border[forceStyle].charAt(1), inWidth);
+		var l = new Label(s, 0, "center");
+		addStack(l);
+	}//---------------------------------------------------;
+	
+	/**
 	   Close window, does not destroy it
 	**/
 	public function close()

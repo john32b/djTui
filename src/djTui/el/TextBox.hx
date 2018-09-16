@@ -267,6 +267,12 @@ class TextBox extends BaseElement
 		scroll_offset = 0;
 		scroll_ratio = 0;
 		flag_empty = true;
+		if (scrollbar != null)
+		{
+			parent.removeChild(scrollbar);
+			scrollbar.clear();
+			scrollbar = null;
+		}
 		if (visible) draw();
 	}//---------------------------------------------------;
 	
