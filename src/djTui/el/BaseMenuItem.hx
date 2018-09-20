@@ -142,8 +142,11 @@ class BaseMenuItem extends BaseElement
 			
 			// DevNote: Why did I need this line, just apply outer pad to all fixed widths
 			//if (textWidth == 0) 
-				v = StrTool.empty(s_padOut) + v + StrTool.empty(s_padOut);
 		}
+		
+		// Apply outer pad to all occasions.
+		if (s_padOut > 0)
+		v = StrTool.empty(s_padOut) + v + StrTool.empty(s_padOut);
 		
 		/* Upon renaming, if the new text is shorter than the old text
 		   clear the space behind it, so the text doesn't overlap */
@@ -197,6 +200,7 @@ class BaseMenuItem extends BaseElement
 	/**
 	   For elements that use SideDecorations, like buttons and Sliders.
 	   Set the padding of the symbols. Call this right after creating an element
+	   NOTE: You can also use OuterPadding in buttons with no sideDecorations
 	   @param	_in Inner Pad
 	   @param	_out Outer Pad
 	**/

@@ -36,16 +36,16 @@ class Main extends BaseApp
 		T.cursorHide();
 		//--
 		
-		// Create/Init the Window Manager
+		// Init the Window Manager and set some parameters :
 		WM.create(
 			new InputObj(), 
 			new TerminalObj(), 80, 25
 		);
 		
 		WM.flag_debug_trace_element_callbacks = true;
-		WM.flag_tab_switch_windows = true;
+		//WM.flag_tab_switch_windows = true;
 		
-		
+		// Quickly set many fields of the default WM style, instead of doing them one by one :
 		Tools.copyFields({
 			titleColor_focus:{fg:"blue", bg:"green"},
 			borderStyle:2,
@@ -56,32 +56,37 @@ class Main extends BaseApp
 			scrollbar_focus:{fg:"white",bg:"red"}
 		}, WM.global_style_win);
 		
+		// The background color is in a separate variable :
 		//WM.backgroundColor = "darkblue";
 		
+		
+		var state1 = new StageTests();
+			state1.start();
+		return;
+		
+		
+		//
 		//WM.T.fg("yellow");
 		//WM.D.drawGrid(0, 0, [ "40|40|13", "50|30|10"], 1, 2);
 		
+		//WM.D.drawArray
 		// -- Add some things
 		
 		//create_test_window_1();
 		
+		WM.flag_tab_switch_windows = true;
 		var w1 = getWindowForm_test();
-		//var w2 = getTextbox_test();
-		var w2 = create_test_window_1();
+		var w2 = getTextbox_test();
+		//var w2 = create_test_window_1();
 		var w3 = getWindowNav_test(); 
 		var w4 = getWindow_Vlist_test();
 		WM.addTiled([w1, w2]);
 		WM.addTiled([w3, w4], w1);
-		w1.focus();
-		//w1.flag_focusable = false;
-		//w2.flag_focusable = false;
-		//w3.flag_focusable = false;
-		//w4.flag_focusable = false;
-		//w3.focus();
 		
+
 		return;
 		
-		// ------------
+		// ------------  [ RETURN ] ------------------------------- //
 		
 		WM.onElementCallback = onWindowCallbacks;
 		
@@ -217,25 +222,18 @@ class Main extends BaseApp
 			w.padding(2, 2);
 			//w.style.titleColor = {fg:"white", bg:"red"};
 			//w.style.titleColor_focus = {fg:"black", bg:"white"};
+			w.modifyStyle({
+				titleColor_focus : {fg:"black", bg:"white"}
+			});
+			
 			w.title = "Textbox";
 		var t = new TextBox(w.inWidth, w.inHeight);
-		//t.setColor("green");
-		w.addStack(t);
-		t.setData([
-			"PopupOption",
-			"SliderNum",
-			"SliderOption",
-			"TextInput",
-			"Button",
-			"Label",
-			"Toggle",
-			"SliderNum",
-			"SliderOption",
-			"TextInput",
-			"Button",
-			"Label"
-		]);
+			t.flag_scrollbar_autohide = false;
+			w.addStack(t);		
+			t.setData("A computer is a device that can be instructed to carry out sequences of arithmetic or logical operations automatically via computer programming. Modern computers have the ability to follow generalized sets of operations, called programs. These programs enable computers to perform an extremely wide range of tasks.Computers are used as control systems for a wide variety of industrial and consumer devices. This includes simple special purpose devices like microwave ovens and remote controls, factory devices such as industrial robots and computer-aided design, and also general purpose devices like personal computers and mobile devices such as smartphones.");
 		return w;
+		
+		// ^ testing adding before
 	}//---------------------------------------------------;
 	
 	
@@ -243,44 +241,41 @@ class Main extends BaseApp
 	{
 		var w = new Window( -2, -2);
 			w.title = "VLIST demo";
-			
-		//var tt = new TextBox(w.inWidth, w.inHeight);
-			//w.addStack(tt);
-			//tt.addLine("Hello World");
-			
-		var l = new VList(w.inWidth, w.inHeight-3);
-			l.flag_scrollbar_autohide = false;
-			
-			w.addStack(l);
-			w.addSeparator(1);
-			w.addStackCentered(
-				[new Button('new', "New", 2).onPush(function(){l.add("New Element " + Std.random(10)); }),
-				new Button('new', "Delete All", 2).onPush(function(){l.reset();})]
-			);			
-			
-		l.setData([
-			"PopupOption",
-			"SliderNum",
-			"SliderOption",
-			"TextInput",
-			"Button",
-			"Label",
-			"Toggle",
-			"SliderNum",
-			"SliderOption",
-			"TextInput",
-			"Button",
-			"Label"
-		]);
-		
-		l.listen (function(a, b)
-		{
-			if (a == "change")
-			{
-				trace("New list " + cast(b,VList).getSelectedText() );
-			}
-		});
 
+		var l = new VList(w.inWidth, w.inHeight-3);
+			l.flag_scrollbar_autohide = true;
+			l.setData([
+				"PopupOption",
+				"SliderNum",
+				"SliderOption",
+				"TextInput",
+				"Button",
+				"Label",
+				"Toggle",
+				"SliderNum",
+				"SliderOption",
+				"TextInput",
+				"Button",
+				"Label"
+			]);
+			l.listen (function(a, b)
+			{
+				if (a == "change")
+				{
+					trace("New list " + cast(b,VList).getSelectedText() );
+				}
+			});
+		
+		
+		w.addStack(l);
+		w.addSeparator(1);
+		w.addStackInline([
+			new Button('new', "New", 2).onPush(function(){l.add("New Element " + Std.random(10)); }),
+			new Button('new', "Delete All", 2).onPush(function(){l.reset();})
+		]);		
+		
+		// ^ testing adding [data] after
+		
 		return w;
 		
 	}//---------------------------------------------------;
@@ -365,12 +360,12 @@ class Main extends BaseApp
 	{
 		var w = new Window("win_lab", -2, -2);
 		w.title = "Labels";
-		w.addStackCentered([
+		w.addStackInline([
 				new Label("Label1").setColor("green", "white"), 
 				new Label("Label2").setColor("red", "yellow")
 		]);
 				
-		w.addStackCentered([
+		w.addStackInline([
 			new Label("one"), 
 			new Label("two"), 
 			new Label("three"), 

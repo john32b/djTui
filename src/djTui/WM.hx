@@ -55,15 +55,15 @@ class WM
 	/** THEME for all popups. Unless overriden in window. */
 	public static var global_style_pop:WinStyle;
 	
-	/** You can set the Background Color */
+	/** You can set the Background Color of the workspace*/
 	public static var backgroundColor(default, set):String = "black";
 	
 	/// Callbacks :
 	
-	/** IF set will copy ANY window element callback to here */
+	/** Get ALL window element callbacks here ( not windows ) */
 	public static var onElementCallback:String->BaseElement->Void = null;
 
-	/** Set this to push keystrokes */
+	/** Get global keystrokes. */
 	public static var onKey:String->Void = null;
 	
 	/// FLAGS :
@@ -211,8 +211,8 @@ class WM
 	{
 		var ww:Window = from; // Temp
 		
-		var nextX:Int = 0; // Always start at 1
-		var nextY:Int = 0; // Either 1 or next window's Y+height
+		var nextX:Int = 0; 
+		var nextY:Int = 0; 
 		
 		if (ww == null && win_list.length > 0)
 		{
@@ -323,6 +323,8 @@ class WM
 		{
 			active.onKey(key);
 		}
+		
+		if(onKey!null) onKey(
 	}//---------------------------------------------------;
 	
 	// --

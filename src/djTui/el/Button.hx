@@ -87,8 +87,8 @@ class Button extends BaseMenuItem
 		
 		if (BtnStyle > 0)
 		{
-			var s = BtnStyle -1;
-			setSideSymbolPad(1, 1);
+			var s = BtnStyle - 1;
+			setSideSymbolPad(1, 1); // TODO: Parameterize ?
 			setSideSymbols(SMB[s].charAt(0), SMB[s].charAt(1));
 		}
 		
@@ -270,9 +270,6 @@ class Button extends BaseMenuItem
 			}
 		}
 		
-		// DEVNOTE: 
-		// right and left keys will not get pushed to this object
-		// when inside a <ButtonGrid>
 		if (flag_leftright_escape)
 		{
 			if (k == "left") parent.focusPrev();

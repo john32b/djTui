@@ -9,7 +9,7 @@ import djTui.el.TextBox;
  * A simple messagebox window
  * 
  * - Text + OK / CANCEL / YES / NO
- * - Callbacks
+ * - Callbacks via `resultCallback`
  */
 class MessageBox extends Window 
 {
@@ -36,13 +36,13 @@ class MessageBox extends Window
 	public static var BUTTON_STYLE:Int = 2;
 	
 	/**
-	   Create a messagabox window. Does not add it to the WM
+	   Create a messagebox window.
 	   @param	text
 	   @param	_type 0:OK | 1:OK,CANCEL | 2:YES,NO
 	   @param	_resCallback fn(int) -> index of button clicked
 	   @param	_width
 	**/
-	public function new(text:String, _type:Int, ?_resCallback:Int->Void, _width:Int = 30 ) 
+	public function new(text:String, _type:Int, ?_resCallback:Int->Void, _width:Int = 30) 
 	{
 		super();
 		style = WM.global_style_pop;
@@ -76,7 +76,7 @@ class MessageBox extends Window
 		// - Window
 		size(_width, tbox.height + 5);
 		addStack(tbox, 1);
-		addStackCentered(cast buttons, 1, 3);
+		addStackInline(cast buttons, 1, 3, "center");
 	}//---------------------------------------------------;
 	
 	override function onElementCallback(st:String, el:BaseElement) 

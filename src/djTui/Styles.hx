@@ -54,7 +54,8 @@ typedef WinStyle =
 
 
 
-/** Static class with some utilities
+/** 
+ * Static class that holds some global Style parameters and utilities
  */
 class Styles 
 {	

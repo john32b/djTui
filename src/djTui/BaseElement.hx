@@ -36,8 +36,8 @@ class BaseElement
 	
 	// General Use color holders
 	// Usually used for current color for printing
-	var colorFG:String;
-	var colorBG:String;
+	var colorFG:String;	
+	var colorBG:String; // The color the background will be filled with
 	
 	/** Is this element currenty visible/onscreen */
 	public var visible(default, set):Bool;
@@ -52,8 +52,8 @@ class BaseElement
 	/** All elements have a parent container ( a window ) */
 	public var parent(default, null):Window = null;
 	
-	// If true will skip draw calls
-	// NOTE : Parent checks this, so don't worry about it
+	// Used in cases where you need to skip draw calls
+	// - It's a short term flag, so set on/off inside a single function scope only
 	var lockDraw:Bool = false;
 	
 	/// FLAGS ::
@@ -132,8 +132,8 @@ class BaseElement
 	{
 		if (isFocused || !flag_focusable) return;
 		isFocused = true;
-		callback('focus');
 		focusSetup(isFocused);
+		callback('focus');
 		draw(); 
 	}//---------------------------------------------------;
 	
@@ -142,8 +142,8 @@ class BaseElement
 	{
 		if (!isFocused) return;
 		isFocused = false;
-		callback('unfocus');
 		focusSetup(isFocused);
+		callback('unfocus');
 		draw();
 	}//---------------------------------------------------;
 	
@@ -186,7 +186,6 @@ class BaseElement
 	   Called every time the focus changes
 	   Handles focus colors etc
 	**/
-	//@:allow(djTui.Window)
 	function focusSetup(focus:Bool):Void {}
 	
 	/**

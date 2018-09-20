@@ -4,14 +4,14 @@ import sys.db.Types.SId;
 /**
  * A state is a collection of windows
  * 
- * - All windows can be quickly be open/close
+ * - All windows can quickly open/close
  * - A global WindowState Manager is provided through the WM.BANK object
  * 
  */
 @:allow(djTui.WindowStateManager)
 class WindowState 
 {
-	// List of all windows
+	// Holds all the windows of the state.
 	var list:Array<Window>;
 	
 	// A unique identifier/name

@@ -121,7 +121,6 @@ class TextBox extends BaseElement
 				
 				scrollbar.draw(); //<- Must call draw to apply color changes
 			}
-			
 		}
 		
 	}//---------------------------------------------------;
@@ -181,7 +180,7 @@ class TextBox extends BaseElement
 		
 		if (parent == null) 
 		{
-			flag_add_scrollbar = true; // add it later
+			flag_add_scrollbar = true; // Add it later
 			return;
 		}
 		
@@ -190,7 +189,8 @@ class TextBox extends BaseElement
 
 		parent.addChild(scrollbar);
 		
-		scrollbar.setColor(parent.style.scrollbar_idle);
+		focusSetup(isFocused);	// <-- Refresh scrollbar colors
+		
 		flag_add_scrollbar = false;
 	}//---------------------------------------------------;
 	

@@ -9,16 +9,14 @@ import haxe.Timer;
 /**
  * 
  * Generic Window/Panel
- * ------------
- * - Managed by the WM
+ * --------------------
  * - Holds and manages baseElements and derivatives 
- * - Default 'TAB' is to cycle between elements and exit to next window, unless "flag_focus_lock" is set
  * 
- * Callback Statuses. Place a callback listener with .listen(..);
+ * - Callback Statuses. Place a callback listener with .listen(..);
  * 
  *		escape : Esc key got pressed
  * 		focus  : Element/Window has been focused ; (check element.type or SID)
- * 		unfocus: Element/Window has been unfocused ; (check element type or SID)
+ * 		unfocus: Element/Window has been unfocused ; (check element.type or SID)
  * 		fire   : Element was activated
  * 		change : Element was changed
  * 		open   : Window was just opened
@@ -44,7 +42,11 @@ class Window extends BaseElement
 	
 	/**
 	   This window style, defaults to `WM.global_style`
-	   NOTE: If you want to modify the style call .modifyStyle()
+	   NOTE: 
+		- You can assign a new style to this object and it will be applied with the setter
+		- If you want to modify parts of the style call .modifyStyle(), it will apply the changes
+	   DEV:
+	    - Keep it as a pointer
 	**/
 	public var style(default, set):WinStyle;
 	
@@ -110,13 +112,12 @@ class Window extends BaseElement
 		
 		type = ElementType.window; 
 		
-		// Create a border element, even if the window will not have border style.
+		// Create a border element, even in 0 border styles. Easier to maintain.
 		border_el = new Border();
 		addChild(border_el);
 		
-		// DevNote: Setting the style will also set the `borderStyle`
-		// If you want to alter a specific window style, you can call `` which will clone the style
-		style = WM.global_style_win;	
+		// DevNotes: Setting the style will also set the `borderStyle`
+		style = Reflect.copy(WM.global_style_win);
 		
 		if (borderStyle > 0) 
 			padding(2, 2);
@@ -127,11 +128,13 @@ class Window extends BaseElement
 	}//---------------------------------------------------;
 	
 	/**
-	   Will modify specific fields of the style object
+	   Will modify specific fields of the style object. See `Styles.WinStyle` for the fields
+	   
 	  ! IMPORTANT : Call this before adding child elements.
 		e.g. window.modifyStyle( { text:"red",bg:"black"} );
-	  ! EXPERIMENTAL : You can call this after adding elements,
-		but it is buggy.
+		
+	  ! EXPERIMENTAL : You can call this after adding elements, but it is buggy.
+		
 	   @param	o Object with field names and values conforming to `Styles.WinStyle`
 	**/
 	public function modifyStyle(o:Dynamic)
@@ -288,8 +291,9 @@ class Window extends BaseElement
 	   @param	el The elements to add
 	   @param	yPad From the previously added element
 	   @param	xPad In between the elements
+	   @param   align center left
 	**/
-	public function addStackCentered(el:Array<BaseElement>, yPad:Int = 0, xPad:Int = 1)
+	public function addStackInline(el:Array<BaseElement>, yPad:Int = 0, xPad:Int = 1, align:String = "left")
 	{
 		// Calculate starting Y
 		var yloc:Int = 0;
@@ -302,7 +306,14 @@ class Window extends BaseElement
 		var totalWidth:Int = 0;
 		for (i in el) totalWidth += i.width;
 		totalWidth += (el.length - 1) * xPad; // Add In-between padding to total width
-		var startX:Int = x + Std.int(width / 2 - totalWidth / 2);
+		
+		// Alignment :
+		var startX = 0;
+		if (align == "center") 
+			startX = x + Std.int(width / 2 - totalWidth / 2);
+		else
+			startX = x + padX;
+			
 		for (i in 0...el.length)
 		{
 			el[i].pos(startX, yloc);
@@ -522,10 +533,6 @@ class Window extends BaseElement
 	}//---------------------------------------------------;
 	
 	
-	
-	
-	
-	
 	//====================================================;
 	// EVENTS 
 	//====================================================;
@@ -624,7 +631,7 @@ class Window extends BaseElement
 	{
 		if (borderStyle == val) return val;
 			borderStyle = val;
-			
+	
 		if (borderStyle > Styles.border.length - 1) borderStyle = 1;
 
 		border_el.style = borderStyle;

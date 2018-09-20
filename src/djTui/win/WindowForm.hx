@@ -123,7 +123,7 @@ class WindowForm extends Window
 				addChild(el);
 				
 			case "center":
-				addStackCentered([l, el], 0, align_padx);
+				addStackInline([l, el], 0, align_padx, "center");
 			default:
 		}
 	}//---------------------------------------------------;
