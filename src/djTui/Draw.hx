@@ -114,7 +114,8 @@ class Draw
 				e.g. [ "20|20|3" , "15|25|2" ] (20,20 = width of the 2 cells, height = 3)
 	   @param	rowsInt [ [width,width,height] , [width,width...,height] ]
 				works like `rowsStr` but with INT values
-				WARNING. You can either set rowsSTR or rowsInt, NOT BOTH!
+				WARNINGS - You can either set rowsSTR or rowsInt, NOT BOTH!
+						 - rowsInt will MODIFY the array in place
 	   @param	Sin Style index from global border style in 'Styles.hx' for outer border
 	   @param	Sout Style index from global border style in 'Styles.hx' for outer border
 

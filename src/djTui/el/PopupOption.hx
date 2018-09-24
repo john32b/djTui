@@ -58,6 +58,7 @@ class PopupOption extends BaseMenuItem
 		win = new Window(1);
 		win.padding(1, 1).size(_width, slots + 2);
 		win.flag_focus_lock = true;
+		win.flag_close_on_esc = true;
 		
 		// --
 		list = new VList("list", win.inWidth, win.height - 2);
@@ -67,8 +68,6 @@ class PopupOption extends BaseMenuItem
 		win.listen(function(status, elem)
 		{
 			switch(status) {
-				case "escape" : 
-					win.close();
 				case "fire" :
 					setData(elem.getData());
 					win.close();
@@ -83,10 +82,10 @@ class PopupOption extends BaseMenuItem
 		{
 			// Open the popup and put it relative to current control.
 			list.cursor_to(index);
-			parent.flag_once_focusLast = true;
 			win.pos(x + 1, y - Math.floor(win.height / 3));
+									  // TODO: Other style?
 			win.style = parent.style; // Make sure the popup takes the parent window style
-			win.open(true);
+			parent.openSub(win);
 		}
 	}//---------------------------------------------------;
 	

@@ -83,13 +83,15 @@ class Window extends BaseElement
 	/// FLAGS :
 	// It is best to set flags right after new()
 	
-	// DO NOT allow focus to leave from this window
+	// DO NOT allow focus to leave from this window (with TAB key or other rules)
 	public var flag_focus_lock:Bool = false;
 
 	/** If true, when this window gets focus, will try to focus last element focused
 	 *  ! Will only apply once ! So it's needed to be set every time  */
 	public var flag_once_focusLast:Bool = false;
 	
+	/** If true, will close this window on `Escape` key. */
+	public var flag_close_on_esc:Bool = false;
 	
 	/**
 	   Create a Window
@@ -105,7 +107,13 @@ class Window extends BaseElement
 		
 		if (sid != null)
 		{
-			WM.DB.set(sid, this);
+			if (!WM.DB.exists(sid))
+			{
+				WM.DB.set(sid, this);
+			}else
+			{
+				trace('WARNING: A window with sid:"$sid" already exists in WM.DB.');
+			}
 		}
 		
 		super(sid);
@@ -227,11 +235,11 @@ class Window extends BaseElement
 		#if debug 
 			// Check Overflows
 			if (el.x + el.width > x + width - padX) {
-				trace('ERROR: Element sid:${el.SID} width is too large for window.');
+				trace('WARNING: Element sid:${el.SID} width is too large for window.');
 			}
 			
-			if (el.y + el.height >= y + height) {
-				trace('ERROR: Element sid:${el.SID} Y pos overflow.');
+			if (el.y + el.height > y + height) {
+				trace('WARNING: Element sid:${el.SID} Y pos overflow.');
 			}
 		#end
 		
@@ -342,6 +350,7 @@ class Window extends BaseElement
 	
 	/**
 	   Close window, does not destroy it
+	   WM will try to focus the last focused window
 	**/
 	public function close()
 	{
@@ -394,6 +403,20 @@ class Window extends BaseElement
 				open(true);
 			}
 		}
+	}//---------------------------------------------------;
+	
+	
+	/**
+	   Open a SubWindow as MODAL
+	**/
+	public function openSub(w:Window, anim:Bool = false)
+	{
+		flag_once_focusLast = true;
+		
+		if (anim) 
+			w.openAnimated(); 
+		else
+			w.open(true);
 	}//---------------------------------------------------;
 	
 	
@@ -545,22 +568,28 @@ class Window extends BaseElement
 		{
 			case 'tab':	
 				
-				// On TAB, it on the last element, try to focus the next WINDOW
-				// If can't focus next window, focus the first element on this window
 				if (activeIsLastFocusable())
 				{
 					if (flag_focus_lock) 
 						focusNext(true); 
 					else
-						callback_wm("focus_next", this);
+					{
+						if(WM._TAB_TYPE == "exit")
+							callback_wm("focus_next", this);
+						else
+							focusNext(true);
+					}
 				}
 				else
 				{
-					focusNext(true);
+					focusNext();
 				}
 					
 			case 'esc':
-				callback('escape');
+				if (flag_close_on_esc) 
+					close(); 
+				else 
+					callback('escape');
 				
 			default:
 				

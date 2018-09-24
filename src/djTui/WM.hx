@@ -68,21 +68,21 @@ class WM
 	
 	/// FLAGS :
 	
-	/** If true, pressing tab will switch between windows */
-	public static var flag_tab_switch_windows:Bool = false;
-	
-	/** If true, when coming back to windows with 'TAB' will focus the previously focused element ( if any )
-	    Works if `flag_tab_switch_windows` is enabled */
-	public static var flag_win_remember_focused_elem:Bool = true;
+	// TAB Capture Level ( 0 = none, 1 = window, 2 = WM ) */
+	static var _TAB_LEVEL:Int;
+	// Encoded behavior, depends on _TAB_LEVEL */
+	@:allow(djTui.Window)
+	static var _TAB_TYPE:String;
 	
 	#if debug
-	
 	/** Applies to windows. Will trace all callback messages */
 	public static var flag_debug_trace_element_callbacks:Bool = false;
-	
 	#end
 	
 	//====================================================;
+	
+
+	
 	
 	/**
 	   Create/Init the Window Manager
@@ -123,6 +123,9 @@ class WM
 		
 		// - Init and ClearBG
 		closeAll();
+		
+		set_TAB_behavior(); // default values
+		
 		// -
 		trace('== Window Manager Created =');
 		trace(' - Viewport Width = $width , Height = $height');
@@ -270,7 +273,7 @@ class WM
 				w.draw();
 			}
 		}
-		// If closing active window, focus
+		// If closing active window, focus last one
 		if (active == win) 
 		{
 			active = null;
@@ -300,7 +303,7 @@ class WM
 	// --
 	static function _onKey(key:String)
 	{
-		if (flag_tab_switch_windows && key == "tab")
+		if (_TAB_LEVEL == 1 && key == "tab")
 		{
 			// If a window is already locked, don't switch windows
 			// just send 'tab' to that window
@@ -310,7 +313,7 @@ class WM
 				return;
 			}
 			
-			if (active != null && flag_win_remember_focused_elem)
+			if (active != null && _TAB_TYPE == "keep")
 			{
 				active.flag_once_focusLast = true;
 			}
@@ -324,7 +327,8 @@ class WM
 			active.onKey(key);
 		}
 		
-		if(onKey!null) onKey(
+		// Push to user
+		if (onKey!=null) onKey(key);
 	}//---------------------------------------------------;
 	
 	// --
@@ -356,4 +360,21 @@ class WM
 		
 	}//---------------------------------------------------;
 	
+	
+	/**
+	   Declare how the Window/Element focus will behave upon [TAB] key. Along with some optional parameters.
+	   I am offering this because some application setups require different approaches to UI.
+	   
+	   @param	level   Where the focus of the [TAB] key should reach | NONE, WM, WINDOW
+	   @param	param   WM 	   :  "keep" , remember active element on windows when switching back to them
+						WINDOW :  "exit" , exit focus from the window to the next available window ( instead of looping )
+	**/
+	public static function set_TAB_behavior(level:String = "WINDOW", param:String = "")
+	{
+		_TAB_TYPE = param;
+		_TAB_LEVEL = ["NONE", "WM", "WINDOW"].indexOf(level);
+		if (_TAB_LEVEL < 0) {
+				throw "set_TAB_behavior invalid level ID";
+		}
+	}//---------------------------------------------------;
 }//- end class-

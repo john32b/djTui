@@ -99,6 +99,7 @@ class BaseElement
 		return this;
 	}//---------------------------------------------------;
 	
+	
 	/** Set the general use colors for printing.
 	    if BG null then it will be the window color 
 		- Not guaranteed to work on ALL Menu Items

@@ -7,6 +7,7 @@ import djTui.Styles.PrintColor;
  * - Basically a Textbox with cursor navigation
  * - Sends status callbacks (fire,change)
  * - Useful for selecting an element from many
+ * - Can add elements on the fly
  * 
  */
 class VList extends TextBox 

@@ -39,32 +39,29 @@ class MenuBar extends Window
 	
 	// Grid and Box Style :
 	var _gSizes:Array<Int>;	// Helper Array, store a button sizes to push to drawer
-	var _gStyle:Int = 0;	// Grid Style both outer and inner
-	var _thick:Bool;		// Thickness Flag True for 3 line height. False for single line
-	var _fl_drawthick:Bool; // Determines whether to draw a line above and below the current element
+	var _gStyle:Int = 0;	// Grid/Panel Thickness Style
 	
 	/** Quick callback for when an Item becomes highlighted */
 	public var onChange:Int->Void;
 	
 	/** Quick callback for when an Item gets selected */
 	public var onSelect:Int->Void;
-	
+		
 	
 	/**
 	   Create a MenuBar
 	   Call `setup()` first for styling and then `set()` to push data
 	   @param	Sid Set an SID to have it pushed to the global WM.DB object
-	   @param	Width -1 For full screen width, 0 For Automatic Based on elements
+	   @param	Width -1 For full screen width. If Size too small for items, it will be resized
+	   @param	Side Window Padding.
 	**/
-	public function new(?Sid:String, Width:Int = -1) 
+	public function new(?Sid:String, Width:Int = 1, PadX:Int = 0) 
 	{
 		super(Sid, Width, 1);
-		padX = 1;
-		
+		padX = PadX;
 		// Setup with the default params
 		setPanelStyle(style.text, style.bg);
 		setItemStyle();
-		
 	}//---------------------------------------------------;
 	
 	/**
@@ -79,14 +76,26 @@ class MenuBar extends Window
 	**/
 	public function setItemStyle(   Align:String = "left", FixedSize:Int = 0,
 									SymbolID:Int = 0, pad0:Int = 1, pad1:Int = 1,
-								    padBetween:Int = 2 )
+								    padBetween:Int = 1 )
 	{
+		
 		menuAlign = Align;
 		_bFixSize = FixedSize;
 		_bStyle = SymbolID;
 		_bPad0 = pad0;
 		_bPad1 = pad1;
 		_bPad2 = padBetween;
+		
+		#if debug
+		if (_gStyle > 0 && _bPad2 == 0) {
+			trace("Warning: Border style needs element padding > 0");
+			_bPad2 = 1;
+		}
+		if (items != null)
+		{
+			trace("Error: Call this function before adding items");
+		}
+		#end
 	}//---------------------------------------------------;
 	
 	
@@ -95,26 +104,28 @@ class MenuBar extends Window
 	   @ Call this BEFORE set();
 	   @param col0 The background color
 	   @param col1 The accent color
-	   @param thick True to have it be 3 lines tall
-	   @param GStyle Border Style 0 for no style (1-6) for other styles. ( Defined in Styles.border object )
+	   @param Gstyle -1:Thin, 0:Thick, 1-6:Thick with border style  ( Defined in Styles.border object )
 	**/
-	public function setPanelStyle(col1:String, col0:String, Thick:Bool = false, GStyle:Int = 0)
+	public function setPanelStyle(col1:String, col0:String, Gstyle:Int = -1)
 	{
-		_gStyle = GStyle;
-		_thick = Thick;
+		_gStyle = Gstyle;
 		
-		if (_thick)
-		{
-			padY = 1;
-			height = 3;
-		}else
+		if (Gstyle ==-1) // THIN BORDER ::
 		{
 			padY = 0;
 			height = 1;
-			_gStyle = 0; // safeguard
 		}
-		
-		_fl_drawthick = _thick && _gStyle == 0;
+		else	// THICK BORDER ::
+		{
+			padY = 1;
+			height = 3;
+			
+			// A border needs padding
+			if (Gstyle > 0 && padX == 0)
+			{
+				padX = 1;
+			}
+		}
 		
 		modifyStyle({
 			borderStyle:0,
@@ -122,6 +133,13 @@ class MenuBar extends Window
 			elem_idle  : {fg:col1},
 			elem_focus : {fg:col0,bg:col1}
 		});
+		
+		#if debug
+		if (items != null)
+		{
+			trace("Error: Call this function before adding items");
+		}
+		#end
 		
 	}//---------------------------------------------------;
  	
@@ -147,6 +165,9 @@ class MenuBar extends Window
 		
 		items = [];
 		_gSizes = [];
+		
+		var totalW:Int = 0;
+		
 		// Add the new items
 		var i = 0;
 		while(i < ar.length)
@@ -157,11 +178,19 @@ class MenuBar extends Window
 			items.push(b);
 			i++;
 			_gSizes.push(b.width + _bPad2);
+			totalW += b.width + _bPad2;
 		}
 		
 		// Last INT in drawgrid is cell height
 		_gSizes[0]++;
 		_gSizes.push(height);
+		totalW -= _bPad2;
+		
+		// Re-Adjust width if it's too small
+		if (totalW + (padX * 2) > width)
+		{
+			width = totalW + (padX * 2);
+		}
 		
 		addStackInline(cast items, 0, _bPad2, menuAlign);
 		
@@ -170,8 +199,7 @@ class MenuBar extends Window
 	
 	
 	override function onElementCallback(st:String, el:BaseElement) 
-	{
-		
+	{	
 		super.onElementCallback(st, el);
 		
 		if (st == "fire" && onSelect != null)
@@ -183,7 +211,7 @@ class MenuBar extends Window
 		if (st == "focus")
 		{
 			currentIndex = Std.parseInt(el.SID);
-			if (_fl_drawthick) drawThick( active );
+			if (_gStyle==0) drawThick( active );
 		
 			if (onChange != null) onChange(currentIndex);
 			
@@ -191,7 +219,7 @@ class MenuBar extends Window
 		
 		if (st == "unfocus")
 		{
-			if (_fl_drawthick) drawThick( items[ Std.parseInt(el.SID) ] );
+			if (_gStyle==0) drawThick( items[ Std.parseInt(el.SID) ] );
 		}
 		
 	}//---------------------------------------------------;
@@ -204,20 +232,35 @@ class MenuBar extends Window
 		if (_gStyle > 0)
 		{
 			_readyCol();
-			WM.D.drawGrid(x + items[0].x - 1 , y, null, [ _gSizes.copy() ] , _gStyle, _gStyle);
+			// Devnote: - (x-1) because The window already has 1 pad
+			//			- copy because drawgrid modifies the array
+			WM.D.drawGrid(items[0].x - 1 , y, null, [ _gSizes.copy() ] , _gStyle, _gStyle);
 		}
 	}//---------------------------------------------------;
 	
 	
 	/**
-	  Draw a line and below a button, to make it appear thicker
-	  -- Checks for flag so you can call this regardless of thickness --
+	  Draw a line above/below a button, making it ""thicker""
 	 */
 	function drawThick(el:BaseElement)
 	{
 		WM.T.bg(el.colorBG);
 		WM.D.rect(el.x, el.y + 1, el.width, 1);
-		WM.D.rect(el.x, el.y-1, el.width, 1);
+		WM.D.rect(el.x, el.y - 1, el.width, 1);
+	}//---------------------------------------------------;
+	
+	/**
+	   Set the cursor to an index. 0 To select none
+	   @param	index
+	**/
+	public function setCursor(index:Int)
+	{
+		if (index == currentIndex) return;
+		currentIndex = index;
+		if (currentIndex > 0)
+		{
+			items[currentIndex].focus();
+		}
 	}//---------------------------------------------------;
 	
 	

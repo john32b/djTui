@@ -7,6 +7,8 @@ package djTui.adaptors;
  * 	 on your desired target (openfl, nodejs, ..)
  *   and pass it to WM
  * 
+ * - Screen coordinates start from (0,0) for top,left
+ * 
  * NOTES : ------------------------------
  *
  *  String Color IDs : 

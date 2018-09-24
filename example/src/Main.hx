@@ -43,7 +43,7 @@ class Main extends BaseApp
 		);
 		
 		WM.flag_debug_trace_element_callbacks = true;
-		//WM.flag_tab_switch_windows = true;
+		WM.set_TAB_behavior("WINDOW", "exit");
 		
 		// Quickly set many fields of the default WM style, instead of doing them one by one :
 		Tools.copyFields({
@@ -60,9 +60,9 @@ class Main extends BaseApp
 		//WM.backgroundColor = "darkblue";
 		
 		
-		var state1 = new StageTests();
-			state1.start();
-		return;
+		//var state1 = new StageTests();
+			//state1.start();
+		//return;
 		
 		
 		//
@@ -82,7 +82,7 @@ class Main extends BaseApp
 		var w4 = getWindow_Vlist_test();
 		WM.addTiled([w1, w2]);
 		WM.addTiled([w3, w4], w1);
-		
+		w1.focus();
 
 		return;
 		

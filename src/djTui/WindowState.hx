@@ -54,6 +54,7 @@ class WindowState
 	
 	/**
 	   Opens all windows and focuses the first window on the list
+	   -- Will autofocus the first window --
 	   @param data Optional, Handled at extended classes
 	**/
 	function open(?data:Dynamic)
@@ -82,7 +83,7 @@ class WindowStateManager
 	// --
 	public function new()
 	{
-		states = new Map();
+		clear();
 	}//---------------------------------------------------;
 	
 	/** Add a Window State to hold
@@ -161,5 +162,16 @@ class WindowStateManager
 	dynamic public function onStateOpen(st:WindowState)
 	{
 	}//---------------------------------------------------;
+	
+	
+	/**
+	   Clears all states, does not clear any windows
+	**/
+	public function clear()
+	{
+		states = new Map();
+		current = null;
+	}//---------------------------------------------------;
+	
 	
 }//--
