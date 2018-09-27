@@ -4,8 +4,8 @@ import sys.db.Types.SId;
 /**
  * A state is a collection of windows
  * 
- * - All windows can quickly open/close
- * - A global WindowState Manager is provided through the WM.BANK object
+ * - Open/Close all windows in the state
+ * - Can be dynamically created or extended
  * 
  */
 @:allow(djTui.WindowStateManager)
@@ -22,7 +22,7 @@ class WindowState
 	   @param	name Unique Name
 	   @param	windows
 	**/
-	public function new(sid:String, ?windows:Array<Window>)
+	public function new(?sid:String, ?windows:Array<Window>)
 	{
 		SID = sid;
 		if (windows != null) list = windows; else list = [];
@@ -37,6 +37,7 @@ class WindowState
 	
 	/**
 	   Search for a window with target SID
+	   Note: This is to be used in dynamic states. To quickly get a window
 	**/
 	public function get(s:String):Window
 	{
@@ -47,17 +48,16 @@ class WindowState
 	/**
 	   Close all windows
 	**/
-	function close()
+	public function close()
 	{
 		for (w in list) w.close();
 	}
 	
 	/**
 	   Opens all windows and focuses the first window on the list
-	   -- Will autofocus the first window --
 	   @param data Optional, Handled at extended classes
 	**/
-	function open(?data:Dynamic)
+	public function open(?data:Dynamic)
 	{
 		for (w in list) w.open();
 		list[0].focus();
@@ -68,16 +68,20 @@ class WindowState
 
 
 /**
-   @singleton Access it with "WM.BANK"
-   - Stores WindowStates
+	WindowState Manager 
+	@singleton Accessible from `WM.STATES`
+   - Stores and Manages WindowStates
    - Handles switching in and out of WindowStates
+   - Will only allow ONE windowstate to be opened at each time
+   - Provides some basic callbacks for `onOpen` and `onClose`
 **/
 @:allow(djTui.WM)
 class WindowStateManager
 {
-	// All states
+	// A pool where it can store states
 	var states:Map<String,WindowState>;
 	
+	/** The currently active state, null for none */
 	public var current(default, null):WindowState;
 
 	// --
@@ -86,9 +90,9 @@ class WindowStateManager
 		clear();
 	}//---------------------------------------------------;
 	
-	/** Add a Window State to hold
-	 */
-	public function add(w:WindowState):Void
+	/** Store a state for quick retrieval
+	 **/
+	public function store(w:WindowState):Void
 	{
 		if (states.exists(w.SID))
 		{
@@ -108,7 +112,7 @@ class WindowStateManager
 	}//---------------------------------------------------;
 	
 	/**
-	   Create and Append a Window State on the fly
+	   Create and Append a Window State on the fly.
 	   Also return it to user.
 	   @param	name The SID of the window state
 	   @param	winList Window List. The windows can exist in multiple states
@@ -116,7 +120,7 @@ class WindowStateManager
 	public function create(name:String, winList:Array<Window>):WindowState
 	{
 		var s = new WindowState(name, winList);
-			add(s);
+			store(s);
 			return s;
 	}//---------------------------------------------------;
 	
@@ -127,6 +131,7 @@ class WindowStateManager
 		if (current != null)
 		{
 			current.close();
+			onStateClose(current);
 			current = null;
 		}
 	}//---------------------------------------------------;
@@ -147,25 +152,42 @@ class WindowStateManager
 			return;
 		}
 		
+		open(b);
+	}//---------------------------------------------------;
+	
+	/**
+	   Open a WindowState Object
+	   If you want to open a previously stored state. call `goto()`
+	**/
+	public function open(st:WindowState)
+	{
 		close();
-		onStateOpen(b);
-		b.open();
-		current = b;
+		onStateOpen(st);
+		st.open();
+		current = st;
 	}//---------------------------------------------------;
 	
 	
 	/**
-	   Called automatically, just before opening the State Windows.
+	   Called automatically, just before opening a Window State
 	   Provided for user customization. e.g. Window positions
 	   @param	st The state opened
 	*/
 	dynamic public function onStateOpen(st:WindowState)
 	{
 	}//---------------------------------------------------;
-	
+		
+	/**
+	   Called automatically, just before closing a Window State
+	   Provided for user customization. e.g. Window positions
+	   @param	st The state closing
+	*/
+	dynamic public function onStateClose(st:WindowState)
+	{
+	}//---------------------------------------------------;
 	
 	/**
-	   Clears all states, does not clear any windows
+	   Clears all states from the pool, does not clear any windows
 	**/
 	public function clear()
 	{

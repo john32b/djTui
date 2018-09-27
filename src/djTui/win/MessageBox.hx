@@ -1,4 +1,4 @@
-package djTui;
+package djTui.win;
 
 import djTui.BaseElement;
 import djTui.el.Button;
@@ -118,7 +118,7 @@ class MessageBox extends Window
 	public static function create(text:String, _type:Int, ?_resCallback:Int->Void, _width:Int = 30)
 	{
 		var m = new MessageBox(text, _type, _resCallback, _width);
-			m.screenCenter();
+			WM.A.screen(m);
 			m.openAnimated();
 	}//---------------------------------------------------;
 	

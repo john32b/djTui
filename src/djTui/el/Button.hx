@@ -1,7 +1,7 @@
 package djTui.el;
 
 import djTui.BaseElement;
-import djTui.MessageBox;
+import djTui.win.MessageBox;
 import djTui.Tools;
 
 
@@ -194,18 +194,16 @@ class Button extends BaseMenuItem
 	**/
 	function confirm_action()
 	{
-		parent.flag_once_focusLast = true;
-		
 		var m = new MessageBox(xtr.confQ, 2, function(res){
 			if (res == 0) action();
 		});
 		
 		if (xtr.center != null)
-			m.screenCenter(); 
+			WM.A.screen(m);
 		else
 			m.pos(x, y + 1);
 		
-		m.openAnimated();
+		parent.openSub(m, true);
 	}//---------------------------------------------------;
 	
 	
@@ -239,7 +237,7 @@ class Button extends BaseMenuItem
 					}
 					else if (xtr.center != null)
 					{
-						win.screenCenter();
+						WM.A.screen(win);
 					}
 				
 					if (xtr.anim != null) {
@@ -247,6 +245,9 @@ class Button extends BaseMenuItem
 					}else {
 						win.open(true);
 					}
+				}else
+				{
+					trace('WARNING: Button request to goto window SID:"${xtr.sid}" that doesn\'t exist in WM.DB');
 				}
 			}
 			

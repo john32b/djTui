@@ -25,13 +25,13 @@ import haxe.Timer;
 class Window extends BaseElement 
 {
 	
-	// Window title, automatically adds an element
+	/** Sets the window title drawn at the top. Can be changed whenever */
 	public var title(default, set):String;
 	
 	// The actual Label holding the title
 	var title_el:Label;
 	
-	/** This window border index. Defaults to `Style.border` but can be overriden
+	/** This window border style index. Can be changed whenever
 	 *  NOTES: - Mind the padding when setting this to and from 0 
 	 * 		   - Check `styles.hx` for available border styles
 	 **/
@@ -45,8 +45,6 @@ class Window extends BaseElement
 	   NOTE: 
 		- You can assign a new style to this object and it will be applied with the setter
 		- If you want to modify parts of the style call .modifyStyle(), it will apply the changes
-	   DEV:
-	    - Keep it as a pointer
 	**/
 	public var style(default, set):WinStyle;
 	
@@ -83,12 +81,13 @@ class Window extends BaseElement
 	/// FLAGS :
 	// It is best to set flags right after new()
 	
-	// DO NOT allow focus to leave from this window (with TAB key or other rules)
+	/** DO NOT allow focus to leave from this window (with TAB key or other rules) */
 	public var flag_focus_lock:Bool = false;
 
 	/** If true, when this window gets focus, will try to focus last element focused
 	 *  ! Will only apply once ! So it's needed to be set every time  */
-	public var flag_once_focusLast:Bool = false;
+	@:allow(djTui.WM)
+	var flag_return_focus_once:Bool = false;
 	
 	/** If true, will close this window on `Escape` key. */
 	public var flag_close_on_esc:Bool = false;
@@ -128,9 +127,9 @@ class Window extends BaseElement
 		style = Reflect.copy(WM.global_style_win);
 		
 		if (borderStyle > 0) 
-			padding(2, 2);
-			else
 			padding(1, 1);
+			else
+			padding(0, 0);
 
 		size(_w, _h);
 	}//---------------------------------------------------;
@@ -210,13 +209,15 @@ class Window extends BaseElement
 	
 
 	/**
-	   Set padding for the edges of the window. Returns self for chaining
+	   Set padding for the edges of the window. Returns self for chaining.
+	   NOTE: You can call padding(X) and it will apply padding(X,X);
 	   @param	xx Sides
 	   @param	yy Top/Bottom
 	   @return
 	**/
-	public function padding(xx:Int, yy:Int):Window
+	public function padding(xx:Int, yy:Int = -1):Window
 	{
+		if (yy ==-1) yy = xx;
 		padX = xx; padY = yy; return this;
 	}//---------------------------------------------------;
 	
@@ -235,7 +236,7 @@ class Window extends BaseElement
 		#if debug 
 			// Check Overflows
 			if (el.x + el.width > x + width - padX) {
-				trace('WARNING: Element sid:${el.SID} width is too large for window.');
+				trace('WARNING: Element type: "${el.type}" with "sid:${el.SID}" width overflow.');
 			}
 			
 			if (el.y + el.height > y + height) {
@@ -337,8 +338,8 @@ class Window extends BaseElement
 	}//---------------------------------------------------;
 	
 	/**
-	   Add a horizontal line separator
-	   @param forceStyle Set a border style (0-6)
+	   Add a horizontal line separator. ( A quick label element )
+	   @param forceStyle Set a border style (0-6) - Default to same style as the window border
 	**/
 	public function addSeparator(forceStyle:Int = 0)
 	{
@@ -407,11 +408,14 @@ class Window extends BaseElement
 	
 	
 	/**
-	   Open a SubWindow as MODAL
+	   Open a SubWindow as MODAL. Meaning, lockfocus the new window 
+	   and return focus to this window on new window close
+	   @param w The window to open as subwindow
+	   @param anim Animate the window to open
 	**/
 	public function openSub(w:Window, anim:Bool = false)
 	{
-		flag_once_focusLast = true;
+		flag_return_focus_once = true;
 		
 		if (anim) 
 			w.openAnimated(); 
@@ -419,15 +423,6 @@ class Window extends BaseElement
 			w.open(true);
 	}//---------------------------------------------------;
 	
-	
-	/**
-		Align this window to the WM Viewport
-	**/
-	public function screenCenter()
-	{
-		pos( Std.int(WM.width / 2 - width / 2) ,
-			 Std.int(WM.height / 2 - height / 2) );
-	}//---------------------------------------------------;
 	
 	/**
 	   - Focus this window
@@ -459,10 +454,10 @@ class Window extends BaseElement
 		lockDraw = false;
 		// Focus an element
 		if (display_list.length == 0) return;
-		if (flag_once_focusLast && active_last != null)
+		if (flag_return_focus_once && active_last != null)
 		{
 			active_last.focus();
-			flag_once_focusLast = false;
+			flag_return_focus_once = false;
 		}else
 		{
 			// Focus the first selectable element :
@@ -635,7 +630,7 @@ class Window extends BaseElement
 		// Pipe callbacks to user
 		callback(st, el);
 	}//---------------------------------------------------;
-	
+
 	//====================================================;
 	// GETTER, SETTERS
 	//====================================================;
@@ -670,6 +665,13 @@ class Window extends BaseElement
 			border_el.draw();
 			if (title_el != null) title_el.draw();
 		}
+		
+		#if debug
+		if (borderStyle > 0 && (padX == 0 || padY == 0))
+		{
+			trace('WARNING: Window "SID:${SID}" should have padding since it uses a border style');
+		}
+		#end
 		
 		return val;
 	}//---------------------------------------------------;

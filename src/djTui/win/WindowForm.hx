@@ -12,7 +12,7 @@ import djTui.el.TextInput;
 import djTui.el.Toggle;
 
 /**
- * A class for easily creating Forms ( LABEL + Menu Element )
+ * A class for easily creating Forms ( single line | LABEL + Menu Element | )
  * 
  * - adds menu elements with a label associated with them
  * - use setAlign(..) to set alignment

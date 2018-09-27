@@ -58,7 +58,7 @@ class BaseElement
 	
 	/// FLAGS ::
 	
-	// If false then the element cannot be focused and will be skipped
+	/** If false then the element cannot be focused*/
 	public var flag_focusable:Bool = true;
 	
 	// Some Elements like the VLIST and TEXTBOX, handle leaving focus themselves

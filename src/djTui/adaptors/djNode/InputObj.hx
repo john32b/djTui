@@ -35,6 +35,12 @@ class InputObj implements IInput
 				case KeycodeID.tab: "tab";
 				case KeycodeID.home: "home";
 				case KeycodeID.end: "end";
+				case KeycodeID.F1: "F1";
+				case KeycodeID.F2: "F2";
+				case KeycodeID.F3: "F3";
+				case KeycodeID.F4: "F4";
+				case KeycodeID.F5: "F5";
+				
 				default: ""; // Other
 			});
 		

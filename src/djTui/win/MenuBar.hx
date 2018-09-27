@@ -13,6 +13,7 @@ import djTui.el.Button;
  * 	- Callbacks on `fire` and on `change`
  *  - Currently acts like a TAB Selection with no popup menus
  *  - Customizable
+ *  - setPanelStyle(), setItemStyle() for customization
  * 
  * TODO:
  * 	- Popup menus support for items
@@ -50,7 +51,7 @@ class MenuBar extends Window
 	
 	/**
 	   Create a MenuBar
-	   Call `setup()` first for styling and then `set()` to push data
+	   Call `setup()` first for styling and then `setItems()` to push data
 	   @param	Sid Set an SID to have it pushed to the global WM.DB object
 	   @param	Width -1 For full screen width. If Size too small for items, it will be resized
 	   @param	Side Window Padding.
@@ -66,7 +67,7 @@ class MenuBar extends Window
 	
 	/**
 	   Setup the item/button Style
-	   ! Call this BEFORE set();
+	   ! Call this BEFORE setItems();
 	   @param	Align Align inside the panel (left,center)
 	   @param	FixedSize Force this size to all items ( Be careful with pad0 and pad1 )
 	   @param	SymbolID Side symbol for items, (0..4) | 0 for none 
@@ -101,7 +102,7 @@ class MenuBar extends Window
 	
 	/**
 	 * Setup Panel Styles
-	   @ Call this BEFORE set();
+	   @ Call this BEFORE setItems();
 	   @param col0 The background color
 	   @param col1 The accent color
 	   @param Gstyle -1:Thin, 0:Thick, 1-6:Thick with border style  ( Defined in Styles.border object )
@@ -148,7 +149,7 @@ class MenuBar extends Window
 	   Will reset cursor to the first element
 	   @param	ar Item Names in an array
 	**/
-	public function set(ar:Array<String>):MenuBar
+	public function setItems(ar:Array<String>):MenuBar
 	{
 		if (ar == null) return this;
 		
@@ -270,7 +271,7 @@ class MenuBar extends Window
 	**/
 	override public function setData(val:Any) 
 	{
-		set(cast(val, String).split(','));
+		setItems(cast(val, String).split(','));
 	}//---------------------------------------------------;
 	
 	/** Return current selected INDEX */

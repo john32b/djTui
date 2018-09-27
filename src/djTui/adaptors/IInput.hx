@@ -16,6 +16,8 @@ package djTui.adaptors;
  * 		tab,
  * 		home,end
  * 
+ *   - Fkeys :  F1, F2, ...., F12
+ * 
  *	 -	regular key ascii, (e.g. 'k')
  * 
  */

@@ -24,6 +24,9 @@ class WM
 
 	// Drawing operations objects
 	public static var D(default, null):Draw;
+	
+	// Alignment functions
+	public static var A(default, null):Align;
 
 	// A created Input Renderer
 	static var I(default, null):IInput;
@@ -44,7 +47,8 @@ class WM
 	// Pointer to currently active/focused window
 	static var active:Window;
 	
-	// Pointer to the last active window, useful to have when closing windows
+	// Pointer to the last active window, 
+	// It is used to focus the last window when a window closes
 	static var active_last:Window;
 	
 	/// Global Styles :
@@ -75,7 +79,7 @@ class WM
 	static var _TAB_TYPE:String;
 	
 	#if debug
-	/** Applies to windows. Will trace all callback messages */
+	/** Applies to windows. Will trace all ELEMENT callback messages (not window callbacks)*/
 	public static var flag_debug_trace_element_callbacks:Bool = false;
 	#end
 	
@@ -102,6 +106,7 @@ class WM
 		T = t;
 		D = new Draw();
 		DB = new Map();
+		A = new Align();
 		STATE = new WindowStateManager();
 		
 		if (width <= 0) width = T.MAX_WIDTH;
@@ -170,7 +175,8 @@ class WM
 	
 	
 	/**
-	   Adds a window to the display list
+	   Adds a window to the display list. 
+	   Alternatively you can call window.open() or .openAnimated()
 	   @param	w The window to add
 	   @param	autoFocus Focus the window?
 	**/
@@ -183,7 +189,7 @@ class WM
 		if (w.y < 0) w.pos(w.x, 0); else
 		if (w.y + w.height > height) w.pos(w.x, height - w.height);
 		
-		trace('Adding Window : UID:${w.UID}, SID:${w.SID} | Size: (${w.width},${w.height}) | Pos: ${w.x},${w.y} ');
+		trace('WM -> Adding Window : UID:${w.UID}, SID:${w.SID} | Size: (${w.width},${w.height}) | Pos: ${w.x},${w.y} ');
 		
 		// --
 		if (win_list.indexOf(w) == -1)
@@ -212,28 +218,33 @@ class WM
 	**/
 	public static function addTiled(w_arr:Array<Window>, ?from:Window)
 	{
-		var ww:Window = from; // Temp
+		var nY = 0;
+		if (from != null) nY = from.y + from.height;
+		A.inLine(w_arr, nY);
+		for ( i in w_arr) add(i);
 		
-		var nextX:Int = 0; 
-		var nextY:Int = 0; 
 		
-		if (ww == null && win_list.length > 0)
-		{
-			ww = win_list[win_list.length - 1];
-		}
-		
-		if (ww != null)
-		{
-			nextY = ww.y + ww.height;
-		}
-		
-		var c:Int = 0;
-		do {
-			ww = w_arr[c];
-			ww.pos(nextX, nextY);
-			add(ww, false);
-			nextX = ww.x + ww.width;
-		}while (++c < w_arr.length);
+		//var ww:Window = from; // Temp
+		//var nextX:Int = 0; 
+		//var nextY:Int = 0; 
+		//
+		//if (ww == null && win_list.length > 0)
+		//{
+			//ww = win_list[win_list.length - 1];
+		//}
+		//
+		//if (ww != null)
+		//{
+			//nextY = ww.y + ww.height;
+		//}
+		//
+		//var c:Int = 0;
+		//do {
+			//ww = w_arr[c];
+			//ww.pos(nextX, nextY);
+			//add(ww, false);
+			//nextX = ww.x + ww.width;
+		//}while (++c < w_arr.length);
 		
 	}//---------------------------------------------------;
 		
@@ -278,7 +289,7 @@ class WM
 		{
 			active = null;
 			
-			if (active_last != null) 
+			if (active_last != null && active_last.visible == true) 
 			{
 				active_last.focus();
 			}
@@ -303,7 +314,7 @@ class WM
 	// --
 	static function _onKey(key:String)
 	{
-		if (_TAB_LEVEL == 1 && key == "tab")
+		if (_TAB_LEVEL == 2 && key == "tab")
 		{
 			// If a window is already locked, don't switch windows
 			// just send 'tab' to that window
@@ -315,7 +326,7 @@ class WM
 			
 			if (active != null && _TAB_TYPE == "keep")
 			{
-				active.flag_once_focusLast = true;
+				active.flag_return_focus_once = true;
 			}
 			
 			focusNext();

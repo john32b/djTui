@@ -259,7 +259,7 @@ class ButtonGrid extends Window
 	// Adjust pointer location
 	override public function focus() 
 	{
-		if (!flag_once_focusLast || active_last == null)
+		if (!flag_return_focus_once || active_last == null)
 		{
 			c_x = 0;
 			c_y = 0;
