@@ -30,9 +30,10 @@ class WindowState
 
 	/** Add a window to state
 	 */
-	public function add(win:Window)
+	public function add(win:Window):Window
 	{
 		list.push(win);
+		return win;
 	}
 	
 	/**

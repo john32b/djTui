@@ -109,8 +109,9 @@ class State_Misc_01 extends WindowState
 	function getWindowNav_test():Window
 	{
 		
-		var w = new ButtonGrid( -3, -2, 2, 1);
-			w.setButtonStyle(7, 0, 0, 1 ).enableSeparators();
+		var w = new ButtonGrid(null, -3, -2, 2);
+			w.setButtonStyle(7, 0, 0, 1 );
+			w.setColumnStyle(0, 2, 1);
 			w.add(0, "Style", "s1");
 			w.add(0, "Exit", "s2");
 			w.add(1, "Btn 3");

@@ -18,7 +18,7 @@ class ButtonGrid extends Window
 	// DEV: You can adjust the positioning of columns after size();
 	public var col_pos:Array<Int>;
 	
-	// Which elements go in which column
+	// Which elements go in which column. Store all buttons here
 	var col_el:Array<Array<BaseElement>>;
 	
 	// Number of columns
@@ -29,7 +29,7 @@ class ButtonGrid extends Window
 	var c_y:Int;
 	
 	// Vertical Pad betwen elements
-	var pad_el:Int; 
+	var pad_el:Int = 0;
 	
 	// If true, will loop on the edges
 	public var flag_loop:Bool = false;
@@ -44,32 +44,30 @@ class ButtonGrid extends Window
 	var sep_enable:Bool = false;
 	var sep_symbol:String;
 
-	// - Maps <SID> to <CURSORPOS> of elements
+	// - Maps <SID> to <CURSORPOS> of all elements
+	//  CURSORPOS : `x,y` starting at 0,0 for top left
 	var posMap:Map<String,String>;
 	
 	/**
 	   @param	_w Width -
 	   @param	_h Height -
 	   @param	columns How many columns
-	   @param	elementPad Vertical Padding between elements
 	**/
-	public function new(?_sid:String, _w:Int = 20, _h:Int = 10, columns:Int = 2, elementPad:Int = 1)
+	public function new(?_sid:String, _w:Int = 20, _h:Int = 10, columns:Int = 2)
 	{
 		col_pos = [];
 		col_el = [];
 		c_x = 0; c_y = 0;
-		pad_el = elementPad;
 		col_count = columns;
 		posMap = new Map();
 		
-		// DevNote: Need to be last, because it trigers size() and col_pos needs to be initialized.
-		super(_sid, _w, _h); 
+		super(_sid, _w, _h); // Keep it last
 	}//---------------------------------------------------;
 
 	/**
 	   Sets button display mode
 	   ~ Call this before adding elements
-	   @param	buttonStyle Common button style for all buttons?
+	   @param	buttonStyle Common button style for all buttons? (0-4)
 	   @param	buttonWidth 0 for auto, other for forced width
 	   @param	padOut Symbol pad Outer
 	   @param	padIn Symbol pad Inner
@@ -83,38 +81,49 @@ class ButtonGrid extends Window
 		return this;
 	}//---------------------------------------------------;
 	
+	
 	/**
-	   Enables drawing of vertical separators between columns
-	   ~ Call right after new()
-	   @param	style Index in`styles.hx`.border to get the vertical symbol from. Defaults to border style
+	   Set a separator style for the columns and a padding 
+	   @param	sep  Separator symbol Index. -1 for none. 0 to follow border style. Else to apply border ID style
+	   @param	Xpad  Left Edge Padding 
+	   @param	Vpad  Vertical padding between elementrs
 	**/
-	public function enableSeparators(style:Int = 0):ButtonGrid
+	public function setColumnStyle(sep:Int = -1, Xpad:Int = 1, Vpad:Int = 0)
 	{
-		sep_enable = true;
-		if (style == 0)
+		pad_el = Vpad;
+		padX = Xpad;
+		
+		// -
+		if (sep >-1)
 		{
-			if (borderStyle > 0) style = borderStyle; else style = 1;
+			sep_enable = true;
+			if (sep == 0)
+			{
+				if (borderStyle > 0) sep = borderStyle; else sep = 1;
+			}
+			sep_symbol = Styles.border[sep].charAt(7);
+			
+			// Need to have a padding 
+			if (padX == 0) padX = 1;	
 		}
-		sep_symbol = Styles.border[style].charAt(7);
+		
+		setupColumns(); // Because paddingX might have changed
+	}//---------------------------------------------------;
+
+	override public function size(_w:Int, _h:Int):BaseElement 
+	{
+		super.size(_w, _h);
+		setupColumns();
 		return this;
 	}//---------------------------------------------------;
 	
 	/**
-	   Re-adjust column sizes. Usually called once
-	   IMPORTANT: Call this after padding()
-	   @return
+	   Calculate column sizes
 	**/
-	override public function size(_w:Int, _h:Int):BaseElement 
+	function setupColumns()
 	{
-		super.size(_w, _h);
-		// Precalculate column starting position
-		// DEV: Useful if I ever want to customize it later
-		var colWidth:Int = Math.floor(inWidth / col_count);
-		for (i in 0...col_count)
-		{
-			col_pos[i] = padX + colWidth * i;
-		}
-		return this;
+		var colWidth:Int = Math.floor(width / col_count);
+		for (i in 0...col_count) col_pos[i] = colWidth * i;
 	}//---------------------------------------------------;
 	
 	
@@ -148,7 +157,7 @@ class ButtonGrid extends Window
 	**/
 	public function putEl(col:Int, el:BaseElement)
 	{
-		var xx = x + col_pos[col] + 1;
+		var xx = x + col_pos[col] + padX;
 		var yy = y + padY;
 		
 		if (col_el[col] == null)
