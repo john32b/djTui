@@ -48,7 +48,7 @@ class MessageBox extends Window
 		style = WM.global_style_pop;
 		mbType = _type;
 		resultCallback = _resCallback;
-		flag_focus_lock = true;
+		flag_lock_focus = true;
 		padding(2, 1);
 		
 		// - Create the textbox

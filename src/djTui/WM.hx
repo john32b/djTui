@@ -4,6 +4,7 @@ package djTui;
 import djTui.adaptors.*;
 import djTui.Styles.WinStyle;
 import djTui.WindowState.WindowStateManager;
+import djTui.win.MessageBox;
 
 
 /**
@@ -70,13 +71,19 @@ class WM
 	/** Get global keystrokes. */
 	public static var onKey:String->Void = null;
 	
-	/// FLAGS :
+	/// Internal :
 	
 	// TAB Capture Level ( 0 = none, 1 = window, 2 = WM ) */
 	static var _TAB_LEVEL:Int;
 	// Encoded behavior, depends on _TAB_LEVEL */
 	@:allow(djTui.Window)
 	static var _TAB_TYPE:String;
+	
+	// If there is an active modal/popup. Else null.
+	static var activeModal:Window;
+	
+	/// FLAGS :
+	
 	
 	#if debug
 	/** Applies to windows. Will trace all ELEMENT callback messages (not window callbacks)*/
@@ -207,6 +214,7 @@ class WM
 	}//---------------------------------------------------;
 	
 	
+	
 	/**
 	  = Position windows to the viewport with a tiled layout 
 	   - WARNING, assumes empty display list
@@ -222,32 +230,66 @@ class WM
 		if (from != null) nY = from.y + from.height;
 		A.inLine(w_arr, nY);
 		for ( i in w_arr) add(i);
-		
-		
-		//var ww:Window = from; // Temp
-		//var nextX:Int = 0; 
-		//var nextY:Int = 0; 
-		//
-		//if (ww == null && win_list.length > 0)
-		//{
-			//ww = win_list[win_list.length - 1];
-		//}
-		//
-		//if (ww != null)
-		//{
-			//nextY = ww.y + ww.height;
-		//}
-		//
-		//var c:Int = 0;
-		//do {
-			//ww = w_arr[c];
-			//ww.pos(nextX, nextY);
-			//add(ww, false);
-			//nextX = ww.x + ww.width;
-		//}while (++c < w_arr.length);
-		
 	}//---------------------------------------------------;
 		
+	
+	
+	/**
+	   Declare how the Window/Element focus will behave upon [TAB] key. Along with some optional parameters.
+	   I am offering this because some application setups require different approaches to UI.
+	   
+	   @param	level   Where the focus of the [TAB] key should reach | NONE, WM, WINDOW
+	   @param	param   WM 	   :  "keep" , remember active element on windows when switching back to them
+						WINDOW :  "exit" , exit focus from the window to the next available window ( instead of looping )
+	**/
+	public static function set_TAB_behavior(level:String = "WINDOW", param:String = "")
+	{
+		_TAB_TYPE = param;
+		_TAB_LEVEL = ["NONE", "WM", "WINDOW"].indexOf(level);
+		if (_TAB_LEVEL < 0) {
+				throw "set_TAB_behavior invalid level ID";
+		}
+	}//---------------------------------------------------;
+	
+	
+	/**
+	   Show a YES/NO popup as a modal under current active window. Callbacks the result.
+	   @param	callback. Will call this if selected YES
+	   @param	Q Custom Question. Default for "Are you Sure"
+	   @param	pos [x,y], Null for center
+	**/
+	public static function popupConfirm(callback:Void->Void, ?Q:String, ?pos:Array<Int> )
+	{
+		var m = new MessageBox(Q, 2, function(res){
+			if (res == 0) callback();
+		});
+		
+		m.flag_close_on_esc = true;
+		
+		if (pos == null)
+			A.screen(m);
+		else
+			m.pos(pos[0], pos[1]);
+		
+		if (active != null)
+			active.openSub(m, true);
+		else
+			m.openAnimated();
+		
+	}//---------------------------------------------------;
+	
+
+	/**
+	   Clear all the stored windows. Does not actually destroy the windows
+	**/
+	public static function clearDB()
+	{
+		DB = new Map();
+	}//---------------------------------------------------;
+			
+	
+	
+	
 	//====================================================;
 	// INTERNAL 
 	//====================================================;
@@ -308,17 +350,41 @@ class WM
 	}//---------------------------------------------------;
 	
 	
+	
+	
+	
+	
 	//====================================================;
 	// EVENTS 
 	//====================================================;
 	// --
+	/**
+	   DEVNOTES:
+		- [TAB],[ESC] keys do not get passed to the active window
+		- Everything else does
+		
+	**/
 	static function _onKey(key:String)
 	{
+		
+		if (key == "esc")
+		{
+			if (active != null && active.flag_close_on_esc)
+				active.close();
+			else
+			{
+				if (STATE.handleESC())
+				{
+					return; // The window state is going to change, no need to continue
+				}
+			}
+		}else
+		
 		if (_TAB_LEVEL == 2 && key == "tab")
 		{
 			// If a window is already locked, don't switch windows
 			// just send 'tab' to that window
-			if (active != null && active.flag_focus_lock)
+			if (active != null && active.flag_lock_focus)
 			{
 				active.onKey('tab');
 				return;
@@ -337,6 +403,7 @@ class WM
 		{
 			active.onKey(key);
 		}
+		
 		
 		// Push to user
 		if (onKey!=null) onKey(key);
@@ -372,20 +439,5 @@ class WM
 	}//---------------------------------------------------;
 	
 	
-	/**
-	   Declare how the Window/Element focus will behave upon [TAB] key. Along with some optional parameters.
-	   I am offering this because some application setups require different approaches to UI.
-	   
-	   @param	level   Where the focus of the [TAB] key should reach | NONE, WM, WINDOW
-	   @param	param   WM 	   :  "keep" , remember active element on windows when switching back to them
-						WINDOW :  "exit" , exit focus from the window to the next available window ( instead of looping )
-	**/
-	public static function set_TAB_behavior(level:String = "WINDOW", param:String = "")
-	{
-		_TAB_TYPE = param;
-		_TAB_LEVEL = ["NONE", "WM", "WINDOW"].indexOf(level);
-		if (_TAB_LEVEL < 0) {
-				throw "set_TAB_behavior invalid level ID";
-		}
-	}//---------------------------------------------------;
+
 }//- end class-

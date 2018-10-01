@@ -62,7 +62,7 @@ class Window extends BaseElement
 	var display_list:Array<BaseElement>;
 
 	// Current Focused Element ( null if none )
-	var active:BaseElement;
+	public var active(default, null):BaseElement;
 	
 	// Previously Focused element before current one ( null if none)  
 	var active_last:BaseElement;
@@ -74,23 +74,20 @@ class Window extends BaseElement
 	//    Will push custom window statuses and
 	//    all children element statuses as
 	//  DEVNOTE: I don't use the `callbacks` pool on purpose. Don't change it.
-	@:allow(djTui.WM)
+		@:allow(djTui.WM)
 	var callback_wm:String->Window->Void;
 
-	
 	/// FLAGS :
-	// It is best to set flags right after new()
 	
-	/** DO NOT allow focus to leave from this window (with TAB key or other rules) */
-	public var flag_focus_lock:Bool = false;
-
-	/** If true, when this window gets focus, will try to focus last element focused
-	 *  ! Will only apply once ! So it's needed to be set every time  */
-	@:allow(djTui.WM)
-	var flag_return_focus_once:Bool = false;
 	
 	/** If true, will close this window on `Escape` key. */
 	public var flag_close_on_esc:Bool = false;
+		
+	/** If true, when this window gets focus, will try to focus last element focused
+	 *  ! Will only apply once ! So it's needed to be set every time  */
+		@:allow(djTui.WM)
+	var flag_return_focus_once:Bool = false;
+	
 	
 	/**
 	   Create a Window
@@ -128,7 +125,7 @@ class Window extends BaseElement
 		
 		if (borderStyle > 0) 
 			padding(1, 1);
-			else
+		else
 			padding(0, 0);
 
 		size(_w, _h);
@@ -565,7 +562,7 @@ class Window extends BaseElement
 				
 				if (activeIsLastFocusable())
 				{
-					if (flag_focus_lock) 
+					if (flag_lock_focus) 
 						focusNext(true); 
 					else
 					{
@@ -581,9 +578,7 @@ class Window extends BaseElement
 				}
 					
 			case 'esc':
-				if (flag_close_on_esc) 
-					close(); 
-				else 
+					// DEVNOTE: I am not sure if this is useful, since WM handles the ESC key
 					callback('escape');
 				
 			default:

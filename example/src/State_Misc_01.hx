@@ -19,6 +19,8 @@ class State_Misc_01 extends WindowState
 	{
 		super("state_misc");
 		
+		exitToState = "main";
+		
 		var w1 = getTextbox_test();
 		var w2 = getWindow_Vlist_test();
 		var w3 = getWindowNav_test();
@@ -52,10 +54,11 @@ class State_Misc_01 extends WindowState
 			});
 			
 			w.title = "Textbox";
-		var t = new TextBox(w.inWidth, w.inHeight);
+		var t = new TextBox(w.inWidth, w.inHeight-1);
 			t.flag_scrollbar_autohide = false;
-			w.addStack(t);		
 			t.setData("A computer is a device that can be instructed to carry out sequences of arithmetic or logical operations automatically via computer programming. Modern computers have the ability to follow generalized sets of operations, called programs. These programs enable computers to perform an extremely wide range of tasks.Computers are used as control systems for a wide variety of industrial and consumer devices. This includes simple special purpose devices like microwave ovens and remote controls, factory devices such as industrial robots and computer-aided design, and also general purpose devices like personal computers and mobile devices such as smartphones.");
+			w.addStack(t);
+			w.addStackInline([new Button("", "clear").onPush(function(){ t.reset(); })], 0, 0, "center");
 		return w;
 		
 		// ^ testing adding before

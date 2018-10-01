@@ -18,11 +18,10 @@ import djTui.Tools;
  * 
  * EXTRA Functionality 
  * -------------
- *  You can set some Extra Functionality by calling extra(...)
+ *  You can set some Extra Functionality by calling `extra(..)`
  *   - Auto-open a specified window on click (can customize position)
  *   - Auto-open a WindowState on click
- *   - Auto-Confirmation (YES/NO) on click, (customizable question)
- * 
+ *   - Auto-Confirmation (YES/NO) on click, (customizable question) use with `.confirm()` or `.extra()`
  * 
  * TAGS in SID
  * ---------------
@@ -62,8 +61,7 @@ class Button extends BaseMenuItem
 	
 	// Extra function called when this button is pushed
 	var extra_onPush:Void->Void;
-	
-	
+		
 	/** If true, will request next/previous element focus upon left/right keys
 	 *  Useful in cases where you put buttons in a single line */
 	public var flag_leftright_escape:Bool = false;
@@ -189,23 +187,6 @@ class Button extends BaseMenuItem
 		return extra(s);
 	}//---------------------------------------------------;
 	
-	/**
-	   Present the confirmation box and functionality
-	**/
-	function confirm_action()
-	{
-		var m = new MessageBox(xtr.confQ, 2, function(res){
-			if (res == 0) action();
-		});
-		
-		if (xtr.center != null)
-			WM.A.screen(m);
-		else
-			m.pos(x, y + 1);
-		
-		parent.openSub(m, true);
-	}//---------------------------------------------------;
-	
 	
 	/**
 	   Act what the button is supposed to do,
@@ -264,7 +245,7 @@ class Button extends BaseMenuItem
 		{
 			if (xtr != null && xtr.conf != null)
 			{
-				confirm_action(); // will call action() from there
+				WM.popupConfirm(action, xtr.confQ, xtr.center == null?[x, y + 1]:null);
 			}else
 			{
 				action();

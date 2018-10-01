@@ -68,10 +68,10 @@ class VList extends TextBox
 	// --
 	override function onKey(k:String):Void 
 	{
-		
-		if (flag_empty) {
-			if (k == "up") parent.focusPrev(); else
-			if (k == "down") parent.focusNext(false);
+		if (flag_empty) 
+		{
+			// Let textbox handle focusing other elements
+			super.onKey(k);
 			return;
 		}
 		

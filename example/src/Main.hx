@@ -64,9 +64,9 @@ class Main extends BaseApp
 		
 		#if (debug && false) // quickly go to a state
 		
-		var st = new State_ButtonGrid();
-		st.open();
-		return;
+		//var st = new State_ButtonGrid();
+		//st.open();
+		//return;
 		
 		#end
 		
@@ -101,11 +101,12 @@ class Main extends BaseApp
 		
 		var states:Map<String,Class<WindowState>> = [
 			"Misc_01" => State_Misc_01,
+			"Button Grid" => State_ButtonGrid,
+			
 			"Textboxes" => State_Textbox,
 			"Buttons" => State_Textbox,
 			"Labels" => State_Textbox,
 			"Window Form" => State_Textbox,
-			"Button Grid" => State_Textbox
 		];
 		
 		// NOTE: -2,-2 = half the screen width, half the screen height
@@ -140,19 +141,22 @@ class Main extends BaseApp
 			qWin.onSelect = function(s){
 				if (s == 0)
 				{
-					Sys.exit(0);
+					var a = qWin.active;
+					var p = [a.x - 2, a.y - 2];
+					WM.popupConfirm(function(){Sys.exit(0); }, "Really Quit",p);
+					
 				}else
 				{
 					var m = new MessageBox("Re-inventing the wheel for no particular reason.", 0);
-						WM.A.screen(m);
-						m.openAnimated();
+						m.flag_close_on_esc = true;
+						WM.A.screen(m).move(2, 2);
+						qWin.openSub(m, true);
 				}
 			}
 			
 		// Dynamically create a state with those 2 windows
 		// This way I can open/close quickly
 		WM.STATE.create("main", [head, menu, qWin]);
-		
 		
 		WM.STATE.goto("main");
 		

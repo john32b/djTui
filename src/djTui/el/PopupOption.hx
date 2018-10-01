@@ -57,7 +57,7 @@ class PopupOption extends BaseMenuItem
 		// --
 		win = new Window(1);
 		win.padding(1, 1).size(_width, slots + 2);
-		win.flag_focus_lock = true;
+		win.flag_lock_focus = true;
 		win.flag_close_on_esc = true;
 		
 		// --

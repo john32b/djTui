@@ -17,6 +17,11 @@ class WindowState
 	// A unique identifier/name
 	public var SID(default, null):String;
 	
+	// If set, whenever the [ESC] key is pressed, this state will exit and call [exitToState] State
+	// #USER SET
+	public var exitToState:String;
+	
+	
 	/**
 	   Create a Window State
 	   @param	name Unique Name
@@ -61,7 +66,8 @@ class WindowState
 	public function open(?data:Dynamic)
 	{
 		for (w in list) w.open();
-		list[0].focus();
+		// Focus first focusable Window
+		BaseElement.focusNext(cast list, null);
 	}
 	
 }//---------------------------------------------------;
@@ -194,6 +200,20 @@ class WindowStateManager
 	{
 		states = new Map();
 		current = null;
+	}//---------------------------------------------------;
+	
+	/**
+	   Handles ESC key, Returns True if handled
+	   @return
+	**/
+	public function handleESC():Bool
+	{
+		if (current != null && current.exitToState != null)
+		{
+			goto(current.exitToState);
+			return true;
+		}
+		return false;
 	}//---------------------------------------------------;
 	
 	

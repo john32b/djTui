@@ -62,7 +62,11 @@ class TextBox extends BaseElement
 	// --
 	override function onKey(k:String):Void 
 	{
-		if (flag_empty) return;
+		if (flag_empty) {
+			if (k == "up") parent.focusPrev(); else
+			if (k == "down") parent.focusNext(false);
+			return;
+		}
 		
 		switch(k)
 		{

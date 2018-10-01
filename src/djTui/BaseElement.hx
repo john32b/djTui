@@ -61,9 +61,8 @@ class BaseElement
 	/** If false then the element cannot be focused*/
 	public var flag_focusable:Bool = true;
 	
-	// Some Elements like the VLIST and TEXTBOX, handle leaving focus themselves
-	@:allow(djTui.Window)
-	var flag_lock_focus:Bool = false;
+	/** DO NOT allow focus to leave from this element/window (with TAB key or other rules) */
+	public var flag_lock_focus:Bool = false;
 	
 	//====================================================;
 	
