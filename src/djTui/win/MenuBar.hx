@@ -66,7 +66,7 @@ class MenuBar extends Window
 	}//---------------------------------------------------;
 	
 	/**
-	   Setup the item/button Style
+	   Setup the item/	button Style
 	   ! Call this BEFORE setItems();
 	   @param	Align Align inside the panel (left,center)
 	   @param	FixedSize Force this size to all items ( Be careful with pad0 and pad1 )

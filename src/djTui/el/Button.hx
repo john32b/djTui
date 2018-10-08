@@ -77,8 +77,13 @@ class Button extends BaseMenuItem
 	{
 		super(sid);
 		#if debug
-			if (BtnStyle > SMB.length) BtnStyle = SMB.length;
+			if (BtnStyle > SMB.length) 
+			{
+				BtnStyle = SMB.length;
+				trace("WARNING: Button Style > Available. For button", this);
+			}
 		#end
+		
 		type = ElementType.button;
 		height = 1;
 		textWidth = Width;

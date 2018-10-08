@@ -132,7 +132,8 @@ class Window extends BaseElement
 	}//---------------------------------------------------;
 	
 	/**
-	   Will modify specific fields of the style object. See `Styles.WinStyle` for the fields
+	   Will modify specific fields of the style object. 
+	   See `Styles.WinStyle` for the fields
 	   
 	  ! IMPORTANT : Call this before adding child elements.
 		e.g. window.modifyStyle( { text:"red",bg:"black"} );

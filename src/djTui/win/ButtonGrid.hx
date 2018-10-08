@@ -7,9 +7,10 @@ import djTui.el.Button;
  * A Table/grid of buttons where you can select between them using the arrow keys
  * --
  * - Multiple columns
- * - new().padding().size(); 	in this order only 
- * - primarily used for adding buttons, but you can add anything else with put();
- * - use getData() to get current cursor position	
+ * - Primarily used for adding buttons, but you can add anything else with put();
+ * - use getData() to get current cursor position
+ * - setButtonStyle() to customize buttons
+ * - setColumnStyle() to customize padding and separator
  */
 class ButtonGrid extends Window 
 {
@@ -84,6 +85,7 @@ class ButtonGrid extends Window
 	
 	/**
 	   Set a separator style for the columns and a padding 
+	   NOTE: the separator color is `style.text`. This is if you want a different color than the border
 	   @param	sep  Separator symbol Index. -1 for none. 0 to follow border style. Else to apply border ID style
 	   @param	Xpad  Left Edge Padding 
 	   @param	Vpad  Vertical padding between elementrs
@@ -284,7 +286,7 @@ class ButtonGrid extends Window
 		super.draw();
 		if (sep_enable)
 		{
-			_readyCol();
+			_readyCol(); // <-- draw separator with BG,FG
 			for (i in 1...col_count)
 			{
 				WM.D.lineV(x + col_pos[i], y + padY, height - (padY * 2), sep_symbol);

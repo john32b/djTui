@@ -13,13 +13,13 @@ import djTui.Styles.PrintColor;
 class VList extends TextBox 
 {
 	
-	// Currently selected index
+	/** Currently selected element index. Starting at 0 for the first one */
 	public var index(default, null):Int;
 	
 	// Current slot the cursor/highlighted element is at
 	var index_slot:Int;
 	
-	// Scroll the view when the cursor is this much from the edge
+	/* USERSET -  Scroll the view when the cursor is this much from the edge */
 	public var scrollPad:Int = 1;
 
 	// The maximum index the cursor can get ( the number of elements )

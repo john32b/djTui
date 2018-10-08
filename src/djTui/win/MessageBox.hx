@@ -1,6 +1,7 @@
 package djTui.win;
 
 import djTui.BaseElement;
+import djTui.Styles.WinStyle;
 import djTui.el.Button;
 import djTui.el.TextBox;
 
@@ -42,14 +43,19 @@ class MessageBox extends Window
 	   @param	_resCallback fn(int) -> index of button clicked
 	   @param	_width
 	**/
-	public function new(text:String, _type:Int, ?_resCallback:Int->Void, _width:Int = 30) 
+	public function new(text:String, _type:Int, ?_resCallback:Int->Void, _width:Int = 30, ?_style:WinStyle) 
 	{
 		super();
-		style = WM.global_style_pop;
+		if(_style==null)
+			style = WM.global_style_pop;
+			else
+			style = _style;
+		
 		mbType = _type;
 		resultCallback = _resCallback;
 		flag_lock_focus = true;
 		padding(2, 1);
+		
 		
 		// - Create the textbox
 		tbox = new TextBox(_width - 2, 0);
@@ -115,9 +121,9 @@ class MessageBox extends Window
 	   @param	_resCallback fn(int) -> index of button clicked
 	   @param	_width
 	**/
-	public static function create(text:String, _type:Int, ?_resCallback:Int->Void, _width:Int = 30)
+	public static function create(text:String, _type:Int, ?_resCallback:Int->Void, _width:Int = 30, ?_style:WinStyle)
 	{
-		var m = new MessageBox(text, _type, _resCallback, _width);
+		var m = new MessageBox(text, _type, _resCallback, _width,_style);
 			WM.A.screen(m);
 			m.openAnimated();
 	}//---------------------------------------------------;

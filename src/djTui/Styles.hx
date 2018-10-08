@@ -46,8 +46,8 @@ typedef WinStyle =
 	scrollbar_idle:PrintColor,
 	?scrollbar_focus:PrintColor,
 	
-	textbox:PrintColor,
-	?textbox_focus:PrintColor,
+	textbox:PrintColor,			// Also for Vlist
+	?textbox_focus:PrintColor,	// Also for Vlist
 	
 	vlist_cursor:PrintColor
 }// --
@@ -113,6 +113,7 @@ class Styles
 		win = new Map();
 		win.set("default", createWinStyle("green", "blue", "white", "black"));
 		win.set("default_pop", createWinStyle("green", "black", "white", "blue"));
+		win.set("error", createWinStyle("yellow", "red", "yellow", "red"));
 		
 	}//---------------------------------------------------;
 	

@@ -17,9 +17,9 @@ class WindowState
 	// A unique identifier/name
 	public var SID(default, null):String;
 	
-	// If set, whenever the [ESC] key is pressed, this state will exit and call [exitToState] State
+	// If set, whenever the [ESC] key is pressed, this state will exit and call [onEscGoto] State
 	// #USER SET
-	public var exitToState:String;
+	public var onEscGoto:String;
 	
 	
 	/**
@@ -208,9 +208,9 @@ class WindowStateManager
 	**/
 	public function handleESC():Bool
 	{
-		if (current != null && current.exitToState != null)
+		if (current != null && current.onEscGoto != null)
 		{
-			goto(current.exitToState);
+			goto(current.onEscGoto);
 			return true;
 		}
 		return false;
