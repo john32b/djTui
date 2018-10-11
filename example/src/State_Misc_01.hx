@@ -19,16 +19,19 @@ class State_Misc_01 extends WindowState
 	{
 		super("state_misc");
 		
-		exitToState = "main";
+		onEscGoto = "main";
 		
 		var w1 = getTextbox_test();
 		var w2 = getWindow_Vlist_test();
-		var w3 = getWindowNav_test();
+		var w3 = getWindowNav_test(); // <-- error in releas
 		var w4 = getWindowForm_test();
+		
 		// First row
 		WM.A.inLine([w3, w4], 0);
 		WM.A.inLine([w1, w2], w1.y + w1.height);
 		list = [w1, w2, w3, w4];
+		
+
 	}//---------------------------------------------------;
 	
 	
@@ -113,48 +116,48 @@ class State_Misc_01 extends WindowState
 	{
 		
 		var w = new ButtonGrid(null, -3, -2, 2);
-			w.setButtonStyle(7, 0, 0, 1 );
+			w.setButtonStyle(9, 0, 0, 1 );
 			w.setColumnStyle(0, 2, 1);
 			w.add(0, "Style", "s1");
 			w.add(0, "Exit", "s2");
 			w.add(1, "Btn 3");
 			w.add(1, "Btn 4");
-			
-		w.listen( function(a, b)
-		{
-			if (a == "focus")
-			{
-				trace("Cursor POS " + w.getData());
-			}
-			
-			if (a == "fire")
-			{
-				if (b.SID == "s1") // Toy around with colors
-				{
-					// This alters the style for the already open windows
-					// It is buggy, It's better to alter the default style and close and recreate all the windows
-					for (i in WM.win_list)
-					{
-						i.modifyStyle(
-						{
-							bg: Tools.randAr([ "darkgray", "black", "darkred", "darkmagenta", "darkblue", "darkcyan" ]),
-							
-							borderColor:{
-								fg:Tools.randAr([ "darkgray", "black", "darkred", "darkmagenta", "darkblue", "darkcyan" ]),
-								bg:Tools.randAr([ "darkgray", "black", "darkred", "darkmagenta", "darkblue", "darkcyan" ])
-							}
-						});
-						i.borderStyle = Std.random(7);
-						i.draw();
-					}
-				}else
-				if (b.SID == "s2")
-				{
-					// Will autoclose this state and goto the main state
-					WM.STATE.goto("main");
-				}
-			}
-		});
+			//
+		//w.listen( function(a, b)
+		//{
+			//if (a == "focus")
+			//{
+				//trace("Cursor POS " + w.getData());
+			//}
+			//
+			//if (a == "fire")
+			//{
+				//if (b.SID == "s1") // Toy around with colors
+				//{
+					//// This alters the style for the already open windows
+					//// It is buggy, It's better to alter the default style and close and recreate all the windows
+					//for (i in WM.win_list)
+					//{
+						//i.modifyStyle(
+						//{
+							//bg: Tools.randAr([ "darkgray", "black", "darkred", "darkmagenta", "darkblue", "darkcyan" ]),
+							//
+							//borderColor:{
+								//fg:Tools.randAr([ "darkgray", "black", "darkred", "darkmagenta", "darkblue", "darkcyan" ]),
+								//bg:Tools.randAr([ "darkgray", "black", "darkred", "darkmagenta", "darkblue", "darkcyan" ])
+							//}
+						//});
+						//i.borderStyle = Std.random(7);
+						//i.draw();
+					//}
+				//}else
+				//if (b.SID == "s2")
+				//{
+					//// Will autoclose this state and goto the main state
+					//WM.STATE.goto("main");
+				//}
+			//}
+		//});
 			
 		return w;
 		

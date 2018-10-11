@@ -1,7 +1,6 @@
 package djTui.el;
 
 import djTui.BaseElement;
-import djTui.win.MessageBox;
 import djTui.Tools;
 
 
@@ -246,7 +245,7 @@ class Button extends BaseMenuItem
 	// --
 	override function onKey(k:String):Void 
 	{
-		if (k == "enter" || k == "space") 
+		if ((k == "enter" || k == "space") && !disabled) 
 		{
 			if (xtr != null && xtr.conf != null)
 			{
@@ -255,7 +254,7 @@ class Button extends BaseMenuItem
 			{
 				action();
 			}
-		}
+		}else
 		
 		if (flag_leftright_escape)
 		{

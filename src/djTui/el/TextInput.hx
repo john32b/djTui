@@ -112,6 +112,8 @@ class TextInput extends BaseMenuItem
 	// --
 	override function onKey(k:String):Void 
 	{
+		if (disabled) return;
+		
 		switch(k)
 		{
 			case "backsp":

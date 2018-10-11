@@ -7,6 +7,152 @@ function $extend(from, fields) {
 	if( fields.toString !== Object.prototype.toString ) proto.toString = fields.toString;
 	return proto;
 }
+var EReg = function(r,opt) {
+	this.r = new RegExp(r,opt.split("u").join(""));
+};
+EReg.__name__ = ["EReg"];
+EReg.prototype = {
+	match: function(s) {
+		if(this.r.global) {
+			this.r.lastIndex = 0;
+		}
+		this.r.m = this.r.exec(s);
+		this.r.s = s;
+		return this.r.m != null;
+	}
+	,matched: function(n) {
+		if(this.r.m != null && n >= 0 && n < this.r.m.length) {
+			return this.r.m[n];
+		} else {
+			throw new js__$Boot_HaxeError("EReg::matched");
+		}
+	}
+	,matchedPos: function() {
+		if(this.r.m == null) {
+			throw new js__$Boot_HaxeError("No string matched");
+		}
+		return { pos : this.r.m.index, len : this.r.m[0].length};
+	}
+	,matchSub: function(s,pos,len) {
+		if(len == null) {
+			len = -1;
+		}
+		if(this.r.global) {
+			this.r.lastIndex = pos;
+			var tmp = this.r;
+			var tmp1 = len < 0 ? s : HxOverrides.substr(s,0,pos + len);
+			this.r.m = tmp.exec(tmp1);
+			var b = this.r.m != null;
+			if(b) {
+				this.r.s = s;
+			}
+			return b;
+		} else {
+			var b1 = this.match(len < 0 ? HxOverrides.substr(s,pos,null) : HxOverrides.substr(s,pos,len));
+			if(b1) {
+				this.r.s = s;
+				this.r.m.index += pos;
+			}
+			return b1;
+		}
+	}
+	,map: function(s,f) {
+		var offset = 0;
+		var buf_b = "";
+		while(true) {
+			if(offset >= s.length) {
+				break;
+			} else if(!this.matchSub(s,offset)) {
+				buf_b += Std.string(HxOverrides.substr(s,offset,null));
+				break;
+			}
+			var p = this.matchedPos();
+			buf_b += Std.string(HxOverrides.substr(s,offset,p.pos - offset));
+			buf_b += Std.string(f(this));
+			if(p.len == 0) {
+				buf_b += Std.string(HxOverrides.substr(s,p.pos,1));
+				offset = p.pos + 1;
+			} else {
+				offset = p.pos + p.len;
+			}
+			if(!this.r.global) {
+				break;
+			}
+		}
+		if(!this.r.global && offset > 0 && offset < s.length) {
+			buf_b += Std.string(HxOverrides.substr(s,offset,null));
+		}
+		return buf_b;
+	}
+	,__class__: EReg
+};
+var HxOverrides = function() { };
+HxOverrides.__name__ = ["HxOverrides"];
+HxOverrides.dateStr = function(date) {
+	var m = date.getMonth() + 1;
+	var d = date.getDate();
+	var h = date.getHours();
+	var mi = date.getMinutes();
+	var s = date.getSeconds();
+	return date.getFullYear() + "-" + (m < 10 ? "0" + m : "" + m) + "-" + (d < 10 ? "0" + d : "" + d) + " " + (h < 10 ? "0" + h : "" + h) + ":" + (mi < 10 ? "0" + mi : "" + mi) + ":" + (s < 10 ? "0" + s : "" + s);
+};
+HxOverrides.strDate = function(s) {
+	var _g = s.length;
+	switch(_g) {
+	case 8:
+		var k = s.split(":");
+		var d = new Date();
+		d["setTime"](0);
+		d["setUTCHours"](k[0]);
+		d["setUTCMinutes"](k[1]);
+		d["setUTCSeconds"](k[2]);
+		return d;
+	case 10:
+		var k1 = s.split("-");
+		return new Date(k1[0],k1[1] - 1,k1[2],0,0,0);
+	case 19:
+		var k2 = s.split(" ");
+		var y = k2[0].split("-");
+		var t = k2[1].split(":");
+		return new Date(y[0],y[1] - 1,y[2],t[0],t[1],t[2]);
+	default:
+		throw new js__$Boot_HaxeError("Invalid date format : " + s);
+	}
+};
+HxOverrides.cca = function(s,index) {
+	var x = s.charCodeAt(index);
+	if(x != x) {
+		return undefined;
+	}
+	return x;
+};
+HxOverrides.substr = function(s,pos,len) {
+	if(len == null) {
+		len = s.length;
+	} else if(len < 0) {
+		if(pos == 0) {
+			len = s.length + len;
+		} else {
+			return "";
+		}
+	}
+	return s.substr(pos,len);
+};
+HxOverrides.remove = function(a,obj) {
+	var i = a.indexOf(obj);
+	if(i == -1) {
+		return false;
+	}
+	a.splice(i,1);
+	return true;
+};
+HxOverrides.iter = function(a) {
+	return { cur : 0, arr : a, hasNext : function() {
+		return this.cur < this.arr.length;
+	}, next : function() {
+		return this.arr[this.cur++];
+	}};
+};
 var djNode_BaseApp = function() {
 	this.argsAction = null;
 	this.argsOptions = { };
@@ -26,13 +172,14 @@ var djNode_BaseApp = function() {
 		process.exit(1);
 	});
 	process.once("uncaughtException",function(err) {
-		djNode_tools_LOG.log("Critical Error - ",4,{ fileName : "BaseApp.hx", lineNumber : 120, className : "djNode.BaseApp", methodName : "new"});
+		djNode_tools_LOG.log("-------- !! Critical Error !! --------",4,{ fileName : "BaseApp.hx", lineNumber : 120, className : "djNode.BaseApp", methodName : "new"});
 		if(js_Boot.__instanceof(err,Error)) {
-			djNode_tools_LOG.log(err.message,4,{ fileName : "BaseApp.hx", lineNumber : 123, className : "djNode.BaseApp", methodName : "new"});
+			djNode_tools_LOG.log(err.message,4,{ fileName : "BaseApp.hx", lineNumber : 124, className : "djNode.BaseApp", methodName : "new"});
 			_gthis.exitError(err.message);
+		} else {
+			djNode_tools_LOG.log(err,4,{ fileName : "BaseApp.hx", lineNumber : 128, className : "djNode.BaseApp", methodName : "new"});
+			_gthis.exitError(err);
 		}
-		djNode_tools_LOG.log(err,4,{ fileName : "BaseApp.hx", lineNumber : 126, className : "djNode.BaseApp", methodName : "new"});
-		_gthis.exitError(err);
 	});
 	try {
 		this.init();
@@ -56,7 +203,7 @@ djNode_BaseApp.prototype = {
 		process.stdout.write("\x1B[0m");
 		var P = this.PROGRAM_INFO;
 		var A = this.ARGS;
-		djNode_tools_LOG.log("Creating Application [ " + P.name + " ,v" + P.version + " ]",null,{ fileName : "BaseApp.hx", lineNumber : 159, className : "djNode.BaseApp", methodName : "init"});
+		djNode_tools_LOG.log("Creating Application [ " + P.name + " ,v" + P.version + " ]",null,{ fileName : "BaseApp.hx", lineNumber : 162, className : "djNode.BaseApp", methodName : "init"});
 		var cc = 0;
 		var $arguments = process.argv.slice(2);
 		var arg;
@@ -347,7 +494,7 @@ djNode_BaseApp.prototype = {
 			showHelp = false;
 		}
 		var _this = this.T;
-		var str = _this.sprintf("~bg_darkred~~white~ ERROR ~!~ ~red~" + text + "\n");
+		var str = _this.sprintf("\n~bg_darkred~~white~ ERROR ~!~ ~red~" + text + "\n");
 		process.stdout.write(str);
 		if(showHelp) {
 			var _this1 = this.T;
@@ -387,195 +534,363 @@ djNode_BaseApp.prototype = {
 	}
 	,__class__: djNode_BaseApp
 };
-var DevMain = function() {
+var Main = function() {
 	djNode_BaseApp.call(this);
 };
-DevMain.__name__ = ["DevMain"];
-DevMain.main = function() {
-	new DevMain();
+Main.__name__ = ["Main"];
+Main.main = function() {
+	new Main();
 };
-DevMain.__super__ = djNode_BaseApp;
-DevMain.prototype = $extend(djNode_BaseApp.prototype,{
+Main.__super__ = djNode_BaseApp;
+Main.prototype = $extend(djNode_BaseApp.prototype,{
 	init: function() {
 		this.PROGRAM_INFO.name = "djTui development";
 		djNode_tools_LOG.pipeTrace();
-		djNode_tools_LOG.setLogFile("a:\\log.txt",true);
+		djNode_tools_LOG.setLogFile(REG.LOG_FILE,true);
 		djNode_BaseApp.prototype.init.call(this);
 	}
 	,onStart: function() {
 		this.T.pageDown();
 		this.T.clearScreen();
 		this.T.cursorHide();
-		djTui_WM.create(new adapter_InputObj(),new adapter_TerminalObj(),80,25);
-		var w1 = new djTui_Window();
-		w1.padding(3,1).move(3,3).size(20,14);
-		var _g = 0;
-		while(_g < 5) {
-			var i = _g++;
-			var b = new djTui_el_Button("Bnt " + i,null,i % 3);
-			w1.addStacked(b);
+		djTui_WM.create(new djTui_adaptors_djNode_InputObj(),new djTui_adaptors_djNode_TerminalObj(),REG.APP_WIDTH,REG.APP_HEIGHT);
+		djTui_WM.set_TAB_behavior("WINDOW","exit");
+		djTui_Tools.copyFields({ titleColor_focus : { fg : "blue", bg : "green"}, borderStyle : 1, text : "white", textbox_focus : { fg : "white"}, textbox : { fg : "gray"}, scrollbar_focus : { fg : "white", bg : "red"}},djTui_WM.global_style_win);
+		var _this = djTui_Styles.win;
+		djTui_WM.global_style_pop = __map_reserved["pop_red"] != null ? _this.getReserved("pop_red") : _this.h["pop_red"];
+		var head = new djTui_Window(null,-1,3);
+		head.flag_focusable = false;
+		head.modifyStyle({ bg : "cyan", text : "black", borderStyle : 2, borderColor : { fg : "darkblue"}});
+		head.addStack(new djTui_el_Label("djTUI V" + "0.1" + " - Demo  "));
+		var foot = new djTui_Window(null,-1,1);
+		foot.flag_focusable = false;
+		foot.padding(0);
+		foot.modifyStyle({ bg : "gray", text : "darkblue", borderStyle : 0});
+		foot.addStack(new djTui_el_Label("[Arrow Keys / TAB] = MOVE | [ENTER] = SELECT | [ESC] = SELECT",foot.get_inWidth(),"center"));
+		foot.pos(0,djTui_WM.height - foot.height);
+		djTui_WM.add(foot);
+		var menu = new djTui_Window(null,-2,-2);
+		menu.addStack(new djTui_el_Label("Select a demo :").setColor(null,"blue","white"));
+		menu.addSeparator();
+		var i = REG.states.keys();
+		while(i.hasNext()) {
+			var i1 = i.next();
+			var b = new djTui_el_Button(i1,i1,1,0);
+			menu.addStack(b);
 		}
-		var a1 = new djTui_el_Label("Label");
-		var a2 = new djTui_el_Button(" ... ",false);
-		var a3 = new djTui_el_Toggle();
-		w1.addStacked(a1);
-		w1.addStacked(a2);
-		w1.addStacked(a3);
-		djTui_WM.addWindow(w1,true);
-		w1.set_title("Main win");
+		menu.listen(function(msg,el) {
+			if(el.type == djTui_ElementType.button && msg == "fire") {
+				var key = el.SID;
+				var _this1 = REG.states;
+				var st = Type.createInstance(__map_reserved[key] != null ? _this1.getReserved(key) : _this1.h[key],[]);
+				djTui_WM.STATE.open(st);
+			}
+		});
+		djTui_WM.A.screen(menu).move(0,-2);
+		var qWin = new djTui_win_MenuBar("",menu.width,1);
+		qWin.setItemStyle("center",0,1);
+		qWin.setPanelStyle("blue","darkcyan");
+		qWin.setItems(["QUIT","ABOUT"]);
+		djTui_WM.A.down(qWin,menu);
+		qWin.onSelect = function(s) {
+			if(s == 0) {
+				var a = qWin.active;
+				var p = [a.x - 2,a.y - 2];
+				djTui_WM.popupConfirm(function() {
+					process.exit(0);
+				},"Really Quit",p);
+			} else {
+				var m = new djTui_win_MessageBox("Re-inventing the wheel for no particular reason.",0);
+				m.flag_close_on_esc = true;
+				djTui_WM.A.screen(m).move(2,2);
+				qWin.openSub(m,true);
+			}
+		};
+		djTui_WM.STATE.create("main",[head,menu,qWin]);
+		if(REG.startState != null) {
+			djTui_WM.STATE.open(Type.createInstance(REG.startState,[]));
+			return;
+		}
+		djTui_WM.STATE["goto"]("main");
 	}
 	,onExit: function() {
-		var _this = this.T;
-		process.stdout.write("\x1B[0m");
 		this.T.move(0,djTui_WM.height);
 		djNode_BaseApp.prototype.onExit.call(this);
 	}
-	,__class__: DevMain
+	,exitError: function(text,showHelp) {
+		if(showHelp == null) {
+			showHelp = false;
+		}
+		if(djTui_WM._isInited) {
+			var _this = djTui_Styles.win;
+			var m = new djTui_win_MessageBox("CRITICAL ERROR:\n" + text,0,function(a) {
+				process.exit(1);
+			},djTui_WM.width - 10,__map_reserved["error"] != null ? _this.getReserved("error") : _this.h["error"]);
+			djTui_WM.A.screen(m);
+			m.open(true);
+		} else {
+			djNode_BaseApp.prototype.exitError.call(this,text,showHelp);
+		}
+	}
+	,__class__: Main
 });
-var EReg = function(r,opt) {
-	this.r = new RegExp(r,opt.split("u").join(""));
-};
-EReg.__name__ = ["EReg"];
-EReg.prototype = {
-	match: function(s) {
-		if(this.r.global) {
-			this.r.lastIndex = 0;
-		}
-		this.r.m = this.r.exec(s);
-		this.r.s = s;
-		return this.r.m != null;
-	}
-	,matched: function(n) {
-		if(this.r.m != null && n >= 0 && n < this.r.m.length) {
-			return this.r.m[n];
-		} else {
-			throw new js__$Boot_HaxeError("EReg::matched");
-		}
-	}
-	,matchedPos: function() {
-		if(this.r.m == null) {
-			throw new js__$Boot_HaxeError("No string matched");
-		}
-		return { pos : this.r.m.index, len : this.r.m[0].length};
-	}
-	,matchSub: function(s,pos,len) {
-		if(len == null) {
-			len = -1;
-		}
-		if(this.r.global) {
-			this.r.lastIndex = pos;
-			var tmp = this.r;
-			var tmp1 = len < 0 ? s : HxOverrides.substr(s,0,pos + len);
-			this.r.m = tmp.exec(tmp1);
-			var b = this.r.m != null;
-			if(b) {
-				this.r.s = s;
-			}
-			return b;
-		} else {
-			var b1 = this.match(len < 0 ? HxOverrides.substr(s,pos,null) : HxOverrides.substr(s,pos,len));
-			if(b1) {
-				this.r.s = s;
-				this.r.m.index += pos;
-			}
-			return b1;
-		}
-	}
-	,map: function(s,f) {
-		var offset = 0;
-		var buf_b = "";
-		while(true) {
-			if(offset >= s.length) {
-				break;
-			} else if(!this.matchSub(s,offset)) {
-				buf_b += Std.string(HxOverrides.substr(s,offset,null));
-				break;
-			}
-			var p = this.matchedPos();
-			buf_b += Std.string(HxOverrides.substr(s,offset,p.pos - offset));
-			buf_b += Std.string(f(this));
-			if(p.len == 0) {
-				buf_b += Std.string(HxOverrides.substr(s,p.pos,1));
-				offset = p.pos + 1;
-			} else {
-				offset = p.pos + p.len;
-			}
-			if(!this.r.global) {
-				break;
-			}
-		}
-		if(!this.r.global && offset > 0 && offset < s.length) {
-			buf_b += Std.string(HxOverrides.substr(s,offset,null));
-		}
-		return buf_b;
-	}
-	,__class__: EReg
-};
-var HxOverrides = function() { };
-HxOverrides.__name__ = ["HxOverrides"];
-HxOverrides.dateStr = function(date) {
-	var m = date.getMonth() + 1;
-	var d = date.getDate();
-	var h = date.getHours();
-	var mi = date.getMinutes();
-	var s = date.getSeconds();
-	return date.getFullYear() + "-" + (m < 10 ? "0" + m : "" + m) + "-" + (d < 10 ? "0" + d : "" + d) + " " + (h < 10 ? "0" + h : "" + h) + ":" + (mi < 10 ? "0" + mi : "" + mi) + ":" + (s < 10 ? "0" + s : "" + s);
-};
-HxOverrides.strDate = function(s) {
-	var _g = s.length;
-	switch(_g) {
-	case 8:
-		var k = s.split(":");
-		var d = new Date();
-		d["setTime"](0);
-		d["setUTCHours"](k[0]);
-		d["setUTCMinutes"](k[1]);
-		d["setUTCSeconds"](k[2]);
-		return d;
-	case 10:
-		var k1 = s.split("-");
-		return new Date(k1[0],k1[1] - 1,k1[2],0,0,0);
-	case 19:
-		var k2 = s.split(" ");
-		var y = k2[0].split("-");
-		var t = k2[1].split(":");
-		return new Date(y[0],y[1] - 1,y[2],t[0],t[1],t[2]);
-	default:
-		throw new js__$Boot_HaxeError("Invalid date format : " + s);
-	}
-};
-HxOverrides.cca = function(s,index) {
-	var x = s.charCodeAt(index);
-	if(x != x) {
-		return undefined;
-	}
-	return x;
-};
-HxOverrides.substr = function(s,pos,len) {
-	if(len == null) {
-		len = s.length;
-	} else if(len < 0) {
-		if(pos == 0) {
-			len = s.length + len;
-		} else {
-			return "";
-		}
-	}
-	return s.substr(pos,len);
-};
-HxOverrides.remove = function(a,obj) {
-	var i = a.indexOf(obj);
-	if(i == -1) {
-		return false;
-	}
-	a.splice(i,1);
-	return true;
-};
 Math.__name__ = ["Math"];
+var djTui_WindowState = function(sid,windows) {
+	this.SID = sid;
+	if(windows != null) {
+		this.list = windows;
+	} else {
+		this.list = [];
+	}
+};
+djTui_WindowState.__name__ = ["djTui","WindowState"];
+djTui_WindowState.prototype = {
+	add: function(win) {
+		this.list.push(win);
+		return win;
+	}
+	,get: function(s) {
+		var _g = 0;
+		var _g1 = this.list;
+		while(_g < _g1.length) {
+			var w = _g1[_g];
+			++_g;
+			if(w.SID == s) {
+				return w;
+			}
+		}
+		return null;
+	}
+	,close: function() {
+		var _g = 0;
+		var _g1 = this.list;
+		while(_g < _g1.length) {
+			var w = _g1[_g];
+			++_g;
+			w.close();
+		}
+	}
+	,open: function(data) {
+		var _g = 0;
+		var _g1 = this.list;
+		while(_g < _g1.length) {
+			var w = _g1[_g];
+			++_g;
+			w.open();
+		}
+		djTui_BaseElement.focusNext(this.list,null);
+	}
+	,__class__: djTui_WindowState
+};
+var State_$Buttons = function() {
+	djTui_WindowState.call(this,"st_textbox");
+	this.onEscGoto = "main";
+	var w1 = new djTui_Window(null,40,10);
+	w1.padding(3,2).pos(3,3);
+	var _this = djTui_Styles.win;
+	var tmp = __map_reserved["win_01"] != null ? _this.getReserved("win_01") : _this.h["win_01"];
+	w1.set_style(tmp);
+	djTui_WM.A.screen(w1);
+	w1.addStack(new djTui_el_Button("b1","Normal Button"));
+	var tmp1 = new djTui_el_Button("b2","Disabled Button").disable();
+	w1.addStack(tmp1);
+	w1.addStack(new djTui_el_Button("b3","TEST",2,20));
+	var tmp2 = new djTui_el_Button("b4","^ Toggle Disable Status").onPush(function() {
+		var b = w1.getEl("b3");
+		b.disable(!b.disabled,true);
+	});
+	w1.addStack(tmp2);
+	this.list = [w1];
+};
+State_$Buttons.__name__ = ["State_Buttons"];
+State_$Buttons.__super__ = djTui_WindowState;
+State_$Buttons.prototype = $extend(djTui_WindowState.prototype,{
+	open: function(data) {
+		djTui_WM.set_TAB_behavior("WINDOW","keep");
+		djTui_WindowState.prototype.open.call(this,data);
+	}
+	,__class__: State_$Buttons
+});
+var State_$Misc_$01 = function() {
+	djTui_WindowState.call(this,"state_misc");
+	this.onEscGoto = "main";
+	var w1 = this.getTextbox_test();
+	var w2 = this.getWindow_Vlist_test();
+	var w3 = this.getWindowNav_test();
+	var w4 = this.getWindowForm_test();
+	djTui_WM.A.inLine([w3,w4],0);
+	djTui_WM.A.inLine([w1,w2],w1.y + w1.height);
+	this.list = [w1,w2,w3,w4];
+};
+State_$Misc_$01.__name__ = ["State_Misc_01"];
+State_$Misc_$01.__super__ = djTui_WindowState;
+State_$Misc_$01.prototype = $extend(djTui_WindowState.prototype,{
+	open: function(data) {
+		djTui_WM.set_TAB_behavior("WINDOW","keep");
+		djTui_WindowState.prototype.open.call(this);
+	}
+	,getTextbox_test: function() {
+		var w = new djTui_Window(null,-2,-2);
+		w.padding(2,2);
+		w.modifyStyle({ titleColor_focus : { fg : "black", bg : "white"}});
+		w.set_title("Textbox");
+		var t = new djTui_el_TextBox(null,w.get_inWidth(),w.get_inHeight() - 1);
+		t.flag_scrollbar_autohide = false;
+		t.setData("A computer is a device that can be instructed to carry out sequences of arithmetic or logical operations automatically via computer programming. Modern computers have the ability to follow generalized sets of operations, called programs. These programs enable computers to perform an extremely wide range of tasks.Computers are used as control systems for a wide variety of industrial and consumer devices. This includes simple special purpose devices like microwave ovens and remote controls, factory devices such as industrial robots and computer-aided design, and also general purpose devices like personal computers and mobile devices such as smartphones.");
+		w.addStack(t);
+		w.addStackInline([new djTui_el_Button("","clear").onPush(function() {
+			t.reset();
+		})],0,0,"center");
+		return w;
+	}
+	,getWindow_Vlist_test: function() {
+		var w = new djTui_Window(null,-2,-2);
+		w.set_title("VLIST demo");
+		var l = new djTui_el_VList(null,w.get_inWidth(),w.get_inHeight() - 3);
+		l.flag_scrollbar_autohide = true;
+		l.setData(["PopupOption","SliderNum","SliderOption","TextInput","Button","Label","Toggle","SliderNum","SliderOption","TextInput","Button","Label"]);
+		l.listen(function(a,b) {
+			if(a == "change") {
+				haxe_Log.trace("New list " + (js_Boot.__cast(b , djTui_el_VList)).getSelectedText(),{ fileName : "State_Misc_01.hx", lineNumber : 96, className : "State_Misc_01", methodName : "getWindow_Vlist_test"});
+			}
+		});
+		w.addStack(l);
+		w.addSeparator(1);
+		w.addStackInline([new djTui_el_Button("new","New",2).onPush(function() {
+			var tmp = "New Element " + Std.random(10);
+			l.add(tmp);
+		}),new djTui_el_Button("new","Delete All",2).onPush(function() {
+			l.reset();
+		})]);
+		return w;
+	}
+	,getWindowNav_test: function() {
+		var w = new djTui_win_ButtonGrid(null,-3,-2,2);
+		w.setButtonStyle(9,0,0,1);
+		w.setColumnStyle(0,2,1);
+		w.add(0,"Style","s1");
+		w.add(0,"Exit","s2");
+		w.add(1,"Btn 3");
+		w.add(1,"Btn 4");
+		return w;
+	}
+	,getWindowForm_test: function() {
+		var w = new djTui_win_WindowForm(null,-2,-2);
+		w.setAlign("fixed");
+		w.setLabelFocusColor("yellow","blue");
+		w.addQ("+ Input","input,a0").colorFocus("white","blue");
+		w.add("! Confirm",new djTui_el_Button("_quit","Quit").extra("?Are you Sure?").onPush(function() {
+			process.exit(0);
+		}));
+		var pp = w.addQ("+ Popup Opt","popOpt,a3,one|2|two|no|three|four");
+		var ww = w.addQ("+ Slider NUM","slNum,a1,0,1000,100");
+		ww.colorFocus("green","blue");
+		ww.setSideSymbolPad(2,1);
+		ww.setTextWidth(0);
+		w.addQ("+ Slider OPT","slOpt,a2,one|two|three").colorIdle("white","gray");
+		var btn = w.addQ("Quick Button","button,b1,Button Text,1");
+		btn.colorFocus("black","white").setSideSymbolPad(0,2);
+		w.addQ("Quick Label","label,Label text,0,right");
+		w.addQ("Quick Toggle","toggle");
+		w.set_title("WindowForm Test");
+		return w;
+	}
+	,__class__: State_$Misc_$01
+});
+var State_$ButtonGrid = function() {
+	djTui_WindowState.call(this,"st_btnnav");
+	this.onEscGoto = "main";
+};
+State_$ButtonGrid.__name__ = ["State_ButtonGrid"];
+State_$ButtonGrid.__super__ = djTui_WindowState;
+State_$ButtonGrid.prototype = $extend(djTui_WindowState.prototype,{
+	open: function(data) {
+		var COLUMNS = 2;
+		var w = new djTui_win_ButtonGrid(null,-2,13,COLUMNS);
+		w.modifyStyle({ bg : "red", text : "yellow"});
+		w.setColumnStyle(3,2,0);
+		w.setButtonStyle(2,0,1,1);
+		this.add(w);
+		var _g1 = 0;
+		var _g = COLUMNS;
+		while(_g1 < _g) {
+			var c = _g1++;
+			var _g2 = 0;
+			while(_g2 < 5) {
+				var i = _g2++;
+				w.add(c,"btn");
+			}
+		}
+		w.add(0,"EXIT","#main");
+		djTui_WM.A.screen(w).move(0,2);
+		djTui_WindowState.prototype.open.call(this,data);
+	}
+	,__class__: State_$ButtonGrid
+});
+var State_$Textbox = function() {
+	djTui_WindowState.call(this,"st_textbox");
+	this.onEscGoto = "main";
+};
+State_$Textbox.__name__ = ["State_Textbox"];
+State_$Textbox.__super__ = djTui_WindowState;
+State_$Textbox.prototype = $extend(djTui_WindowState.prototype,{
+	__class__: State_$Textbox
+});
+var REG = function() { };
+REG.__name__ = ["REG"];
+var Reflect = function() { };
+Reflect.__name__ = ["Reflect"];
+Reflect.field = function(o,field) {
+	try {
+		return o[field];
+	} catch( e ) {
+		return null;
+	}
+};
+Reflect.fields = function(o) {
+	var a = [];
+	if(o != null) {
+		var hasOwnProperty = Object.prototype.hasOwnProperty;
+		for( var f in o ) {
+		if(f != "__id__" && f != "hx__closures__" && hasOwnProperty.call(o,f)) {
+			a.push(f);
+		}
+		}
+	}
+	return a;
+};
+Reflect.copy = function(o) {
+	var o2 = { };
+	var _g = 0;
+	var _g1 = Reflect.fields(o);
+	while(_g < _g1.length) {
+		var f = _g1[_g];
+		++_g;
+		o2[f] = Reflect.field(o,f);
+	}
+	return o2;
+};
 var Std = function() { };
 Std.__name__ = ["Std"];
 Std.string = function(s) {
 	return js_Boot.__string_rec(s,"");
+};
+Std.parseInt = function(x) {
+	var v = parseInt(x,10);
+	if(v == 0 && (HxOverrides.cca(x,1) == 120 || HxOverrides.cca(x,1) == 88)) {
+		v = parseInt(x);
+	}
+	if(isNaN(v)) {
+		return null;
+	}
+	return v;
+};
+Std.random = function(x) {
+	if(x <= 0) {
+		return 0;
+	} else {
+		return Math.floor(Math.random() * x);
+	}
 };
 var StringTools = function() { };
 StringTools.__name__ = ["StringTools"];
@@ -602,154 +917,42 @@ Type.getClassName = function(c) {
 	}
 	return a.join(".");
 };
-var djTui_ext_IInput = function() { };
-djTui_ext_IInput.__name__ = ["djTui","ext","IInput"];
-djTui_ext_IInput.prototype = {
-	__class__: djTui_ext_IInput
-};
-var adapter_InputObj = function() {
-};
-adapter_InputObj.__name__ = ["adapter","InputObj"];
-adapter_InputObj.__interfaces__ = [djTui_ext_IInput];
-adapter_InputObj.prototype = {
-	_onKey: function(k) {
-		var code = djNode_Keycode.toKeyCodeID(k);
-		if(code != null) {
-			var tmp;
-			switch(code[1]) {
-			case 0:
-				tmp = "up";
-				break;
-			case 1:
-				tmp = "down";
-				break;
-			case 2:
-				tmp = "left";
-				break;
-			case 3:
-				tmp = "right";
-				break;
-			case 8:
-				tmp = "pageup";
-				break;
-			case 9:
-				tmp = "pagedown";
-				break;
-			case 10:
-				tmp = "back";
-				break;
-			case 11:
-				tmp = "tab";
-				break;
-			case 12:
-				tmp = "enter";
-				break;
-			case 13:
-				tmp = "space";
-				break;
-			case 14:
-				tmp = "esc";
-				break;
-			default:
-				tmp = "";
-			}
-			this.onKey(tmp);
-		} else {
-			this.onKey(k);
-		}
+Type.createInstance = function(cl,args) {
+	var _g = args.length;
+	switch(_g) {
+	case 0:
+		return new cl();
+	case 1:
+		return new cl(args[0]);
+	case 2:
+		return new cl(args[0],args[1]);
+	case 3:
+		return new cl(args[0],args[1],args[2]);
+	case 4:
+		return new cl(args[0],args[1],args[2],args[3]);
+	case 5:
+		return new cl(args[0],args[1],args[2],args[3],args[4]);
+	case 6:
+		return new cl(args[0],args[1],args[2],args[3],args[4],args[5]);
+	case 7:
+		return new cl(args[0],args[1],args[2],args[3],args[4],args[5],args[6]);
+	case 8:
+		return new cl(args[0],args[1],args[2],args[3],args[4],args[5],args[6],args[7]);
+	case 9:
+		return new cl(args[0],args[1],args[2],args[3],args[4],args[5],args[6],args[7],args[8]);
+	case 10:
+		return new cl(args[0],args[1],args[2],args[3],args[4],args[5],args[6],args[7],args[8],args[9]);
+	case 11:
+		return new cl(args[0],args[1],args[2],args[3],args[4],args[5],args[6],args[7],args[8],args[9],args[10]);
+	case 12:
+		return new cl(args[0],args[1],args[2],args[3],args[4],args[5],args[6],args[7],args[8],args[9],args[10],args[11]);
+	case 13:
+		return new cl(args[0],args[1],args[2],args[3],args[4],args[5],args[6],args[7],args[8],args[9],args[10],args[11],args[12]);
+	case 14:
+		return new cl(args[0],args[1],args[2],args[3],args[4],args[5],args[6],args[7],args[8],args[9],args[10],args[11],args[12],args[13]);
+	default:
+		throw new js__$Boot_HaxeError("Too many arguments");
 	}
-	,start: function() {
-		djNode_Keyboard.startCapture(true,$bind(this,this._onKey));
-	}
-	,stop: function() {
-		djNode_Keyboard.stop();
-	}
-	,__class__: adapter_InputObj
-};
-var djTui_ext_ITerminal = function() { };
-djTui_ext_ITerminal.__name__ = ["djTui","ext","ITerminal"];
-djTui_ext_ITerminal.prototype = {
-	__class__: djTui_ext_ITerminal
-};
-var adapter_TerminalObj = function() {
-	this.t = djNode_BaseApp.TERMINAL;
-	this.MAX_WIDTH = this.t.getWidth();
-	this.MAX_HEIGHT = this.t.getHeight();
-};
-adapter_TerminalObj.__name__ = ["adapter","TerminalObj"];
-adapter_TerminalObj.__interfaces__ = [djTui_ext_ITerminal];
-adapter_TerminalObj.prototype = {
-	saveCursor: function() {
-		var _this = this.t;
-		process.stdout.write("\x1B[s");
-	}
-	,restoreCursor: function() {
-		var _this = this.t;
-		process.stdout.write("\x1B[u");
-	}
-	,setCursorSymbol: function(s) {
-	}
-	,print: function(s) {
-		process.stdout.write(s);
-		return this;
-	}
-	,move: function(x,y) {
-		this.t.move(x,y);
-		return this;
-	}
-	,moveR: function(x,y) {
-		if(x > 0) {
-			var _this = this.t;
-			process.stdout.write("\x1B[" + x + "C");
-		} else if(x < 0) {
-			var _this1 = this.t;
-			process.stdout.write("\x1B[" + -x + "D");
-		}
-		if(y > 0) {
-			var _this2 = this.t;
-			process.stdout.write("\x1B[" + y + "B");
-		} else if(y < 0) {
-			var _this3 = this.t;
-			process.stdout.write("\x1B[" + -y + "A");
-		}
-		return this;
-	}
-	,fg: function(col) {
-		this.t.fg(col);
-		return this;
-	}
-	,bg: function(col) {
-		this.t.bg(col);
-		return this;
-	}
-	,resetFG: function() {
-		var _this = this.t;
-		process.stdout.write("\x1B[39m");
-		return this;
-	}
-	,resetBG: function() {
-		var _this = this.t;
-		process.stdout.write("\x1B[49m");
-		return this;
-	}
-	,reset: function() {
-		var _this = this.t;
-		process.stdout.write("\x1B[0m");
-		return this;
-	}
-	,bold: function(state) {
-		if(state) {
-			this.t.bold();
-		} else {
-			var _this = this.t;
-			process.stdout.write("\x1B[21m");
-		}
-		return this;
-	}
-	,italics: function(state) {
-		return this;
-	}
-	,__class__: adapter_TerminalObj
 };
 var djNode_KeycodeID = { __ename__ : true, __constructs__ : ["up","down","left","right","home","insert","delete","end","pageup","pagedown","backsp","tab","enter","space","esc","ctrlC","acute","F1","F2","F3","F4","F5","F6","F7","F8","F9","F10","F11","F12","other"] };
 djNode_KeycodeID.up = ["up",0];
@@ -918,7 +1121,7 @@ djNode_Keyboard.startCapture = function(realtime,callback) {
 	djNode_Keyboard.stdin.resume();
 };
 djNode_Keyboard.onKeyData = function(data) {
-	if(djNode_Keyboard.FLAG_CAN_BREAK && (data == djNode_Keycode.CTRLC || data == djNode_Keycode.ESC)) {
+	if(djNode_Keyboard.FLAG_CAN_BREAK && data == djNode_Keycode.CTRLC) {
 		djNode_Keyboard.stop();
 		if(djNode_Keyboard.onBreak != null) {
 			djNode_Keyboard.onBreak();
@@ -1469,7 +1672,7 @@ djNode_tools_FileTool.moveFile = function(source,dest,onComplete,onProgress) {
 				try {
 					js_node_Fs.unlinkSync(source);
 				} catch( e ) {
-					djNode_tools_LOG.log("Could not delete \"" + source + "\" while moving",null,{ fileName : "FileTool.hx", lineNumber : 91, className : "djNode.tools.FileTool", methodName : "moveFile"});
+					djNode_tools_LOG.log("Could not delete \"" + source + "\" while moving",null,{ fileName : "FileTool.hx", lineNumber : 97, className : "djNode.tools.FileTool", methodName : "moveFile"});
 				}
 				onComplete();
 			},onProgress);
@@ -1493,19 +1696,49 @@ djNode_tools_FileTool.copyFile = function(source,dest,onComplete,onProgress) {
 		});
 	}
 };
-djNode_tools_FileTool.getFileListFromDir = function(inPath) {
+djNode_tools_FileTool.getFileListFromDir = function(inPath,fullPath) {
+	if(fullPath == null) {
+		fullPath = false;
+	}
 	var allfiles = js_node_Fs.readdirSync(js_node_Path.normalize(inPath));
-	var fileList = [];
+	var ret = [];
 	var _g = 0;
 	while(_g < allfiles.length) {
-		var i = allfiles[_g];
+		var f = allfiles[_g];
 		++_g;
-		var stats = js_node_Fs.statSync(js_node_Path.join(inPath,i));
-		if(stats.isFile()) {
-			fileList.push(i);
+		if(js_node_Fs.statSync(js_node_Path.join(inPath,f)).isFile()) {
+			if(fullPath) {
+				ret.push(js_node_Path.join(inPath,f));
+			} else {
+				ret.push(f);
+			}
 		}
 	}
-	return fileList;
+	return ret;
+};
+djNode_tools_FileTool.getFileListFromDirR = function(rootPath,ext) {
+	var res = [];
+	var pushFiles = null;
+	pushFiles = function(path) {
+		var files = js_node_Fs.readdirSync(js_node_Path.normalize(path));
+		var _g = 0;
+		while(_g < files.length) {
+			var f = files[_g];
+			++_g;
+			var fp = js_node_Path.join(path,f);
+			if(js_node_Fs.statSync(fp).isDirectory()) {
+				pushFiles(fp);
+			} else if(ext != null) {
+				var pushFiles1 = djNode_tools_FileTool.getFileExt(f);
+				if(ext.indexOf(pushFiles1) > -1) {
+					res.push(fp);
+				}
+			}
+		}
+	};
+	var pushFiles2 = pushFiles;
+	pushFiles2(rootPath);
+	return res;
 };
 djNode_tools_FileTool.getFileListFromWildcard = function(path) {
 	var fileList = [];
@@ -1579,6 +1812,15 @@ djNode_tools_LOG.init = function(file,realtime) {
 djNode_tools_LOG.pipeTrace = function() {
 	haxe_Log.trace = function(msg,pos) {
 		djNode_tools_LOG.log(msg,1,pos);
+		if(pos != null && pos.customParams != null) {
+			var _g = 0;
+			var _g1 = pos.customParams;
+			while(_g < _g1.length) {
+				var v = _g1[_g];
+				++_g;
+				djNode_tools_LOG.log(v,1,pos);
+			}
+		}
 	};
 };
 djNode_tools_LOG.getLog = function() {
@@ -1598,14 +1840,14 @@ djNode_tools_LOG.end = function() {
 		djNode_tools_LOG.io.close();
 	}
 };
-djNode_tools_LOG.log = function(message,level,pos) {
+djNode_tools_LOG.log = function(obj,level,pos) {
 	if(level == null) {
 		level = 1;
 	}
 	if(level < djNode_tools_LOG.logLevel) {
 		return;
 	}
-	var logmsg = { pos : pos, log : message, level : level};
+	var logmsg = { pos : pos, log : Std.string(obj), level : level};
 	if(djNode_tools_LOG.flag_keep_in_memory) {
 		if(djNode_tools_LOG.messages.length == djNode_tools_LOG.param_memory_buffer) {
 			djNode_tools_LOG.messages.shift();
@@ -1633,10 +1875,10 @@ djNode_tools_LOG.logObj = function(obj,level,pos) {
 		djNode_tools_LOG.io.sockets.emit("logObj",{ data : obj, pos : pos, level : level});
 	}
 	if(djNode_tools_LOG.flag_realtime_file && djNode_tools_LOG.logFile != null) {
-		djNode_tools_LOG.push_File({ level : level, pos : pos, log : "---- OBJECT ----\n" + Std.string(obj)});
+		djNode_tools_LOG.push_File({ level : level, pos : pos, log : "(object): " + Std.string(obj)});
 	}
 	if(djNode_tools_LOG.onLog != null) {
-		djNode_tools_LOG.onLog({ pos : pos, level : level, log : " OBJECT :: \n" + Std.string(obj)});
+		djNode_tools_LOG.onLog({ pos : pos, level : level, log : "(object): " + Std.string(obj)});
 	}
 };
 djNode_tools_LOG.setSocketLogging = function(port) {
@@ -1648,11 +1890,11 @@ djNode_tools_LOG.setSocketLogging = function(port) {
 	}
 	djNode_tools_LOG.flag_socket_log = true;
 	djNode_tools_LOG.io = require("socket.io").listen(port);
-	djNode_tools_LOG.log("Socket, Listening to port " + port,null,{ fileName : "LOG.hx", lineNumber : 199, className : "djNode.tools.LOG", methodName : "setSocketLogging"});
+	djNode_tools_LOG.log("Socket, Listening to port " + port,null,{ fileName : "LOG.hx", lineNumber : 204, className : "djNode.tools.LOG", methodName : "setSocketLogging"});
 	djNode_tools_LOG.io.sockets.on("connection",function(socket) {
-		djNode_tools_LOG.log("Socket, Connected to client",null,{ fileName : "LOG.hx", lineNumber : 202, className : "djNode.tools.LOG", methodName : "setSocketLogging"});
+		djNode_tools_LOG.log("Socket, Connected to client",null,{ fileName : "LOG.hx", lineNumber : 207, className : "djNode.tools.LOG", methodName : "setSocketLogging"});
 		socket.on("disconnect",function() {
-			djNode_tools_LOG.log("Socket, Disconnected from client",null,{ fileName : "LOG.hx", lineNumber : 205, className : "djNode.tools.LOG", methodName : "setSocketLogging"});
+			djNode_tools_LOG.log("Socket, Disconnected from client",null,{ fileName : "LOG.hx", lineNumber : 210, className : "djNode.tools.LOG", methodName : "setSocketLogging"});
 		});
 		socket.emit("maxLines",djNode_tools_LOG.param_memory_buffer);
 		if(djNode_tools_LOG.messages.length > 0) {
@@ -1689,7 +1931,7 @@ djNode_tools_LOG.setLogFile = function(filename,realtime_update) {
 		var fileHeader = " - LOG -\n" + " -------\n" + " - " + djNode_tools_LOG.logFile + "\n" + " - Created: " + HxOverrides.dateStr(new Date()) + "\n" + " - App: " + js_node_Path.basename(process.argv[1]) + "\n" + " ---------------------------------------------------\n\n";
 		js_node_Fs.writeFileSync(djNode_tools_LOG.logFile,fileHeader,"utf8");
 	} catch( e ) {
-		djNode_tools_LOG.log("Could not create logfile - " + djNode_tools_LOG.logFile,3,{ fileName : "LOG.hx", lineNumber : 275, className : "djNode.tools.LOG", methodName : "setLogFile"});
+		djNode_tools_LOG.log("Could not create logfile - " + djNode_tools_LOG.logFile,3,{ fileName : "LOG.hx", lineNumber : 280, className : "djNode.tools.LOG", methodName : "setLogFile"});
 		djNode_tools_LOG.logFile = null;
 	}
 	if(djNode_tools_LOG.flag_realtime_file && djNode_tools_LOG.messages.length > 0 && djNode_tools_LOG.logFile != null) {
@@ -1708,8 +1950,138 @@ djNode_tools_LOG.timeStart = function() {
 djNode_tools_LOG.timeGet = function() {
 	return new Date().getTime() - djNode_tools_LOG._t | 0;
 };
-var djTui_BaseElement = function() {
-	this.flag_can_focus = true;
+var djTui_Align = function() {
+	this.g = null;
+};
+djTui_Align.__name__ = ["djTui","Align"];
+djTui_Align.prototype = {
+	screen: function(win,alignX,alignY,pad) {
+		if(pad == null) {
+			pad = 0;
+		}
+		if(alignY == null) {
+			alignY = "center";
+		}
+		if(alignX == null) {
+			alignX = "center";
+		}
+		var tx = 0;
+		var ty = 0;
+		switch(alignX) {
+		case "center":
+			tx = djTui_WM.width / 2 - win.width / 2 | 0;
+			break;
+		case "left":
+			tx = pad;
+			break;
+		case "right":
+			tx = djTui_WM.width - win.width - pad;
+			break;
+		default:
+		}
+		switch(alignY) {
+		case "bottom":
+			ty = djTui_WM.height - win.height - pad;
+			break;
+		case "center":
+			ty = djTui_WM.height / 2 - win.height / 2 | 0;
+			break;
+		case "top":
+			ty = pad;
+			break;
+		default:
+		}
+		win.pos(tx,ty);
+		return win;
+	}
+	,up: function(A,B,offx,offy) {
+		if(offy == null) {
+			offy = 0;
+		}
+		if(offx == null) {
+			offx = 0;
+		}
+		A.move(B.x + offx,B.y - A.height + offy);
+		return A;
+	}
+	,down: function(A,B,offx,offy) {
+		if(offy == null) {
+			offy = 0;
+		}
+		if(offx == null) {
+			offx = 0;
+		}
+		A.move(B.x + offx,B.y + B.height + offy);
+		return A;
+	}
+	,left: function(A,B,offx,offy) {
+		if(offy == null) {
+			offy = 0;
+		}
+		if(offx == null) {
+			offx = 0;
+		}
+		A.move(B.x - A.width + offx,B.y + offy);
+		return A;
+	}
+	,right: function(A,B,offx,offy) {
+		if(offy == null) {
+			offy = 0;
+		}
+		if(offx == null) {
+			offx = 0;
+		}
+		A.move(B.x + B.width + offx,B.y + offy);
+		return A;
+	}
+	,inLine: function(A,Y,align,p1,p2) {
+		if(p2 == null) {
+			p2 = 0;
+		}
+		if(p1 == null) {
+			p1 = 0;
+		}
+		if(align == null) {
+			align = "center";
+		}
+		var sx;
+		var getTW = function() {
+			var tw = 0;
+			var _g = 0;
+			while(_g < A.length) {
+				var w = A[_g];
+				++_g;
+				tw += w.width;
+			}
+			tw += (A.length - 1) * p1;
+			return tw;
+		};
+		switch(align) {
+		case "center":
+			sx = p2 + (djTui_WM.width / 2 - getTW() / 2 | 0);
+			break;
+		case "left":
+			sx = p2;
+			break;
+		case "right":
+			sx = p2 + djTui_WM.width - getTW();
+			break;
+		default:
+			throw new js__$Boot_HaxeError("Not supported align type `" + align + "` Typo?");
+		}
+		var _g1 = 0;
+		while(_g1 < A.length) {
+			var w1 = A[_g1];
+			++_g1;
+			w1.pos(sx,Y);
+			sx += w1.width + p1;
+		}
+	}
+	,__class__: djTui_Align
+};
+var djTui_BaseElement = function(sid) {
+	this.flag_lock_focus = false;
+	this.flag_focusable = true;
 	this.lockDraw = false;
 	this.parent = null;
 	this.isFocused = false;
@@ -1718,6 +2090,12 @@ var djTui_BaseElement = function() {
 	this.y = 0;
 	this.x = 0;
 	this.UID = djTui_BaseElement.UID_GEN++;
+	this.SID = sid;
+	this.callbacks = [];
+	this.set_visible(false);
+	if(this.SID == null || this.SID == "") {
+		this.SID = "id_" + this.UID;
+	}
 };
 djTui_BaseElement.__name__ = ["djTui","BaseElement"];
 djTui_BaseElement.focusNext = function(ar,act,loop) {
@@ -1744,7 +2122,7 @@ djTui_BaseElement.focusNext = function(ar,act,loop) {
 		if(j == ia) {
 			return false;
 		}
-		if(ar[j].flag_can_focus) {
+		if(ar[j].flag_focusable && ar[j].visible) {
 			break;
 		}
 	}
@@ -1753,28 +2131,33 @@ djTui_BaseElement.focusNext = function(ar,act,loop) {
 };
 djTui_BaseElement.prototype = {
 	move: function(dx,dy) {
-		this.pos(this.x + dx,this.y + dy);
+		this.x += dx;
+		this.y += dy;
 		return this;
 	}
 	,pos: function(_x,_y) {
-		this.x = _x;
-		this.y = _y;
+		this.move(_x - this.x,_y - this.y);
 		return this;
 	}
 	,posNext: function(el,pad) {
 		if(pad == null) {
 			pad = 0;
 		}
-		this.x = el.x + el.width + pad;
-		this.y = el.y;
+		this.pos(el.x + el.width + pad,el.y);
 		return this;
 	}
-	,setColors: function(fg,bg) {
-		this.colorFG = fg;
-		this.colorBG = bg;
+	,setColor: function(pair,fg,bg) {
+		if(pair != null) {
+			this.colorFG = pair.fg;
+			this.colorBG = pair.bg;
+		} else {
+			this.colorFG = fg;
+			this.colorBG = bg;
+		}
 		if(this.colorBG == null && this.parent != null) {
 			this.colorBG = this.parent.colorBG;
 		}
+		return this;
 	}
 	,size: function(_w,_h) {
 		this.width = _w;
@@ -1782,12 +2165,12 @@ djTui_BaseElement.prototype = {
 		return this;
 	}
 	,focus: function() {
-		if(this.isFocused || !this.flag_can_focus) {
+		if(this.isFocused || !this.flag_focusable) {
 			return;
 		}
-		this.callbacks("focus",this);
 		this.isFocused = true;
-		this.onFocusChange();
+		this.focusSetup(this.isFocused);
+		this.callback("focus");
 		this.draw();
 	}
 	,unfocus: function() {
@@ -1795,16 +2178,38 @@ djTui_BaseElement.prototype = {
 			return;
 		}
 		this.isFocused = false;
-		this.onFocusChange();
+		this.focusSetup(this.isFocused);
+		this.callback("unfocus");
 		this.draw();
+	}
+	,listen: function(fn) {
+		this.callbacks.push(fn);
+	}
+	,callback: function(msg,caller) {
+		if(caller == null) {
+			caller = this;
+		}
+		var _g = 0;
+		var _g1 = this.callbacks;
+		while(_g < _g1.length) {
+			var i = _g1[_g];
+			++_g;
+			i(msg,caller);
+		}
 	}
 	,onAdded: function() {
 	}
 	,onKey: function(k) {
 	}
-	,onFocusChange: function() {
+	,focusSetup: function(focus) {
 	}
 	,draw: function() {
+	}
+	,clear: function() {
+		if(!this.lockDraw) {
+			djTui_WM.T.reset().bg(this.parent.colorBG);
+			djTui_WM.D.rect(this.x,this.y,this.width,this.height);
+		}
 	}
 	,overlapsWith: function(el) {
 		if(this.x + this.width > el.x && this.x < el.x + el.width && this.y + this.height > el.y) {
@@ -1816,8 +2221,18 @@ djTui_BaseElement.prototype = {
 	,_readyCol: function() {
 		djTui_WM.T.reset().fg(this.colorFG).bg(this.colorBG);
 	}
+	,set_visible: function(val) {
+		return this.visible = val;
+	}
 	,toString: function() {
-		return Type.getClassName(js_Boot.getClass(this)) + (" - UID:" + this.UID + ", x:" + this.x + ", y:" + this.y + ", width:" + this.width + ", height:" + this.height);
+		return Type.getClassName(js_Boot.getClass(this)) + (": SID:" + this.SID + ", UID:" + this.UID + ", pos(" + this.x + "," + this.y + "), size(" + this.width + "," + this.height + ")");
+	}
+	,setData: function(val) {
+	}
+	,getData: function() {
+		return null;
+	}
+	,reset: function() {
 	}
 	,__class__: djTui_BaseElement
 };
@@ -1842,15 +2257,12 @@ djTui_Draw.prototype = {
 			style = 1;
 		}
 		var bs = djTui_Styles.border[style];
-		var c = 0;
-		djTui_WM.T.move(x,y);
-		djTui_WM.T.print(bs[0] + StringTools.lpad("",bs[1],width - 2) + bs[2]);
-		while(++c < height) {
-			djTui_WM.T.move(x,y + c).print(bs[6]);
-			djTui_WM.T.moveR(width - 2,0).print(bs[7]);
-		}
-		djTui_WM.T.move(x,y + height - 1);
-		djTui_WM.T.print(bs[3] + StringTools.lpad("",bs[4],width - 2) + bs[5]);
+		this.lineH(x + 1,y,width - 2,bs.charAt(1));
+		this.lineV(x,y + 1,height - 2,bs.charAt(6));
+		this.lineV(x + width - 1,y + 1,height - 2,bs.charAt(7));
+		this.lineH(x + 1,y + height - 1,width - 2,bs.charAt(4));
+		djTui_WM.T.move(x,y).print(bs.charAt(0)).moveR(width - 2,0).print(bs.charAt(2));
+		djTui_WM.T.move(x,y + height - 1).print(bs.charAt(3)).moveR(width - 2,0).print(bs.charAt(5));
 	}
 	,drawArray: function(ar,x,y) {
 		var _g1 = 0;
@@ -1860,8 +2272,144 @@ djTui_Draw.prototype = {
 			djTui_WM.T.move(x,y + i).print(ar[i]);
 		}
 	}
+	,lineH: function(x,y,width,s) {
+		if(s == null) {
+			s = "-";
+		}
+		djTui_WM.T.move(x,y).print(StringTools.lpad("",s,width));
+	}
+	,lineV: function(x,y,height,s) {
+		if(s == null) {
+			s = "|";
+		}
+		djTui_WM.T.move(x,y);
+		var c = 0;
+		while(c < height) djTui_WM.T.move(x,y + c++).print(s);
+	}
+	,drawGrid: function(x,y,rowsStr,rowsInt,Sin,Sout) {
+		var W = 0;
+		var H = 0;
+		var boxes = [];
+		var boxH = [];
+		if(rowsStr != null && rowsInt != null) {
+			haxe_Log.trace("ERROR: You only need to set one raw data type.",{ fileName : "Draw.hx", lineNumber : 134, className : "djTui.Draw", methodName : "drawGrid"});
+			throw new js__$Boot_HaxeError("drawGrid Error");
+		}
+		if(rowsStr != null) {
+			var _g1 = 0;
+			var _g = rowsStr.length;
+			while(_g1 < _g) {
+				var r = _g1++;
+				boxes[r] = rowsStr[r].split("|").map(function(s) {
+					return Std.parseInt(s);
+				});
+				boxH[r] = boxes[r].pop();
+			}
+		}
+		if(rowsInt != null) {
+			var _g11 = 0;
+			var _g2 = rowsInt.length;
+			while(_g11 < _g2) {
+				var r1 = _g11++;
+				boxes[r1] = rowsInt[r1];
+				boxH[r1] = boxes[r1].pop();
+			}
+		}
+		var _g3 = 0;
+		var _g12 = boxes[0];
+		while(_g3 < _g12.length) {
+			var w = _g12[_g3];
+			++_g3;
+			W += w;
+		}
+		var _g4 = 0;
+		while(_g4 < boxH.length) {
+			var h = boxH[_g4];
+			++_g4;
+			H += h;
+		}
+		if(Sout > 0) {
+			this.border(x,y,W,H,Sout);
+		}
+		var currentRowTop = y;
+		var _g13 = 0;
+		var _g5 = boxH.length;
+		while(_g13 < _g5) {
+			var r2 = _g13++;
+			var rowH = boxH[r2] - 1;
+			if(r2 == 0) {
+				--rowH;
+			}
+			if(r2 != boxH.length - 1) {
+				this.lineH(x + 1,currentRowTop + rowH + 1,W - 2,djTui_Styles.border[Sin].charAt(1));
+				djTui_WM.T.move(x,currentRowTop + rowH + 1).print(djTui_Styles.connectBorder(Sin,Sout,2));
+				djTui_WM.T.moveR(W - 2,0).print(djTui_Styles.connectBorder(Sin,Sout,3));
+			}
+			var cBoxEdge = x;
+			var _g31 = 0;
+			var _g21 = boxes[r2].length;
+			while(_g31 < _g21) {
+				var b = _g31++;
+				var boxwidth = boxes[r2][b] - 1;
+				if(b == 0) {
+					--boxwidth;
+				}
+				cBoxEdge += boxwidth + 1;
+				boxes[r2][b] = cBoxEdge;
+				if(b == boxes[r2].length - 1) {
+					continue;
+				}
+				this.lineV(cBoxEdge,currentRowTop + 1,rowH,djTui_Styles.border[Sin].charAt(7));
+				var S0 = null;
+				var S1 = null;
+				if(r2 == 0) {
+					S0 = djTui_Styles.connectBorder(Sin,Sout,0);
+				} else {
+					var _g41 = 0;
+					var _g51 = boxes[r2 - 1];
+					while(_g41 < _g51.length) {
+						var i = _g51[_g41];
+						++_g41;
+						if(i == cBoxEdge) {
+							S0 = djTui_Styles.connectBorder(Sin,Sin,4);
+						}
+					}
+					if(S0 == null) {
+						S0 = djTui_Styles.connectBorder(Sin,Sin,0);
+					}
+				}
+				if(r2 == boxH.length - 1) {
+					S1 = djTui_Styles.connectBorder(Sin,Sout,1);
+				} else {
+					S1 = djTui_Styles.connectBorder(Sin,Sin,1);
+				}
+				djTui_WM.T.move(cBoxEdge,currentRowTop).print(S0);
+				djTui_WM.T.move(cBoxEdge,currentRowTop + rowH + 1).print(S1);
+			}
+			currentRowTop += rowH + 1;
+		}
+	}
 	,__class__: djTui_Draw
 };
+var djTui_ElementType = { __ename__ : true, __constructs__ : ["button","label","option","number","textbox","vlist","toggle","input","window"] };
+djTui_ElementType.button = ["button",0];
+djTui_ElementType.button.__enum__ = djTui_ElementType;
+djTui_ElementType.label = ["label",1];
+djTui_ElementType.label.__enum__ = djTui_ElementType;
+djTui_ElementType.option = ["option",2];
+djTui_ElementType.option.__enum__ = djTui_ElementType;
+djTui_ElementType.number = ["number",3];
+djTui_ElementType.number.__enum__ = djTui_ElementType;
+djTui_ElementType.textbox = ["textbox",4];
+djTui_ElementType.textbox.__enum__ = djTui_ElementType;
+djTui_ElementType.vlist = ["vlist",5];
+djTui_ElementType.vlist.__enum__ = djTui_ElementType;
+djTui_ElementType.toggle = ["toggle",6];
+djTui_ElementType.toggle.__enum__ = djTui_ElementType;
+djTui_ElementType.input = ["input",7];
+djTui_ElementType.input.__enum__ = djTui_ElementType;
+djTui_ElementType.window = ["window",8];
+djTui_ElementType.window.__enum__ = djTui_ElementType;
 var djTui_StrTool = function() { };
 djTui_StrTool.__name__ = ["djTui","StrTool"];
 djTui_StrTool.bytesToMBStr = function(bytes) {
@@ -1945,9 +2493,10 @@ djTui_StrTool.splitToLines = function(str,width) {
 	return result;
 };
 djTui_StrTool.repeatStr = function(length,$char) {
-	var ar = [];
-	while(length-- > 0) ar.push($char);
-	return ar.join("");
+	return StringTools.lpad("",$char,length);
+};
+djTui_StrTool.empty = function(len) {
+	return StringTools.lpad(""," ",len);
 };
 djTui_StrTool.loopString = function(source,length,offset) {
 	var str = "";
@@ -1958,33 +2507,97 @@ djTui_StrTool.loopString = function(source,length,offset) {
 	}
 	return str;
 };
-var djTui_WMSkin = function() {
-};
-djTui_WMSkin.__name__ = ["djTui","WMSkin"];
-djTui_WMSkin.prototype = {
-	__class__: djTui_WMSkin
-};
 var djTui_Styles = function() { };
 djTui_Styles.__name__ = ["djTui","Styles"];
 djTui_Styles.init = function() {
-	djTui_Styles.border = [];
-	djTui_Styles.border[1] = ["┌","─","┐","└","─","┘","│","│"];
-	djTui_Styles.border[2] = ["╔","═","╗","╚","═","╝","║","║"];
-	var s = new djTui_WMSkin();
-	s.win_fg = "white";
-	s.win_bg = "blue";
-	s.win_hl = "yellow";
-	s.disabled_fg = "gray";
-	s.accent_bg = "red";
-	s.accent_fg = "yellow";
-	s.accent_blur_bg = "cyan";
-	s.accent_blur_fg = "black";
-	djTui_Styles.skins = [];
-	djTui_Styles.skins[0] = s;
+	djTui_Styles.arrowsLR = ["<>","◄►","←→","«»"];
+	djTui_Styles.border = ["        ","┌─┐└─┘││","╔═╗╚═╝║║","╓─╖╙─╜║║","╒═╕╘═╛││","/-\\\\=/||","█▀██▄█▌▐"];
+	djTui_Styles.bCon = ["","┬┴├┤┼","╦╩╠╣╬","╤╧╟╢╪","╥╨╞╡╫","--||T","█▄▌▐█"];
+	djTui_Styles.win = new haxe_ds_StringMap();
+	var this1 = djTui_Styles.win;
+	var value = djTui_Styles.createWinStyle("yellow","darkblue","white","black","gray");
+	var _this = this1;
+	if(__map_reserved["default"] != null) {
+		_this.setReserved("default",value);
+	} else {
+		_this.h["default"] = value;
+	}
+	var this2 = djTui_Styles.win;
+	var value1 = djTui_Styles.createWinStyle("green","black","white","blue","cyan");
+	var _this1 = this2;
+	if(__map_reserved["default_pop"] != null) {
+		_this1.setReserved("default_pop",value1);
+	} else {
+		_this1.h["default_pop"] = value1;
+	}
+	var this3 = djTui_Styles.win;
+	var value2 = djTui_Styles.createWinStyle("yellow","red","yellow","red","darkred");
+	var _this2 = this3;
+	if(__map_reserved["pop_red"] != null) {
+		_this2.setReserved("pop_red",value2);
+	} else {
+		_this2.h["pop_red"] = value2;
+	}
+	var this4 = djTui_Styles.win;
+	var value3 = djTui_Styles.createWinStyle("black","yellow","white","blue","cyan");
+	var _this3 = this4;
+	if(__map_reserved["win_01"] != null) {
+		_this3.setReserved("win_01",value3);
+	} else {
+		_this3.h["win_01"] = value3;
+	}
+};
+djTui_Styles.connectBorder = function(from,to,t) {
+	if(from == 1 && to == 2) {
+		return djTui_Styles.bCon[3].charAt(t);
+	}
+	if(from == 2 && to == 1) {
+		return djTui_Styles.bCon[4].charAt(t);
+	}
+	return djTui_Styles.bCon[from].charAt(t);
+};
+djTui_Styles.createWinStyle = function(A,B,C,D,E,BorderStyle) {
+	if(BorderStyle == null) {
+		BorderStyle = 1;
+	}
+	var s = { bg : D, text : C, titleColor : { fg : A}, borderStyle : BorderStyle, borderColor : { fg : C}, elem_focus : { fg : B, bg : A}, elem_idle : { fg : C}, elem_disable_f : { fg : D, bg : E}, elem_disable_i : { fg : E}, scrollbar_idle : { fg : C}, scrollbar_focus : { fg : A, bg : B}, textbox : { fg : A}, vlist_cursor : { fg : D, bg : A}};
+	return s;
+};
+var djTui_Tools = function() { };
+djTui_Tools.__name__ = ["djTui","Tools"];
+djTui_Tools.copyFields = function(from,into) {
+	if(from == null) {
+		return into;
+	}
+	if(into == null) {
+		haxe_Log.trace("Warning: No fields on the target, copying source object",{ fileName : "Tools.hx", lineNumber : 26, className : "djTui.Tools", methodName : "copyFields"});
+		into = Reflect.copy(from);
+	} else {
+		var _g = 0;
+		var _g1 = Reflect.fields(from);
+		while(_g < _g1.length) {
+			var f = _g1[_g];
+			++_g;
+			if(Reflect.field(from,f) != null) {
+				into[f] = Reflect.field(from,f);
+			}
+		}
+	}
+	return into;
+};
+djTui_Tools.isEmpty = function(str) {
+	if(str != null) {
+		return str.length == 0;
+	} else {
+		return true;
+	}
+};
+djTui_Tools.randAr = function(ar) {
+	return ar[Std.random(ar.length)];
 };
 var djTui_WM = function() { };
 djTui_WM.__name__ = ["djTui","WM"];
-djTui_WM.create = function(i,t,_w,_h) {
+djTui_WM.create = function(i,t,_w,_h,styleWin,stylePop) {
 	if(_h == null) {
 		_h = 0;
 	}
@@ -1996,6 +2609,9 @@ djTui_WM.create = function(i,t,_w,_h) {
 	djTui_WM.I = i;
 	djTui_WM.T = t;
 	djTui_WM.D = new djTui_Draw();
+	djTui_WM.DB = new haxe_ds_StringMap();
+	djTui_WM.A = new djTui_Align();
+	djTui_WM.STATE = new djTui_WindowStateManager();
 	if(djTui_WM.width <= 0) {
 		djTui_WM.width = djTui_WM.T.MAX_WIDTH;
 	}
@@ -2003,42 +2619,188 @@ djTui_WM.create = function(i,t,_w,_h) {
 		djTui_WM.height = djTui_WM.T.MAX_HEIGHT;
 	}
 	djTui_Styles.init();
-	djTui_WM.skin = djTui_Styles.skins[0];
-	djTui_WM.win_list = [];
-	djTui_WM.I.onKey = djTui_WM.onKey;
+	if(styleWin == null) {
+		styleWin = "default";
+	}
+	if(stylePop == null) {
+		stylePop = "default_pop";
+	}
+	var _this = djTui_Styles.win;
+	djTui_WM.global_style_win = Reflect.copy(__map_reserved[styleWin] != null ? _this.getReserved(styleWin) : _this.h[styleWin]);
+	var _this1 = djTui_Styles.win;
+	djTui_WM.global_style_pop = Reflect.copy(__map_reserved[stylePop] != null ? _this1.getReserved(stylePop) : _this1.h[stylePop]);
+	djTui_WM.I.onKey = djTui_WM._onKey;
 	djTui_WM.I.start();
-	if(djTui_WM.skin.tui_bg != null) {
-		djTui_WM.T.bg(djTui_WM.skin.tui_bg);
-		djTui_WM.D.rect(0,0,djTui_WM.width,djTui_WM.height);
+	djTui_WM.closeAll();
+	djTui_WM.set_TAB_behavior();
+	djTui_WM._isInited = true;
+	haxe_Log.trace("== Window Manager Created =",{ fileName : "WM.hx", lineNumber : 147, className : "djTui.WM", methodName : "create"});
+	haxe_Log.trace(" - Viewport Width = " + djTui_WM.width + " , Height = " + djTui_WM.height,{ fileName : "WM.hx", lineNumber : 148, className : "djTui.WM", methodName : "create"});
+};
+djTui_WM.set_backgroundColor = function(col) {
+	if(col == djTui_WM.backgroundColor) {
+		return col;
+	}
+	djTui_WM.backgroundColor = col;
+	djTui_WM.clearBG();
+	return col;
+};
+djTui_WM.closeAll = function() {
+	djTui_WM.win_list = [];
+	djTui_WM.active = djTui_WM.active_last = null;
+	var _g = 0;
+	var _g1 = djTui_WM.win_list;
+	while(_g < _g1.length) {
+		var w = _g1[_g];
+		++_g;
+		w.set_visible(false);
+	}
+	djTui_WM.clearBG();
+	djTui_WM.STATE.current = null;
+};
+djTui_WM.clearBG = function() {
+	djTui_WM.T.reset();
+	djTui_WM.T.bg(djTui_WM.backgroundColor);
+	djTui_WM.D.rect(0,0,djTui_WM.width,djTui_WM.height);
+};
+djTui_WM.add = function(w,autoFocus) {
+	if(autoFocus == null) {
+		autoFocus = false;
+	}
+	if(w.x < 0) {
+		w.pos(0,w.y);
+	} else if(w.x + w.width > djTui_WM.width) {
+		w.pos(djTui_WM.width - w.width,w.y);
+	}
+	if(w.y < 0) {
+		w.pos(w.x,0);
+	} else if(w.y + w.height > djTui_WM.height) {
+		w.pos(w.x,djTui_WM.height - w.height);
+	}
+	haxe_Log.trace("WM -> Adding Window : UID:" + w.UID + ", SID:" + w.SID + " | Size: (" + w.width + "," + w.height + ") | Pos: " + w.x + "," + w.y + " ",{ fileName : "WM.hx", lineNumber : 204, className : "djTui.WM", methodName : "add"});
+	if(djTui_WM.win_list.indexOf(w) == -1) {
+		djTui_WM.win_list.push(w);
+		w.callback_wm = djTui_WM.onWindowCallbacks;
+	}
+	w.set_visible(true);
+	w.draw();
+	if(autoFocus && w.flag_focusable) {
+		w.focus();
 	}
 };
-djTui_WM.addWindow = function(w,autoFocus) {
-	if(autoFocus == null) {
-		autoFocus = true;
+djTui_WM.addTiled = function(w_arr,from) {
+	var nY = 0;
+	if(from != null) {
+		nY = from.y + from.height;
 	}
-	haxe_Log.trace("Added Window UID:{w.UID}",{ fileName : "WM.hx", lineNumber : 93, className : "djTui.WM", methodName : "addWindow"});
-	djTui_WM.win_list.push(w);
-	w.callback_wm = djTui_WM.onWindowCallbacks;
-	w.isOpen = true;
-	if(autoFocus) {
-		w.focus();
+	djTui_WM.A.inLine(w_arr,nY);
+	var _g = 0;
+	while(_g < w_arr.length) {
+		var i = w_arr[_g];
+		++_g;
+		djTui_WM.add(i);
+	}
+};
+djTui_WM.set_TAB_behavior = function(level,param) {
+	if(param == null) {
+		param = "";
+	}
+	if(level == null) {
+		level = "WINDOW";
+	}
+	djTui_WM._TAB_TYPE = param;
+	djTui_WM._TAB_LEVEL = ["NONE","WM","WINDOW"].indexOf(level);
+	if(djTui_WM._TAB_LEVEL < 0) {
+		throw new js__$Boot_HaxeError("set_TAB_behavior invalid level ID");
+	}
+};
+djTui_WM.popupConfirm = function(callback,Q,pos) {
+	var m = new djTui_win_MessageBox(Q,2,function(res) {
+		if(res == 0) {
+			callback();
+		}
+	});
+	m.flag_close_on_esc = true;
+	if(pos == null) {
+		djTui_WM.A.screen(m);
 	} else {
-		w.draw();
+		m.pos(pos[0],pos[1]);
 	}
+	if(djTui_WM.active != null) {
+		djTui_WM.active.openSub(m,true);
+	} else {
+		m.openAnimated();
+	}
+};
+djTui_WM.clearDB = function() {
+	djTui_WM.DB = new haxe_ds_StringMap();
 };
 djTui_WM.focusNext = function() {
 	djTui_BaseElement.focusNext(djTui_WM.win_list,djTui_WM.active);
 };
-djTui_WM.onKey = function(key) {
-	if(djTui_WM.flag_tab_switch_windows && key == "tab") {
+djTui_WM.closeWindow = function(win) {
+	HxOverrides.remove(djTui_WM.win_list,win);
+	djTui_WM.T.reset();
+	djTui_WM.T.bg(djTui_WM.backgroundColor);
+	djTui_WM.D.rect(win.x,win.y,win.width,win.height);
+	var _g = 0;
+	var _g1 = djTui_WM.win_list;
+	while(_g < _g1.length) {
+		var w = _g1[_g];
+		++_g;
+		if(w.overlapsWith(win)) {
+			w.draw();
+		}
+	}
+	if(djTui_WM.active == win) {
+		djTui_WM.active = null;
+		if(djTui_WM.active_last != null && djTui_WM.active_last.visible == true) {
+			djTui_WM.active_last.focus();
+		}
+	}
+};
+djTui_WM.windowOverlapsWithAny = function(win) {
+	var _g = 0;
+	var _g1 = djTui_WM.win_list;
+	while(_g < _g1.length) {
+		var w = _g1[_g];
+		++_g;
+		if(win == w) {
+			continue;
+		}
+		if(win.overlapsWith(w)) {
+			return true;
+		}
+	}
+	return false;
+};
+djTui_WM._onKey = function(key) {
+	if(key == "esc") {
+		if(djTui_WM.active != null && djTui_WM.active.flag_close_on_esc) {
+			djTui_WM.active.close();
+		} else if(djTui_WM.STATE.handleESC()) {
+			return;
+		}
+	} else if(djTui_WM._TAB_LEVEL == 2 && key == "tab") {
+		if(djTui_WM.active != null && djTui_WM.active.flag_lock_focus) {
+			djTui_WM.active.onKey("tab");
+			return;
+		}
+		if(djTui_WM.active != null && djTui_WM._TAB_TYPE == "keep") {
+			djTui_WM.active.flag_return_focus_once = true;
+		}
 		djTui_WM.focusNext();
 	} else if(djTui_WM.active != null) {
 		djTui_WM.active.onKey(key);
+	}
+	if(djTui_WM.onKey != null) {
+		djTui_WM.onKey(key);
 	}
 };
 djTui_WM.onWindowCallbacks = function(status,win) {
 	switch(status) {
 	case "close":
+		djTui_WM.closeWindow(win);
 		break;
 	case "focus":
 		if(djTui_WM.active == win) {
@@ -2049,117 +2811,333 @@ djTui_WM.onWindowCallbacks = function(status,win) {
 		}
 		djTui_WM.active_last = djTui_WM.active;
 		djTui_WM.active = win;
+		if(djTui_WM.windowOverlapsWithAny(win)) {
+			win.draw();
+		}
 		break;
 	case "focus_next":
 		if(!djTui_BaseElement.focusNext(djTui_WM.win_list,djTui_WM.active)) {
 			win.focusNext();
 		}
 		break;
-	case "open":
-		break;
 	default:
 	}
 };
-var djTui_Window = function(_border,_skin) {
-	if(_border == null) {
-		_border = 1;
+var djTui_Window = function(sid,_w,_h) {
+	if(_h == null) {
+		_h = 5;
 	}
-	this.flag_enableCursorNav = true;
-	this.flag_enableTab = true;
-	this.flag_lockFocus = false;
-	this.isOpen = false;
-	djTui_BaseElement.call(this);
-	this.el_children = [];
-	this.setColors(djTui_WM.skin.win_fg,djTui_WM.skin.win_bg);
-	this.borderStyle = _border;
-	this.skin = _skin;
-	if(this.skin == null) {
-		this.skin = djTui_WM.skin;
+	if(_w == null) {
+		_w = 5;
 	}
-	this.padding(1,1);
-	this.callbacks = function(_,_1) {
-	};
+	this.flag_return_focus_once = false;
+	this.flag_close_on_esc = false;
+	this.display_list = [];
+	if(sid != null) {
+		var _this = djTui_WM.DB;
+		if(!(__map_reserved[sid] != null ? _this.existsReserved(sid) : _this.h.hasOwnProperty(sid))) {
+			var _this1 = djTui_WM.DB;
+			if(__map_reserved[sid] != null) {
+				_this1.setReserved(sid,this);
+			} else {
+				_this1.h[sid] = this;
+			}
+		} else {
+			haxe_Log.trace("WARNING: A window with sid:\"" + sid + "\" already exists in WM.DB.",{ fileName : "Window.hx", lineNumber : 111, className : "djTui.Window", methodName : "new"});
+		}
+	}
+	djTui_BaseElement.call(this,sid);
+	this.type = djTui_ElementType.window;
+	this.border_el = new djTui_el_Border();
+	this.addChild(this.border_el);
+	this.set_style(Reflect.copy(djTui_WM.global_style_win));
+	if(this.borderStyle > 0) {
+		this.padding(1,1);
+	} else {
+		this.padding(0,0);
+	}
+	this.size(_w,_h);
 };
 djTui_Window.__name__ = ["djTui","Window"];
 djTui_Window.__super__ = djTui_BaseElement;
 djTui_Window.prototype = $extend(djTui_BaseElement.prototype,{
-	padding: function(xx,yy) {
+	modifyStyle: function(o) {
+		var t = Reflect.copy(this.style);
+		djTui_Tools.copyFields(o,t);
+		this.set_style(t);
+		var _g = 0;
+		var _g1 = this.display_list;
+		while(_g < _g1.length) {
+			var i = _g1[_g];
+			++_g;
+			i.focusSetup(i.isFocused);
+		}
+	}
+	,getEl: function(sid) {
+		var _g = 0;
+		var _g1 = this.display_list;
+		while(_g < _g1.length) {
+			var el = _g1[_g];
+			++_g;
+			if(el.SID == sid) {
+				return el;
+			}
+		}
+		return null;
+	}
+	,move: function(dx,dy) {
+		this.x += dx;
+		this.y += dy;
+		var _g = 0;
+		var _g1 = this.display_list;
+		while(_g < _g1.length) {
+			var i = _g1[_g];
+			++_g;
+			i.move(dx,dy);
+		}
+		if(this.visible) {
+			this.draw();
+		}
+		return this;
+	}
+	,size: function(_w,_h) {
+		if(_w == 0 || _h == 0) {
+			throw new js__$Boot_HaxeError("ERROR, Window size cannot be 0");
+		}
+		if(_w < 0) {
+			_w = Math.floor(djTui_WM.width / -_w);
+		}
+		if(_h < 0) {
+			_h = Math.floor(djTui_WM.height / -_h);
+		}
+		djTui_BaseElement.prototype.size.call(this,_w,_h);
+		this.border_el.size(_w,_h);
+		return this;
+	}
+	,padding: function(xx,yy) {
+		if(yy == null) {
+			yy = -1;
+		}
+		if(yy == -1) {
+			yy = xx;
+		}
 		this.padX = xx;
 		this.padY = yy;
 		return this;
 	}
 	,addChild: function(el) {
-		if(this.width == 0 || this.height == 0) {
-			throw new js__$Boot_HaxeError("Window with zero size");
-		}
-		this.el_children.push(el);
+		this.display_list.push(el);
+		el.listen($bind(this,this.onElementCallback));
 		el.parent = this;
-		el.callbacks = $bind(this,this.onElementCallback);
-		el.onFocusChange();
+		if(el.x + el.width > this.x + this.width - this.padX) {
+			haxe_Log.trace("WARNING: Element type: \"" + Std.string(el.type) + "\" with \"sid:" + el.SID + "\" width overflow.",{ fileName : "Window.hx", lineNumber : 237, className : "djTui.Window", methodName : "addChild"});
+		}
+		if(el.y + el.height > this.y + this.height) {
+			haxe_Log.trace("WARNING: Element sid:" + el.SID + " Y pos overflow.",{ fileName : "Window.hx", lineNumber : 241, className : "djTui.Window", methodName : "addChild"});
+		}
 		el.onAdded();
-		if(this.isOpen) {
+		el.set_visible(this.visible);
+		if(el.flag_focusable) {
+			el.focusSetup(this.isFocused);
+		}
+		if(this.visible && !this.lockDraw) {
 			el.draw();
 		}
-		this.lastAdded = el;
+		return el;
 	}
 	,removeChild: function(el) {
-		if(HxOverrides.remove(this.el_children,el)) {
-			if(this.isOpen) {
+		if(HxOverrides.remove(this.display_list,el)) {
+			el.set_visible(false);
+			if(this.visible && !this.lockDraw) {
 				this.draw();
 			}
 		}
 	}
-	,addStacked: function(el,yPad) {
+	,addStack: function(el,yPad,align) {
+		if(align == null) {
+			align = "left";
+		}
 		if(yPad == null) {
 			yPad = 0;
 		}
-		if(this.lastAdded == null) {
+		switch(align) {
+		case "center":
+			el.x = this.x + (this.width / 2 - el.width / 2 | 0);
+			break;
+		case "left":
 			el.x = this.x + this.padX;
-			el.y = this.y + this.padY;
+			break;
+		case "right":
+			el.x = this.x + this.width - el.width;
+			break;
+		default:
+		}
+		if(this.lastAdded == null) {
+			el.y = this.y + this.padY + yPad;
 		} else {
-			el.x = this.lastAdded.x;
 			el.y = this.lastAdded.y + this.lastAdded.height + yPad;
 		}
 		this.addChild(el);
+		this.lastAdded = el;
+		return el;
+	}
+	,addStackInline: function(el,yPad,xPad,align) {
+		if(align == null) {
+			align = "left";
+		}
+		if(xPad == null) {
+			xPad = 1;
+		}
+		if(yPad == null) {
+			yPad = 0;
+		}
+		var yloc = 0;
+		if(this.lastAdded == null) {
+			yloc = this.y + this.padY;
+		} else {
+			yloc = this.lastAdded.y + this.lastAdded.height + yPad;
+		}
+		var totalWidth = 0;
+		var _g = 0;
+		while(_g < el.length) {
+			var i = el[_g];
+			++_g;
+			totalWidth += i.width;
+		}
+		totalWidth += (el.length - 1) * xPad;
+		var startX = 0;
+		if(align == "center") {
+			startX = this.x + (this.width / 2 - totalWidth / 2 | 0);
+		} else {
+			startX = this.x + this.padX;
+		}
+		var _g1 = 0;
+		var _g2 = el.length;
+		while(_g1 < _g2) {
+			var i1 = _g1++;
+			el[i1].pos(startX,yloc);
+			startX = el[i1].x + el[i1].width + xPad;
+			this.addChild(el[i1]);
+			if(el[i1].type == djTui_ElementType.button) {
+				(js_Boot.__cast(el[i1] , djTui_el_Button)).flag_leftright_escape = true;
+			}
+		}
+		this.lastAdded = el[el.length - 1];
+	}
+	,addSeparator: function(forceStyle) {
+		if(forceStyle == null) {
+			forceStyle = 0;
+		}
+		if(forceStyle == 0) {
+			forceStyle = this.borderStyle;
+		}
+		var s = StringTools.lpad("",djTui_Styles.border[forceStyle].charAt(1),this.get_inWidth());
+		var l = new djTui_el_Label(s,0,"center");
+		this.addStack(l);
+	}
+	,close: function() {
+		if(this.visible == false) {
+			return;
+		}
+		this.set_visible(false);
+		this.unfocus();
+		this.callback_wm("close",this);
+		this.callback("close");
+	}
+	,open: function(autoFocus) {
+		if(autoFocus == null) {
+			autoFocus = false;
+		}
+		djTui_WM.add(this,autoFocus);
+		this.callback("open");
+	}
+	,openAnimated: function() {
+		var _gthis = this;
+		var st = [0.3,0.6];
+		var t = new haxe_Timer(80);
+		var c = 0;
+		t.run = function() {
+			var w = Math.ceil(st[c] * _gthis.width);
+			var h = Math.ceil(st[c] * _gthis.height);
+			var xx = Math.ceil(_gthis.x + (_gthis.width - w) / 2);
+			var yy = Math.ceil(_gthis.y + (_gthis.height - h) / 2);
+			djTui_WM.T.reset().fg(_gthis.colorFG).bg(_gthis.colorBG);
+			djTui_WM.D.rect(xx,yy,w,h);
+			if(_gthis.borderStyle > 0) {
+				djTui_WM.D.border(xx,yy,w,h,_gthis.borderStyle);
+			}
+			if((c += 1) == st.length) {
+				t.stop();
+				_gthis.open(true);
+			}
+		};
+	}
+	,openSub: function(w,anim) {
+		if(anim == null) {
+			anim = false;
+		}
+		this.flag_return_focus_once = true;
+		if(anim) {
+			w.openAnimated();
+		} else {
+			w.open(true);
+		}
 	}
 	,focus: function() {
-		if(!this.flag_can_focus) {
+		if(!this.flag_focusable) {
 			return;
+		}
+		if(this.style.borderColor_focus != null) {
+			this.border_el.setColor(this.style.borderColor_focus);
+			this.border_el.draw();
+		}
+		if(this.style.titleColor_focus != null && this.title_el != null) {
+			this.title_el.setColor(this.style.titleColor_focus);
+			this.title_el.draw();
 		}
 		this.callback_wm("focus",this);
+		this.lockDraw = true;
 		djTui_BaseElement.prototype.focus.call(this);
-		if(this.el_children.length == 0) {
+		this.lockDraw = false;
+		if(this.display_list.length == 0) {
 			return;
 		}
-		djTui_BaseElement.focusNext(this.el_children,null);
+		if(this.flag_return_focus_once && this.active_last != null) {
+			this.active_last.focus();
+			this.flag_return_focus_once = false;
+		} else {
+			djTui_BaseElement.focusNext(this.display_list,null);
+		}
 	}
 	,unfocus: function() {
 		if(!this.isFocused) {
 			return;
+		}
+		if(this.style.borderColor_focus != null) {
+			this.border_el.setColor(this.style.borderColor);
+			this.border_el.draw();
+		}
+		if(this.style.titleColor_focus != null && this.title_el != null) {
+			this.title_el.setColor(this.style.titleColor);
+			this.title_el.draw();
 		}
 		if(this.active != null) {
 			this.active.unfocus();
 		}
 		this.active_last = this.active;
 		this.active = null;
+		this.lockDraw = true;
 		djTui_BaseElement.prototype.unfocus.call(this);
+		this.lockDraw = false;
 	}
 	,draw: function() {
-		if(this.lockDraw) {
+		if(this.lockDraw || !this.visible) {
 			return;
 		}
 		djTui_WM.T.reset().fg(this.colorFG).bg(this.colorBG);
 		djTui_WM.D.rect(this.x,this.y,this.width,this.height);
-		if(this.borderStyle > 0) {
-			if(this.isFocused) {
-				djTui_WM.T.fg(djTui_WM.skin.win_hl);
-			} else {
-				djTui_WM.T.fg(djTui_WM.skin.win_fg);
-			}
-			djTui_WM.D.border(this.x,this.y,this.width,this.height,this.borderStyle);
-		}
 		var _g = 0;
-		var _g1 = this.el_children;
+		var _g1 = this.display_list;
 		while(_g < _g1.length) {
 			var el = _g1[_g];
 			++_g;
@@ -2172,53 +3150,67 @@ djTui_Window.prototype = $extend(djTui_BaseElement.prototype,{
 		if(loop == null) {
 			loop = true;
 		}
-		djTui_BaseElement.focusNext(this.el_children,this.active,loop);
+		return djTui_BaseElement.focusNext(this.display_list,this.active,loop);
 	}
 	,focusPrev: function() {
-		var ind = this.el_children.indexOf(this.active);
+		var ind = this.display_list.indexOf(this.active);
 		if(ind < 1) {
-			return;
+			return false;
 		}
-		while(ind-- > 0) if(this.el_children[ind].flag_can_focus) {
-			this.el_children[ind].focus();
-			return;
+		while(ind-- > 0) if(this.display_list[ind].flag_focusable) {
+			this.display_list[ind].focus();
+			return true;
 		}
+		return false;
 	}
-	,isLastFocusableElement: function() {
-		var ai = this.el_children.indexOf(this.active);
-		var ni = this.el_children.length;
-		while(ni-- > 0) if(this.el_children[ni].flag_can_focus) {
+	,activeIsLastFocusable: function() {
+		var ai = this.display_list.indexOf(this.active);
+		var ni = this.display_list.length;
+		while(ni-- > 0) if(this.display_list[ni].flag_focusable) {
 			break;
 		}
 		return ai == ni;
 	}
 	,onKey: function(key) {
-		if(key == "tab") {
-			if(!this.flag_enableTab) {
-				return;
-			}
-			if(this.isLastFocusableElement()) {
-				if(this.flag_lockFocus) {
-					return;
+		switch(key) {
+		case "esc":
+			this.callback("escape");
+			break;
+		case "tab":
+			if(this.activeIsLastFocusable()) {
+				if(this.flag_lock_focus) {
+					this.focusNext(true);
+				} else if(djTui_WM._TAB_TYPE == "exit") {
+					this.callback_wm("focus_next",this);
+				} else {
+					this.focusNext(true);
 				}
-				this.callback_wm("focus_next",this);
 			} else {
 				this.focusNext();
 			}
-		} else {
-			if(this.flag_enableCursorNav) {
-				if(key == "up") {
-					this.focusPrev();
-				} else if(key == "down") {
-					this.focusNext(false);
+			break;
+		default:
+			if(this.active == null) {
+				return;
+			}
+			if(!this.active.flag_lock_focus) {
+				if(key == "up" && this.focusPrev()) {
+					return;
+				}
+				if(key == "down" && this.focusNext(false)) {
+					return;
 				}
 			}
-			if(this.active != null) {
-				this.active.onKey(key);
-			}
+			this.active.onKey(key);
 		}
 	}
 	,onElementCallback: function(st,el) {
+		if(djTui_WM.flag_debug_trace_element_callbacks) {
+			haxe_Log.trace("> Element Callback : From:" + el.SID + ", Status:" + st + ", Data:\"" + Std.string(el.getData()) + "\", Owner:" + el.parent.SID,{ fileName : "Window.hx", lineNumber : 612, className : "djTui.Window", methodName : "onElementCallback"});
+		}
+		if(djTui_WM.onElementCallback != null) {
+			djTui_WM.onElementCallback(st,el);
+		}
 		if(st == "focus") {
 			if(this.active != null) {
 				this.active.unfocus();
@@ -2226,151 +3218,2215 @@ djTui_Window.prototype = $extend(djTui_BaseElement.prototype,{
 			this.active_last = this.active;
 			this.active = el;
 		}
+		this.callback(st,el);
+	}
+	,set_style: function(val) {
+		if(this.style == val) {
+			return val;
+		}
+		this.style = val;
+		this.setColor(null,this.style.text,this.style.bg);
+		this.border_el.setColor(this.style.borderColor);
+		this.set_borderStyle(this.style.borderStyle);
+		return this.style;
+	}
+	,set_borderStyle: function(val) {
+		if(this.borderStyle == val) {
+			return val;
+		}
+		this.borderStyle = val;
+		if(this.borderStyle > djTui_Styles.border.length - 1) {
+			this.borderStyle = 1;
+		}
+		this.border_el.style = this.borderStyle;
+		if(this.visible && !this.lockDraw) {
+			this.border_el.draw();
+			if(this.title_el != null) {
+				this.title_el.draw();
+			}
+		}
+		if(this.borderStyle > 0 && (this.padX == 0 || this.padY == 0)) {
+			haxe_Log.trace("WARNING: Window \"SID:" + this.SID + "\" should have padding since it uses a border style",{ fileName : "Window.hx", lineNumber : 668, className : "djTui.Window", methodName : "set_borderStyle"});
+		}
+		return val;
+	}
+	,set_visible: function(val) {
+		if(this.visible != val) {
+			var _g = 0;
+			var _g1 = this.display_list;
+			while(_g < _g1.length) {
+				var el = _g1[_g];
+				++_g;
+				el.set_visible(val);
+			}
+		}
+		return this.visible = val;
+	}
+	,get_inWidth: function() {
+		return this.width - this.padX - this.padX | 0;
+	}
+	,get_inHeight: function() {
+		return this.height - this.padY - this.padY | 0;
 	}
 	,set_title: function(val) {
 		this.title = val;
+		this.lockDraw = true;
 		if(this.title_el != null) {
 			this.removeChild(this.title_el);
 		}
-		if(this.title.length > this.width - 4) {
-			this.title_el = new djTui_el_Label(this.title,this.width - 4);
-		} else {
-			this.title_el = new djTui_el_Label("| " + this.title + " |");
+		this.title_el = new djTui_el_Label("| " + this.title + " |");
+		if(this.title.length > this.get_inWidth() - 4) {
+			this.title_el.setTextWidth(this.get_inWidth() - 4,"center");
 		}
-		this.title_el.setColors(djTui_WM.skin.win_hl,this.colorBG);
+		this.title_el.setColor(this.style.titleColor);
 		this.title_el.pos(this.x + (this.width / 2 - this.title_el.width / 2 | 0),this.y);
 		this.addChild(this.title_el);
+		this.lockDraw = false;
+		if(this.visible) {
+			this.border_el.drawTop();
+			this.title_el.draw();
+		}
 		return val;
 	}
 	,__class__: djTui_Window
 });
-var djTui_el_Button = function(txt,_useStyle,_minWidth) {
-	if(_minWidth == null) {
-		_minWidth = 3;
-	}
-	if(_useStyle == null) {
-		_useStyle = true;
-	}
-	djTui_BaseElement.call(this);
-	this.height = 1;
-	this.useStyle = _useStyle;
-	this.minWidth = _minWidth;
-	this.set_text(txt);
+var djTui_WindowStateManager = function() {
+	this.clear();
 };
-djTui_el_Button.__name__ = ["djTui","el","Button"];
-djTui_el_Button.__super__ = djTui_BaseElement;
-djTui_el_Button.prototype = $extend(djTui_BaseElement.prototype,{
-	onFocusChange: function() {
-		if(this.isFocused) {
-			this.setColors(this.parent.skin.accent_fg,this.parent.skin.accent_bg);
+djTui_WindowStateManager.__name__ = ["djTui","WindowStateManager"];
+djTui_WindowStateManager.prototype = {
+	store: function(w) {
+		var key = w.SID;
+		var _this = this.states;
+		if(__map_reserved[key] != null ? _this.existsReserved(key) : _this.h.hasOwnProperty(key)) {
+			haxe_Log.trace("ERROR: Window State \"" + w.SID + "\" already exists",{ fileName : "WindowState.hx", lineNumber : 106, className : "djTui.WindowStateManager", methodName : "store"});
+			return;
+		}
+		if(w.list.length == 0) {
+			haxe_Log.trace("ERROR: Window State \"" + w.SID + "\" contains no windows",{ fileName : "WindowState.hx", lineNumber : 113, className : "djTui.WindowStateManager", methodName : "store"});
+			return;
+		}
+		var key1 = w.SID;
+		var _this1 = this.states;
+		if(__map_reserved[key1] != null) {
+			_this1.setReserved(key1,w);
 		} else {
-			this.setColors(this.parent.skin.accent_blur_fg,null);
+			_this1.h[key1] = w;
+		}
+	}
+	,create: function(name,winList) {
+		var s = new djTui_WindowState(name,winList);
+		this.store(s);
+		return s;
+	}
+	,close: function() {
+		if(this.current != null) {
+			this.current.close();
+			this.onStateClose(this.current);
+			this.current = null;
+		}
+	}
+	,'goto': function(stateSID,data) {
+		var _this = this.states;
+		var b = __map_reserved[stateSID] != null ? _this.getReserved(stateSID) : _this.h[stateSID];
+		if(b == null) {
+			haxe_Log.trace("ERROR: Window State with SID \"" + stateSID + "\" does not exist",{ fileName : "WindowState.hx", lineNumber : 158, className : "djTui.WindowStateManager", methodName : "goto"});
+			return;
+		}
+		this.open(b);
+	}
+	,open: function(st) {
+		this.close();
+		this.onStateOpen(st);
+		st.open();
+		this.current = st;
+	}
+	,onStateOpen: function(st) {
+	}
+	,onStateClose: function(st) {
+	}
+	,clear: function() {
+		this.states = new haxe_ds_StringMap();
+		this.current = null;
+	}
+	,handleESC: function() {
+		if(this.current != null && this.current.onEscGoto != null) {
+			this["goto"](this.current.onEscGoto);
+			return true;
+		}
+		return false;
+	}
+	,__class__: djTui_WindowStateManager
+};
+var djTui_adaptors_IInput = function() { };
+djTui_adaptors_IInput.__name__ = ["djTui","adaptors","IInput"];
+djTui_adaptors_IInput.prototype = {
+	__class__: djTui_adaptors_IInput
+};
+var djTui_adaptors_ITerminal = function() { };
+djTui_adaptors_ITerminal.__name__ = ["djTui","adaptors","ITerminal"];
+djTui_adaptors_ITerminal.prototype = {
+	__class__: djTui_adaptors_ITerminal
+};
+var djTui_adaptors_djNode_InputObj = function() {
+};
+djTui_adaptors_djNode_InputObj.__name__ = ["djTui","adaptors","djNode","InputObj"];
+djTui_adaptors_djNode_InputObj.__interfaces__ = [djTui_adaptors_IInput];
+djTui_adaptors_djNode_InputObj.prototype = {
+	_onKey: function(k) {
+		var code = djNode_Keycode.toKeyCodeID(k);
+		if(code != null) {
+			var tmp;
+			switch(code[1]) {
+			case 0:
+				tmp = "up";
+				break;
+			case 1:
+				tmp = "down";
+				break;
+			case 2:
+				tmp = "left";
+				break;
+			case 3:
+				tmp = "right";
+				break;
+			case 4:
+				tmp = "home";
+				break;
+			case 7:
+				tmp = "end";
+				break;
+			case 8:
+				tmp = "pageup";
+				break;
+			case 9:
+				tmp = "pagedown";
+				break;
+			case 10:
+				tmp = "backsp";
+				break;
+			case 11:
+				tmp = "tab";
+				break;
+			case 12:
+				tmp = "enter";
+				break;
+			case 13:
+				tmp = "space";
+				break;
+			case 14:
+				tmp = "esc";
+				break;
+			case 17:
+				tmp = "F1";
+				break;
+			case 18:
+				tmp = "F2";
+				break;
+			case 19:
+				tmp = "F3";
+				break;
+			case 20:
+				tmp = "F4";
+				break;
+			case 21:
+				tmp = "F5";
+				break;
+			default:
+				tmp = "";
+			}
+			this.onKey(tmp);
+		} else {
+			this.onKey(k);
+		}
+	}
+	,start: function() {
+		djNode_Keyboard.startCapture(true,$bind(this,this._onKey));
+	}
+	,stop: function() {
+		djNode_Keyboard.stop();
+	}
+	,__class__: djTui_adaptors_djNode_InputObj
+};
+var djTui_adaptors_djNode_TerminalObj = function() {
+	this.t = djNode_BaseApp.TERMINAL;
+	this.MAX_WIDTH = this.t.getWidth();
+	this.MAX_HEIGHT = this.t.getHeight();
+};
+djTui_adaptors_djNode_TerminalObj.__name__ = ["djTui","adaptors","djNode","TerminalObj"];
+djTui_adaptors_djNode_TerminalObj.__interfaces__ = [djTui_adaptors_ITerminal];
+djTui_adaptors_djNode_TerminalObj.prototype = {
+	saveCursor: function() {
+		var _this = this.t;
+		process.stdout.write("\x1B[s");
+	}
+	,restoreCursor: function() {
+		var _this = this.t;
+		process.stdout.write("\x1B[u");
+	}
+	,setCursorSymbol: function(s) {
+	}
+	,print: function(s) {
+		process.stdout.write(s);
+		return this;
+	}
+	,move: function(x,y) {
+		this.t.move(x + 1,y + 1);
+		return this;
+	}
+	,moveR: function(x,y) {
+		if(x > 0) {
+			var _this = this.t;
+			process.stdout.write("\x1B[" + x + "C");
+		} else if(x < 0) {
+			var _this1 = this.t;
+			process.stdout.write("\x1B[" + -x + "D");
+		}
+		if(y > 0) {
+			var _this2 = this.t;
+			process.stdout.write("\x1B[" + y + "B");
+		} else if(y < 0) {
+			var _this3 = this.t;
+			process.stdout.write("\x1B[" + -y + "A");
+		}
+		return this;
+	}
+	,fg: function(col) {
+		this.t.fg(col);
+		return this;
+	}
+	,bg: function(col) {
+		this.t.bg(col);
+		return this;
+	}
+	,resetFG: function() {
+		var _this = this.t;
+		process.stdout.write("\x1B[39m");
+		return this;
+	}
+	,resetBG: function() {
+		var _this = this.t;
+		process.stdout.write("\x1B[49m");
+		return this;
+	}
+	,reset: function() {
+		var _this = this.t;
+		process.stdout.write("\x1B[0m");
+		return this;
+	}
+	,bold: function(state) {
+		if(state) {
+			this.t.bold();
+		} else {
+			var _this = this.t;
+			process.stdout.write("\x1B[21m");
+		}
+		return this;
+	}
+	,italics: function(state) {
+		return this;
+	}
+	,__class__: djTui_adaptors_djNode_TerminalObj
+};
+var djTui_el_BaseMenuItem = function(sid) {
+	this.s_padOut = 0;
+	this.s_padIn = 0;
+	this.disabled = false;
+	djTui_BaseElement.call(this,sid);
+	this.textAlign = "center";
+	this.textWidth = 0;
+};
+djTui_el_BaseMenuItem.__name__ = ["djTui","el","BaseMenuItem"];
+djTui_el_BaseMenuItem.__super__ = djTui_BaseElement;
+djTui_el_BaseMenuItem.prototype = $extend(djTui_BaseElement.prototype,{
+	disable: function(V,alsoUnselectable) {
+		if(alsoUnselectable == null) {
+			alsoUnselectable = false;
+		}
+		if(V == null) {
+			V = true;
+		}
+		this.set_disabled(V);
+		if(alsoUnselectable && V) {
+			this.flag_focusable = false;
+		} else if(!V) {
+			this.flag_focusable = true;
+		}
+		return this;
+	}
+	,onAdded: function() {
+		if(this.color_idle == null) {
+			this.color_idle = this.parent.style.elem_idle;
+		}
+		if(this.color_focus == null) {
+			this.color_focus = this.parent.style.elem_focus;
+		}
+		if(this.disabled == true) {
+			this.set_disabled(true);
+		}
+	}
+	,focusSetup: function(focus) {
+		if(focus) {
+			this.setColor(this.color_focus);
+		} else {
+			this.setColor(this.color_idle);
+		}
+	}
+	,colorIdle: function(fg,bg) {
+		this.color_idle = { fg : fg, bg : bg};
+		this.colorChangeDraw();
+		return this;
+	}
+	,colorFocus: function(fg,bg) {
+		this.color_focus = { fg : fg, bg : bg};
+		this.colorChangeDraw();
+		return this;
+	}
+	,colorChangeDraw: function() {
+		if(this.parent != null) {
+			this.focusSetup(this.isFocused);
+			if(this.visible && !this.lockDraw) {
+				this.draw();
+			}
 		}
 	}
 	,draw: function() {
 		djTui_WM.T.reset().fg(this.colorFG).bg(this.colorBG);
-		djTui_WM.T.move(this.x,this.y).print(this.text);
+		djTui_WM.T.move(this.x,this.y).print(this.rText);
+	}
+	,set_text: function(v) {
+		if(v == null) {
+			v = "";
+		}
+		this.text = v;
+		if(this.s_smb_l != null) {
+			v = this.s_smb_l + djTui_StrTool.empty(this.s_padIn) + v + djTui_StrTool.empty(this.s_padIn) + this.s_smb_r;
+		}
+		if(this.s_padOut > 0) {
+			v = djTui_StrTool.empty(this.s_padOut) + v + djTui_StrTool.empty(this.s_padOut);
+		}
+		if(this.rText != null && this.textWidth == 0 && (js_Boot.__cast(v , String)).length < this.rText.length && this.visible) {
+			this.clear();
+		}
+		if(this.textWidth == 0) {
+			this.rText = v;
+		} else {
+			this.rText = djTui_StrTool.padString(v,this.textWidth,this.textAlign);
+		}
+		this.width = this.rText.length;
+		if(this.visible && !this.lockDraw) {
+			this.draw();
+		}
+		return this.text;
+	}
+	,setTextWidth: function(_w,_a) {
+		if(_a == null) {
+			_a = "left";
+		}
+		this.textWidth = _w;
+		this.textAlign = _a;
+		if(this.text != null) {
+			this.set_text(this.text);
+		}
+		return this;
+	}
+	,set_disabled: function(val) {
+		this.disabled = val;
+		if(this.parent != null) {
+			var s = this.parent.style;
+			if(this.disabled) {
+				this.color_focus = s.elem_disable_f;
+				this.color_idle = s.elem_disable_i;
+			} else {
+				this.color_idle = s.elem_idle;
+				this.color_focus = s.elem_focus;
+			}
+			this.colorChangeDraw();
+		}
+		return val;
+	}
+	,setSideSymbolPad: function(_out,_in) {
+		this.s_padIn = _in;
+		this.s_padOut = _out;
+		if(this.text != null) {
+			this.set_text(this.text);
+		}
+		return this;
+	}
+	,setSideSymbols: function(l,r) {
+		if(r == null) {
+			r = " ";
+		}
+		if(l == null) {
+			l = " ";
+		}
+		this.s_smb_l = l;
+		this.s_smb_r = r;
+	}
+	,__class__: djTui_el_BaseMenuItem
+});
+var djTui_el_Border = function(sid,st) {
+	if(st == null) {
+		st = 0;
+	}
+	djTui_BaseElement.call(this,sid);
+	this.flag_focusable = false;
+	this.style = st;
+};
+djTui_el_Border.__name__ = ["djTui","el","Border"];
+djTui_el_Border.__super__ = djTui_BaseElement;
+djTui_el_Border.prototype = $extend(djTui_BaseElement.prototype,{
+	drawTop: function() {
+		djTui_WM.T.reset().fg(this.colorFG).bg(this.colorBG);
+		djTui_WM.D.lineH(this.x + 1,this.y,this.width - 2,djTui_Styles.border[this.style].charAt(1));
+	}
+	,draw: function() {
+		djTui_WM.T.reset().fg(this.colorFG).bg(this.colorBG);
+		djTui_WM.D.border(this.x,this.y,this.width,this.height,this.style);
+	}
+	,__class__: djTui_el_Border
+});
+var djTui_el_Button = function(sid,Text,BtnStyle,Width) {
+	if(Width == null) {
+		Width = 0;
+	}
+	if(BtnStyle == null) {
+		BtnStyle = 0;
+	}
+	this.flag_leftright_escape = false;
+	djTui_el_BaseMenuItem.call(this,sid);
+	if(BtnStyle > djTui_el_Button.SMB.length) {
+		BtnStyle = djTui_el_Button.SMB.length;
+		haxe_Log.trace("WARNING: Button Style > Available. For button",{ fileName : "Button.hx", lineNumber : 83, className : "djTui.el.Button", methodName : "new", customParams : [this]});
+	}
+	this.type = djTui_ElementType.button;
+	this.height = 1;
+	this.textWidth = Width;
+	if(BtnStyle > 0) {
+		var s = BtnStyle - 1;
+		this.setSideSymbolPad(1,1);
+		this.setSideSymbols(djTui_el_Button.SMB[s].charAt(0),djTui_el_Button.SMB[s].charAt(1));
+	}
+	this.set_text(Text);
+	if(sid != null) {
+		if(["#","@"].indexOf(sid.charAt(0)) >= 0) {
+			this.extra(sid);
+		}
+	}
+};
+djTui_el_Button.__name__ = ["djTui","el","Button"];
+djTui_el_Button.__super__ = djTui_el_BaseMenuItem;
+djTui_el_Button.prototype = $extend(djTui_el_BaseMenuItem.prototype,{
+	extra: function(tags) {
+		var ar = tags.split(",");
+		if(this.xtr == null) {
+			this.xtr = { };
+		}
+		var _g = 0;
+		while(_g < ar.length) {
+			var i = ar[_g];
+			++_g;
+			var c0 = i.charAt(0);
+			var c1 = HxOverrides.substr(i,1,null);
+			switch(c0) {
+			case "#":
+				this.xtr.call = 0;
+				this.xtr.sid = c1;
+				break;
+			case "?":
+				this.xtr.conf = true;
+				this.xtr.confQ = c1;
+				if(djTui_Tools.isEmpty(this.xtr.confQ)) {
+					this.xtr.confQ = djTui_el_Button.CONF_DEF;
+				}
+				break;
+			case "@":
+				this.xtr.call = 1;
+				this.xtr.sid = c1;
+				break;
+			case "x":
+				this.xtr.x = Std.parseInt(c1);
+				break;
+			case "y":
+				this.xtr.y = Std.parseInt(c1);
+				break;
+			default:
+				switch(i) {
+				case "anim":
+					this.xtr.anim = true;
+					break;
+				case "center":
+					this.xtr.center = true;
+					break;
+				case "close":
+					this.xtr.close = true;
+					break;
+				default:
+					haxe_Log.trace("Error, Unrecognized Tag",{ fileName : "Button.hx", lineNumber : 173, className : "djTui.el.Button", methodName : "extra", customParams : [i]});
+				}
+			}
+		}
+		return this;
+	}
+	,confirm: function(text,center) {
+		var s = "?";
+		if(text != null) {
+			s += text;
+		}
+		if(center != null) {
+			s += ",center";
+		}
+		return this.extra(s);
+	}
+	,action: function() {
+		if(this.xtr != null) {
+			if(this.xtr.call != null && this.xtr.call == 0) {
+				djTui_WM.STATE["goto"](this.xtr.sid);
+				return;
+			}
+			if(this.xtr.close != null) {
+				this.parent.close();
+			}
+			if(this.xtr.call != null && this.xtr.call == 1) {
+				var key = this.xtr.sid;
+				var _this = djTui_WM.DB;
+				var win = __map_reserved[key] != null ? _this.getReserved(key) : _this.h[key];
+				if(win != null) {
+					if(this.xtr.x != null && this.xtr.y != null) {
+						win.pos(this.xtr.x,this.xtr.y);
+					} else if(this.xtr.center != null) {
+						djTui_WM.A.screen(win);
+					}
+					if(this.xtr.anim != null) {
+						win.openAnimated();
+					} else {
+						win.open(true);
+					}
+				} else {
+					haxe_Log.trace("WARNING: Button request to goto window SID:\"" + this.xtr.sid + "\" that doesn't exist in WM.DB",{ fileName : "Button.hx", lineNumber : 236, className : "djTui.el.Button", methodName : "action"});
+				}
+			}
+		}
+		this.callback("fire");
+		if(this.extra_onPush != null) {
+			this.extra_onPush();
+		}
 	}
 	,onKey: function(k) {
-		if(k == "enter" || k == "space") {
-			this.callbacks("fire",this);
+		if((k == "enter" || k == "space") && !this.disabled) {
+			if(this.xtr != null && this.xtr.conf != null) {
+				djTui_WM.popupConfirm($bind(this,this.action),this.xtr.confQ,this.xtr.center == null ? [this.x,this.y + 1] : null);
+			} else {
+				this.action();
+			}
+		}
+		if(this.flag_leftright_escape) {
+			if(k == "left") {
+				this.parent.focusPrev();
+			} else if(k == "right") {
+				this.parent.focusNext(false);
+			}
 		}
 	}
-	,set_text: function(val) {
-		this.text = val;
-		if(this.text.length < this.minWidth) {
-			this.text = djTui_StrTool.padString(this.text,this.minWidth,"center");
-		}
-		if(this.useStyle) {
-			this.text = "[" + this.text + "]";
-		}
-		this.width = this.text.length;
-		return val;
+	,onPush: function(fn) {
+		this.extra_onPush = fn;
+		return this;
 	}
 	,__class__: djTui_el_Button
 });
-var djTui_el_Label = function(_txt,_width,_align) {
-	if(_align == null) {
-		_align = "left";
+var djTui_el_Label = function(Text,TextWidth,Align) {
+	if(Align == null) {
+		Align = "left";
 	}
-	if(_width == null) {
-		_width = 0;
+	if(TextWidth == null) {
+		TextWidth = 0;
 	}
-	djTui_BaseElement.call(this);
-	this.flag_can_focus = false;
+	djTui_el_BaseMenuItem.call(this);
+	this.type = djTui_ElementType.label;
+	this.flag_focusable = false;
+	this.textWidth = TextWidth;
+	this.textAlign = Align;
 	this.height = 1;
-	this.width = _width;
-	this.autoSize = this.width == 0;
-	this.align = _align;
-	this.set_text(_txt);
+	this.set_text(Text);
+	this.anim_blink = false;
+	this.anim_scroll = 0;
 };
 djTui_el_Label.__name__ = ["djTui","el","Label"];
-djTui_el_Label.__super__ = djTui_BaseElement;
-djTui_el_Label.prototype = $extend(djTui_BaseElement.prototype,{
+djTui_el_Label.__super__ = djTui_el_BaseMenuItem;
+djTui_el_Label.prototype = $extend(djTui_el_BaseMenuItem.prototype,{
 	onAdded: function() {
-		this.setColors(this.parent.skin.win_fg);
-	}
-	,draw: function() {
-		djTui_WM.T.reset().fg(this.colorFG).bg(this.colorBG);
-		djTui_WM.T.move(this.x,this.y).print(this.displayText);
-	}
-	,highlight: function(on) {
-		if(on == null) {
-			on = true;
+		djTui_el_BaseMenuItem.prototype.onAdded.call(this);
+		if(this.colorFG == null) {
+			this.setColor(null,this.parent.style.text);
 		}
-		if(on) {
-			this.setColors(this.parent.skin.accent_bg);
-		} else {
-			this.setColors(this.parent.skin.win_fg);
+	}
+	,scroll: function(freq) {
+		if(freq == null) {
+			freq = 200;
 		}
+		var _gthis = this;
+		this.stop();
+		var f = $bind(this,this.scroll);
+		var a1 = freq;
+		this.anim_active_call = function() {
+			return f(a1);
+		};
+		if(!this.visible) {
+			return this;
+		}
+		this.timer = new haxe_Timer(freq);
+		this.timer.run = function() {
+			_gthis.anim_scroll++;
+			if(_gthis.anim_scroll >= _gthis.text.length) {
+				_gthis.anim_scroll = 0;
+			}
+			var s = 0;
+			var ar = [];
+			while(s < _gthis.width) {
+				ar[s] = _gthis.text.charAt((_gthis.anim_scroll + s) % _gthis.text.length);
+				++s;
+			}
+			_gthis.rText = ar.join("");
+			_gthis.draw();
+		};
+		this.timer.run();
+		return this;
+	}
+	,blink: function(freq) {
+		if(freq == null) {
+			freq = 300;
+		}
+		var _gthis = this;
+		this.stop();
+		var f = $bind(this,this.blink);
+		var a1 = freq;
+		this.anim_active_call = function() {
+			return f(a1);
+		};
+		if(!this.visible) {
+			return this;
+		}
+		this.timer = new haxe_Timer(freq);
+		this.timer.run = function() {
+			_gthis.anim_blink = !_gthis.anim_blink;
+			if(_gthis.anim_blink) {
+				_gthis.rText = djTui_StrTool.padString(_gthis.text,_gthis.width);
+			} else {
+				_gthis.rText = djTui_StrTool.padString("",_gthis.width);
+			}
+			_gthis.draw();
+		};
+		this.timer.run();
+		return this;
+	}
+	,blinkOff: function() {
+		this.stop();
+		this.rText = djTui_StrTool.padString("",this.width);
+		this.anim_blink = false;
 		this.draw();
 	}
-	,set_text: function(val) {
-		this.text = val;
-		this.displayText = val;
-		if(!this.autoSize) {
-			this.displayText = djTui_StrTool.padString(this.text,this.width,this.align);
-		} else {
-			this.width = this.displayText.length;
+	,stop: function() {
+		this.anim_active_call = null;
+		if(this.timer != null) {
+			this.timer.stop();
+			this.timer = null;
+		}
+	}
+	,reset: function() {
+		this.set_text("");
+		this.stop();
+	}
+	,set_visible: function(val) {
+		if(this.visible == val) {
+			return val;
+		}
+		this.visible = val;
+		if(this.visible) {
+			if(this.anim_active_call != null) {
+				this.anim_active_call();
+			}
+		} else if(this.timer != null) {
+			this.timer.stop();
+			this.timer = null;
 		}
 		return val;
 	}
+	,set_text: function(val) {
+		djTui_el_BaseMenuItem.prototype.set_text.call(this,val);
+		if(val == null) {
+			return null;
+		}
+		if(this.visible) {
+			if(this.anim_active_call != null) {
+				this.anim_active_call();
+			}
+		}
+		return this.text;
+	}
+	,setData: function(val) {
+		this.set_text(val);
+	}
+	,getData: function() {
+		return this.text;
+	}
 	,__class__: djTui_el_Label
 });
-var djTui_el_Toggle = function() {
-	this.checked = false;
-	djTui_BaseElement.call(this);
-	this.setToggle(false);
-};
-djTui_el_Toggle.__name__ = ["djTui","el","Toggle"];
-djTui_el_Toggle.__super__ = djTui_BaseElement;
-djTui_el_Toggle.prototype = $extend(djTui_BaseElement.prototype,{
-	onFocusChange: function() {
-		if(this.isFocused) {
-			this.setColors(this.parent.skin.accent_fg,this.parent.skin.accent_bg);
-		} else {
-			this.setColors(this.parent.skin.accent_blur_fg,null);
+var djTui_el_PopupOption = function(sid,src,slots,start) {
+	if(start == null) {
+		start = 0;
+	}
+	if(slots == null) {
+		slots = 4;
+	}
+	djTui_el_BaseMenuItem.call(this,sid);
+	this.type = djTui_ElementType.option;
+	this.options = src.slice();
+	this.height = 1;
+	var maxW = this.options[0].length;
+	var _g1 = 0;
+	var _g = this.options.length;
+	while(_g1 < _g) {
+		var i = _g1++;
+		if(this.options[i].length > maxW) {
+			maxW = this.options[i].length;
 		}
 	}
-	,setToggle: function(b) {
-		this.checked = b;
-		if(this.checked) {
-			this.text = "[ X ]";
-		} else {
-			this.text = "[   ]";
+	this.createPopup(maxW + 1,slots);
+	this.setSideSymbolPad(0,1);
+	this.setSideSymbols("[","]");
+	this.setData(start);
+};
+djTui_el_PopupOption.__name__ = ["djTui","el","PopupOption"];
+djTui_el_PopupOption.__super__ = djTui_el_BaseMenuItem;
+djTui_el_PopupOption.prototype = $extend(djTui_el_BaseMenuItem.prototype,{
+	onAdded: function() {
+		djTui_el_BaseMenuItem.prototype.onAdded.call(this);
+	}
+	,createPopup: function(_width,slots) {
+		var _gthis = this;
+		if(_width < 15) {
+			_width = 15;
 		}
+		this.win = new djTui_Window(null,1);
+		this.win.padding(1,1).size(_width,slots + 2);
+		this.win.flag_lock_focus = true;
+		this.win.flag_close_on_esc = true;
+		this.list = new djTui_el_VList("list",this.win.get_inWidth(),this.win.height - 2);
+		this.list.setData(this.options);
+		this.win.addStack(this.list);
+		this.win.listen(function(status,elem) {
+			if(status == "fire") {
+				var tmp = elem.getData();
+				_gthis.setData(tmp);
+				_gthis.win.close();
+				_gthis.callback("change");
+			}
+		});
 	}
 	,onKey: function(k) {
-		if(k == "enter" || k == "space") {
-			this.setToggle(!this.checked);
+		if((k == "space" || k == "enter") && !this.disabled) {
+			this.list.cursor_to(this.index);
+			this.win.pos(this.x + 1,this.y - Math.floor(this.win.height / 3));
+			this.win.set_style(this.parent.style);
+			this.parent.openSub(this.win);
+		}
+	}
+	,setData: function(val) {
+		this.index = val;
+		this.set_text(this.options[this.index]);
+	}
+	,getData: function() {
+		return this.index;
+	}
+	,__class__: djTui_el_PopupOption
+});
+var djTui_el_ScrollBar = function(_height) {
+	if(_height == null) {
+		_height = 8;
+	}
+	this.scroll_ratio = 0;
+	djTui_BaseElement.call(this);
+	this.height = _height;
+	this.flag_focusable = false;
+};
+djTui_el_ScrollBar.__name__ = ["djTui","el","ScrollBar"];
+djTui_el_ScrollBar.__super__ = djTui_BaseElement;
+djTui_el_ScrollBar.prototype = $extend(djTui_BaseElement.prototype,{
+	onAdded: function() {
+		djTui_BaseElement.prototype.onAdded.call(this);
+		if(this.colorFG == null) {
+			this.setColor(this.parent.style.scrollbar_idle);
+		}
+	}
+	,set_scroll_ratio: function(val) {
+		if(this.scroll_ratio == val) {
+			return val;
+		}
+		this.scroll_ratio = val;
+		if(this.scroll_ratio < 0) {
+			this.scroll_ratio = 0;
+		} else if(this.scroll_ratio > 1) {
+			this.scroll_ratio = 1;
+		}
+		if(this.visible && !this.lockDraw) {
 			this.draw();
+		}
+		return this.scroll_ratio;
+	}
+	,draw: function() {
+		djTui_WM.T.reset().fg(this.colorFG).bg(this.colorBG);
+		var _g1 = 0;
+		var _g = this.height;
+		while(_g1 < _g) {
+			var i = _g1++;
+			djTui_WM.T.move(this.x,this.y + i).print(djTui_el_ScrollBar.SYMBOL_BAR);
+		}
+		var pos = Math.ceil(this.height * this.scroll_ratio) - 1;
+		if(pos < 0) {
+			pos = 0;
+		}
+		djTui_WM.T.move(this.x,this.y + pos).print(djTui_el_ScrollBar.SYMBOL_IND);
+	}
+	,__class__: djTui_el_ScrollBar
+});
+var djTui_el_SliderNum = function(sid,_min,_max,_inc,_st) {
+	if(_st == null) {
+		_st = 0;
+	}
+	if(_inc == null) {
+		_inc = 1;
+	}
+	if(_max == null) {
+		_max = 10;
+	}
+	if(_min == null) {
+		_min = 0;
+	}
+	this.arrowStyle = 1;
+	djTui_el_BaseMenuItem.call(this,sid);
+	this.ar_stat = [false,false];
+	this.type = djTui_ElementType.number;
+	this.min = _min;
+	this.max = _max;
+	this.inc = _inc;
+	this.height = 1;
+	this.setSideSymbolPad(1,1);
+	if(_st == 0) {
+		_st = this.min;
+	}
+	this.setData(_st);
+};
+djTui_el_SliderNum.__name__ = ["djTui","el","SliderNum"];
+djTui_el_SliderNum.__super__ = djTui_el_BaseMenuItem;
+djTui_el_SliderNum.prototype = $extend(djTui_el_BaseMenuItem.prototype,{
+	set_arrowStyle: function(v) {
+		this.arrowStyle = v;
+		if(this.visible) {
+			this.updateText();
+		}
+		return v;
+	}
+	,updateText: function() {
+		if(this.isFocused) {
+			this.setSideSymbols(this.ar_stat[0] ? djTui_Styles.arrowsLR[this.arrowStyle].charAt(0) : null,this.ar_stat[1] ? djTui_Styles.arrowsLR[this.arrowStyle].charAt(1) : null);
+			this.set_text(Std.string(this.data));
+		} else {
+			this.setSideSymbols();
+			this.set_text(Std.string(this.data));
+		}
+	}
+	,focusSetup: function(focus) {
+		djTui_el_BaseMenuItem.prototype.focusSetup.call(this,focus);
+		this.lockDraw = true;
+		this.updateText();
+		this.lockDraw = false;
+	}
+	,onKey: function(k) {
+		if(this.disabled) {
+			return;
+		}
+		switch(k) {
+		case "end":
+			if(this.data != this.max) {
+				this.sd(this.max);
+			}
+			break;
+		case "home":
+			if(this.data != this.min) {
+				this.sd(this.min);
+			}
+			break;
+		case "left":
+			if(this.data != this.min) {
+				this.sd(this.data - this.inc);
+			}
+			break;
+		case "right":
+			if(this.data != this.max) {
+				this.sd(this.data + this.inc);
+			}
+			break;
+		default:
+		}
+	}
+	,sd: function(d) {
+		this.setData(d);
+		this.callback("change");
+	}
+	,setData: function(val) {
+		this.data = val;
+		if(this.data < this.min) {
+			this.data = this.min;
+		} else if(this.data > this.max) {
+			this.data = this.max;
+		}
+		this.ar_stat[0] = this.data != this.min;
+		this.ar_stat[1] = this.data != this.max;
+		this.updateText();
+	}
+	,getData: function() {
+		return this.data;
+	}
+	,__class__: djTui_el_SliderNum
+});
+var djTui_el_SliderOption = function(sid,src,start) {
+	if(start == null) {
+		start = 0;
+	}
+	this.arrowStyle = 1;
+	djTui_el_BaseMenuItem.call(this,sid);
+	this.ar_stat = [false,false];
+	this.type = djTui_ElementType.option;
+	this.options = src.slice();
+	this.index_max = this.options.length - 1;
+	this.height = 1;
+	this.setSideSymbolPad(1,1);
+	this.setData(start);
+};
+djTui_el_SliderOption.__name__ = ["djTui","el","SliderOption"];
+djTui_el_SliderOption.__super__ = djTui_el_BaseMenuItem;
+djTui_el_SliderOption.prototype = $extend(djTui_el_BaseMenuItem.prototype,{
+	set_arrowStyle: function(v) {
+		this.arrowStyle = v;
+		if(this.visible) {
+			this.updateText();
+		}
+		return v;
+	}
+	,focusSetup: function(focus) {
+		djTui_el_BaseMenuItem.prototype.focusSetup.call(this,focus);
+		this.lockDraw = true;
+		this.updateText();
+		this.lockDraw = false;
+	}
+	,onKey: function(k) {
+		if(this.disabled) {
+			return;
+		}
+		switch(k) {
+		case "end":
+			if(this.index != this.index_max) {
+				this.sd(this.index_max);
+			}
+			break;
+		case "home":
+			if(this.index != 0) {
+				this.sd(0);
+			}
+			break;
+		case "left":
+			if(this.index != 0) {
+				this.sd(this.index - 1);
+			}
+			break;
+		case "right":
+			if(this.index != this.index_max) {
+				this.sd(this.index + 1);
+			}
+			break;
+		default:
+		}
+	}
+	,sd: function(d) {
+		this.setData(d);
+		this.callback("change");
+	}
+	,updateText: function() {
+		if(this.isFocused) {
+			this.setSideSymbols(this.ar_stat[0] ? djTui_Styles.arrowsLR[this.arrowStyle].charAt(0) : null,this.ar_stat[1] ? djTui_Styles.arrowsLR[this.arrowStyle].charAt(1) : null);
+			this.set_text(this.options[this.index]);
+		} else {
+			this.setSideSymbols();
+			this.set_text(this.options[this.index]);
+		}
+	}
+	,setData: function(val) {
+		this.index = val;
+		this.ar_stat[0] = this.index != 0;
+		this.ar_stat[1] = this.index != this.index_max;
+		this.updateText();
+	}
+	,getData: function() {
+		return this.index;
+	}
+	,__class__: djTui_el_SliderOption
+});
+var djTui_el_TextBox = function(sid,_width,_height) {
+	if(_height == null) {
+		_height = 0;
+	}
+	this.flag_scrollbar_autohide = true;
+	this.flag_add_scrollbar = false;
+	djTui_BaseElement.call(this,sid);
+	this.type = djTui_ElementType.textbox;
+	this.size(_width - 1,_height);
+	this.slots_count = this.height;
+	this.reset();
+	this.flag_lock_focus = true;
+};
+djTui_el_TextBox.__name__ = ["djTui","el","TextBox"];
+djTui_el_TextBox.__super__ = djTui_BaseElement;
+djTui_el_TextBox.prototype = $extend(djTui_BaseElement.prototype,{
+	onKey: function(k) {
+		if(this.flag_empty) {
+			if(k == "up") {
+				this.parent.focusPrev();
+			} else if(k == "down") {
+				this.parent.focusNext(false);
+			}
+			return;
+		}
+		switch(k) {
+		case "down":
+			if(this.scroll_offset == this.scroll_max) {
+				this.parent.focusNext(false);
+			} else {
+				this.scrollDown();
+			}
+			break;
+		case "end":
+			this.scrollBottom();
+			break;
+		case "home":
+			this.scrollTop();
+			break;
+		case "left":
+			this.parent.focusPrev();
+			break;
+		case "pagedown":
+			this.scrollPageDown();
+			break;
+		case "pageup":
+			this.scrollPageUp();
+			break;
+		case "right":
+			this.parent.focusNext(false);
+			break;
+		case "up":
+			if(this.scroll_offset == 0) {
+				this.parent.focusPrev();
+			} else {
+				this.scrollUp();
+			}
+			break;
+		default:
+		}
+	}
+	,onAdded: function() {
+		if(this.colorFG == null) {
+			this.setColor(this.parent.style.textbox);
+		}
+		if(this.flag_add_scrollbar) {
+			this.addScrollbar();
+		}
+	}
+	,focusSetup: function(focus) {
+		if(this.parent.style.textbox_focus != null) {
+			if(focus) {
+				this.setColor(this.parent.style.textbox_focus);
+			} else {
+				this.setColor(this.parent.style.textbox);
+			}
+		}
+		if(this.scrollbar != null) {
+			if(this.flag_scrollbar_autohide && !focus) {
+				this.scrollbar.setColor(null,this.colorBG,this.colorBG);
+				this.scrollbar.draw();
+			} else if(this.parent.style.scrollbar_focus != null) {
+				if(focus) {
+					this.scrollbar.setColor(this.parent.style.scrollbar_focus);
+				} else {
+					this.scrollbar.setColor(this.parent.style.scrollbar_idle);
+				}
+				this.scrollbar.draw();
+			}
 		}
 	}
 	,draw: function() {
 		djTui_WM.T.reset().fg(this.colorFG).bg(this.colorBG);
-		djTui_WM.T.move(this.x,this.y).print(this.text);
+		var j = 0;
+		while(true) {
+			if(this.lines[j + this.scroll_offset] != null) {
+				this.drawSlotIndex(j);
+			} else {
+				djTui_WM.D.rect(this.x,this.y + j,this.width,this.slots_count - j);
+				break;
+			}
+			if(!(++j < this.slots_count)) {
+				break;
+			}
+		}
+	}
+	,drawSlotIndex: function(i) {
+		djTui_WM.T.move(this.x,this.y + i).print(this.lines[i + this.scroll_offset]);
+	}
+	,addLine: function(line) {
+		if(this.height == 0) {
+			throw new js__$Boot_HaxeError("Set height before adding Lines");
+		}
+		this.flag_empty = false;
+		this.lines.push(djTui_StrTool.padString(line,this.width));
+		this.scroll_max = this.lines.length - this.slots_count;
+		if(this.scroll_max < 0) {
+			this.scroll_max = 0;
+		}
+		if(this.scroll_max > 0) {
+			this.addScrollbar();
+			this.set_scroll_offset(this.scroll_offset);
+		}
+		if(this.visible) {
+			this.draw();
+		}
+	}
+	,addScrollbar: function() {
+		if(this.scrollbar != null) {
+			return;
+		}
+		if(this.parent == null) {
+			this.flag_add_scrollbar = true;
+			return;
+		}
+		this.scrollbar = new djTui_el_ScrollBar(this.height);
+		this.scrollbar.posNext(this);
+		this.parent.addChild(this.scrollbar);
+		this.focusSetup(this.isFocused);
+		this.flag_add_scrollbar = false;
+	}
+	,setData: function(val) {
+		this.reset();
+		var src;
+		if(typeof(val) == "string") {
+			src = djTui_StrTool.splitToLines(val,this.width);
+		} else if((val instanceof Array) && val.__enum__ == null) {
+			src = val;
+		} else {
+			throw new js__$Boot_HaxeError("Unsupported Data Type for Textbox");
+		}
+		var _g = 0;
+		while(_g < src.length) {
+			var i = src[_g];
+			++_g;
+			this.lines.push(djTui_StrTool.padString(i,this.width));
+		}
+		if(this.height == 0) {
+			this.height = src.length;
+			this.slots_count = this.height;
+		}
+		this.scroll_max = this.lines.length - this.slots_count;
+		if(this.scroll_max < 0) {
+			this.scroll_max = 0;
+		}
+		if(this.scroll_max > 0) {
+			this.addScrollbar();
+		}
+		this.flag_empty = this.lines.length == 0;
+	}
+	,getData: function() {
+		return this.scroll_ratio;
+	}
+	,set_scroll_offset: function(val) {
+		if(val < 0) {
+			val = 0;
+		}
+		if(val > this.scroll_max) {
+			val = this.scroll_max;
+		}
+		this.scroll_offset = val;
+		this.scroll_ratio = this.scroll_offset / this.scroll_max;
+		if(this.scrollbar != null) {
+			this.scrollbar.set_scroll_ratio(this.scroll_ratio);
+		}
+		if(this.visible && !this.lockDraw) {
+			this.draw();
+		}
+		return val;
+	}
+	,reset: function() {
+		this.lines = [];
+		this.set_scroll_offset(0);
+		this.scroll_ratio = 0;
+		this.flag_empty = true;
+		if(this.scrollbar != null) {
+			this.parent.removeChild(this.scrollbar);
+			this.scrollbar.clear();
+			this.scrollbar = null;
+		}
+		if(this.visible) {
+			this.draw();
+		}
+	}
+	,scrollUp: function() {
+		var _g = this;
+		var _g1 = _g.scroll_offset;
+		_g.set_scroll_offset(_g1 - 1);
+	}
+	,scrollDown: function() {
+		var _g = this;
+		var _g1 = _g.scroll_offset;
+		_g.set_scroll_offset(_g1 + 1);
+	}
+	,scrollPageUp: function() {
+		var _g = this;
+		_g.set_scroll_offset(_g.scroll_offset - Math.floor(this.slots_count / 2));
+	}
+	,scrollPageDown: function() {
+		var _g = this;
+		_g.set_scroll_offset(_g.scroll_offset + Math.floor(this.slots_count / 2));
+	}
+	,scrollTop: function() {
+		this.set_scroll_offset(0);
+	}
+	,scrollBottom: function() {
+		this.set_scroll_offset(this.scroll_max);
+	}
+	,__class__: djTui_el_TextBox
+});
+var djTui_el_TextInput = function(sid,_maxChars,_allow) {
+	if(_allow == null) {
+		_allow = "all";
+	}
+	if(_maxChars == null) {
+		_maxChars = 0;
+	}
+	this.validKeys = null;
+	djTui_el_BaseMenuItem.call(this,sid);
+	this.type = djTui_ElementType.input;
+	this.caret_symbol = "▄";
+	this.maxChars = _maxChars;
+	if(this.maxChars < 1) {
+		this.maxChars = 12;
+	}
+	this.height = 1;
+	if(_allow == "number") {
+		this.validKeys = djTui_el_TextInput.BANK_NUMBERS;
+	} else {
+		this.validKeys = djTui_el_TextInput.BANK_LETTERS + djTui_el_TextInput.BANK_NUMBERS;
+	}
+	this.setSideSymbolPad(0,0);
+	this.setSideSymbols(":","");
+	this.setTextWidth(this.maxChars + 1,"left");
+	this.set_text("");
+};
+djTui_el_TextInput.__name__ = ["djTui","el","TextInput"];
+djTui_el_TextInput.__super__ = djTui_el_BaseMenuItem;
+djTui_el_TextInput.prototype = $extend(djTui_el_BaseMenuItem.prototype,{
+	onAdded: function() {
+		djTui_el_BaseMenuItem.prototype.onAdded.call(this);
+		if(this.maxChars <= 0) {
+			this.maxChars = this.width - 1;
+		}
+	}
+	,focusSetup: function(focus) {
+		djTui_el_BaseMenuItem.prototype.focusSetup.call(this,focus);
+		if(focus) {
+			this.caret_start();
+		} else {
+			this.caret_stop();
+		}
+	}
+	,set_visible: function(value) {
+		this.visible = value;
+		if(!this.visible) {
+			this.caret_stop();
+		}
+		return value;
+	}
+	,caret_start: function() {
+		var _gthis = this;
+		this.caret_stop();
+		this.caret_tim = new haxe_Timer(200);
+		this.caret_tim.run = function() {
+			_gthis.caret_on = !_gthis.caret_on;
+			djTui_WM.T.reset().fg(_gthis.colorFG).bg(_gthis.colorBG);
+			djTui_WM.T.move(_gthis.x + _gthis.text.length + _gthis.s_padOut + _gthis.s_padIn + _gthis.s_smb_l.length,_gthis.y);
+			if(_gthis.caret_on) {
+				djTui_WM.T.print(_gthis.caret_symbol);
+			} else {
+				djTui_WM.T.print(" ");
+			}
+		};
+	}
+	,caret_stop: function() {
+		if(this.caret_tim != null) {
+			this.caret_tim.stop();
+			this.caret_tim = null;
+		}
+		this.caret_on = false;
+	}
+	,onKey: function(k) {
+		if(this.disabled) {
+			return;
+		}
+		switch(k) {
+		case "backsp":
+			if(this.text.length > 0) {
+				this.set_text(HxOverrides.substr(this.text,0,-1));
+			}
+			this.draw();
+			break;
+		case "enter":
+			this.callback("fire");
+			break;
+		case "space":
+			var _g = this;
+			_g.set_text(_g.text + " ");
+			this.draw();
+			break;
+		default:
+			if(k.length == 1 && this.validKeys.indexOf(k) >= 0) {
+				var _g1 = this;
+				_g1.set_text(_g1.text + k);
+				this.draw();
+			}
+		}
+	}
+	,set_text: function(val) {
+		if(val != null && (js_Boot.__cast(val , String)).length == this.maxChars) {
+			return this.text;
+		}
+		this.caret_on = false;
+		djTui_el_BaseMenuItem.prototype.set_text.call(this,val);
+		return val;
+	}
+	,getData: function() {
+		return this.text;
+	}
+	,setData: function(val) {
+		this.set_text(val);
+	}
+	,__class__: djTui_el_TextInput
+});
+var djTui_el_Toggle = function(sid,current) {
+	if(current == null) {
+		current = false;
+	}
+	this.TOGGLE_SYMBOL = "■";
+	djTui_el_BaseMenuItem.call(this,sid);
+	this.type = djTui_ElementType.toggle;
+	this.height = 1;
+	this.setSideSymbolPad(1,0);
+	this.setSideSymbols("[","]");
+	this.setData(current);
+};
+djTui_el_Toggle.__name__ = ["djTui","el","Toggle"];
+djTui_el_Toggle.__super__ = djTui_el_BaseMenuItem;
+djTui_el_Toggle.prototype = $extend(djTui_el_BaseMenuItem.prototype,{
+	setData: function(val) {
+		this.data = val;
+		if(this.data) {
+			this.set_text(this.TOGGLE_SYMBOL);
+		} else {
+			this.set_text(" ");
+		}
+	}
+	,getData: function() {
+		return this.data;
+	}
+	,onKey: function(k) {
+		if((k == "enter" || k == "space") && !this.disabled) {
+			this.setData(!this.data);
+			this.callback("change");
+		}
 	}
 	,__class__: djTui_el_Toggle
+});
+var djTui_el_VList = function(sid,_width,_slots) {
+	this.scrollPad = 1;
+	djTui_el_TextBox.call(this,sid,_width,_slots);
+	this.type = djTui_ElementType.vlist;
+	this.flag_focusable = true;
+};
+djTui_el_VList.__name__ = ["djTui","el","VList"];
+djTui_el_VList.__super__ = djTui_el_TextBox;
+djTui_el_VList.prototype = $extend(djTui_el_TextBox.prototype,{
+	onAdded: function() {
+		djTui_el_TextBox.prototype.onAdded.call(this);
+		if(this.scrollPad > Math.floor(this.slots_count / 2) - 1) {
+			this.scrollPad = Math.floor(this.slots_count / 2) - 1;
+		}
+		if(this.color_cursor == null) {
+			this.color_cursor = this.parent.style.vlist_cursor;
+		}
+	}
+	,setColorCursor: function(fg,bg) {
+		this.color_cursor = { fg : fg, bg : bg};
+	}
+	,draw: function() {
+		djTui_el_TextBox.prototype.draw.call(this);
+		if(this.isFocused && !this.flag_empty) {
+			this.cursor_draw();
+		}
+	}
+	,onKey: function(k) {
+		if(this.flag_empty) {
+			djTui_el_TextBox.prototype.onKey.call(this,k);
+			return;
+		}
+		switch(k) {
+		case "down":
+			if(this.index == this.get_index_max()) {
+				this.parent.focusNext(false);
+			} else {
+				this.cursor_down();
+			}
+			break;
+		case "end":
+			this.cursor_bottom();
+			break;
+		case "enter":
+			this.callback("fire");
+			break;
+		case "home":
+			this.cursor_top();
+			break;
+		case "left":
+			this.parent.focusPrev();
+			break;
+		case "pagedown":
+			this.cursor_pageDown();
+			break;
+		case "pageup":
+			this.cursor_pageUp();
+			break;
+		case "right":
+			this.parent.focusNext(false);
+			break;
+		case "space":
+			this.callback("fire");
+			break;
+		case "up":
+			if(this.index == 0) {
+				this.parent.focusPrev();
+			} else {
+				this.cursor_up();
+			}
+			break;
+		default:
+		}
+	}
+	,reset: function() {
+		djTui_el_TextBox.prototype.reset.call(this);
+		this.index = 0;
+		this.index_slot = 0;
+	}
+	,getData: function() {
+		return this.index;
+	}
+	,add: function(name) {
+		this.addLine(name);
+		return this.get_index_max();
+	}
+	,getSelectedText: function() {
+		if(this.lines[this.index] != null) {
+			return this.lines[this.index];
+		}
+		return "";
+	}
+	,cursor_to: function(val) {
+		if(val == this.index) {
+			return;
+		}
+		if(this.scrollbar != null) {
+			this.scrollbar.lockDraw = true;
+		}
+		this.lockDraw = true;
+		this.cursor_top();
+		while(this.index < val) this.cursor_down();
+		this.lockDraw = false;
+		if(this.visible) {
+			this.draw();
+		}
+		if(this.scrollbar != null) {
+			this.scrollbar.lockDraw = false;
+			if(this.visible) {
+				this.scrollbar.draw();
+			}
+		}
+	}
+	,cursor_draw: function() {
+		djTui_WM.T.reset().fg(this.color_cursor.fg).bg(this.color_cursor.bg);
+		this.drawSlotIndex(this.index_slot);
+	}
+	,draw_current_slot_unfocused: function() {
+		djTui_WM.T.reset().fg(this.colorFG).bg(this.colorBG);
+		this.drawSlotIndex(this.index_slot);
+	}
+	,cursor_up: function() {
+		if(this.index == 0) {
+			return;
+		}
+		this.index--;
+		if(this.index_slot <= this.scrollPad && this.scroll_offset > 0) {
+			this.scrollUp();
+			this.cursor_draw();
+		} else {
+			this.draw_current_slot_unfocused();
+			this.index_slot--;
+			this.cursor_draw();
+		}
+		this.callback("change");
+	}
+	,cursor_down: function() {
+		if(this.index == this.get_index_max()) {
+			return;
+		}
+		this.index++;
+		if(this.index_slot >= this.slots_count - this.scrollPad - 1 && this.scroll_offset < this.scroll_max) {
+			this.scrollDown();
+			this.cursor_draw();
+		} else {
+			this.draw_current_slot_unfocused();
+			this.index_slot++;
+			this.cursor_draw();
+		}
+		this.callback("change");
+	}
+	,cursor_top: function() {
+		if(this.index == 0) {
+			return;
+		}
+		this.index = 0;
+		if(this.scroll_offset == 0) {
+			this.draw_current_slot_unfocused();
+			this.index_slot = 0;
+			this.cursor_draw();
+		} else {
+			this.index_slot = 0;
+			this.scrollTop();
+		}
+		this.callback("change");
+	}
+	,cursor_bottom: function() {
+		if(this.index == this.get_index_max()) {
+			return;
+		}
+		this.index = this.get_index_max();
+		if(this.scroll_offset == this.scroll_max) {
+			this.draw_current_slot_unfocused();
+			if(this.lines.length < this.slots_count) {
+				this.index_slot = this.get_index_max();
+			} else {
+				this.index_slot = this.slots_count - 1;
+			}
+			this.cursor_draw();
+		} else {
+			this.index_slot = this.slots_count - 1;
+			this.scrollBottom();
+		}
+		this.callback("change");
+	}
+	,cursor_pageUp: function() {
+		if(this.index == 0) {
+			return;
+		}
+		if(this.index_slot > this.scrollPad && this.scroll_offset > 0) {
+			this.draw_current_slot_unfocused();
+			this.index_slot = this.scrollPad;
+			this.index = this.scroll_offset + this.index_slot;
+			this.cursor_draw();
+		} else {
+			if(this.scroll_offset == 0) {
+				this.cursor_top();
+				return;
+			}
+			this.index_slot = this.scrollPad;
+			this.scrollPageUp();
+			this.index = this.scroll_offset + this.index_slot;
+		}
+		this.callback("change");
+	}
+	,cursor_pageDown: function() {
+		if(this.index == this.get_index_max()) {
+			return;
+		}
+		if(this.index_slot < this.slots_count - this.scrollPad - 1 && this.scroll_offset < this.scroll_max) {
+			this.draw_current_slot_unfocused();
+			this.index_slot = this.slots_count - this.scrollPad - 1;
+			this.index = this.scroll_offset + this.index_slot;
+			this.cursor_draw();
+		} else {
+			if(this.scroll_offset == this.scroll_max) {
+				this.cursor_bottom();
+				return;
+			}
+			this.index_slot = this.slots_count - 1 - this.scrollPad;
+			this.scrollPageDown();
+			this.index = this.scroll_offset + this.index_slot;
+		}
+		this.callback("change");
+	}
+	,get_index_max: function() {
+		return this.lines.length - 1;
+	}
+	,__class__: djTui_el_VList
+});
+var djTui_win_ButtonGrid = function(_sid,_w,_h,columns) {
+	if(columns == null) {
+		columns = 2;
+	}
+	if(_h == null) {
+		_h = 10;
+	}
+	if(_w == null) {
+		_w = 20;
+	}
+	this.sep_enable = false;
+	this.btn_padIn = 0;
+	this.btn_padOut = 0;
+	this.btn_width = 0;
+	this.btn_style = 0;
+	this.flag_loop = false;
+	this.pad_el = 0;
+	this.col_pos = [];
+	this.col_el = [];
+	this.c_x = 0;
+	this.c_y = 0;
+	this.col_count = columns;
+	this.posMap = new haxe_ds_StringMap();
+	djTui_Window.call(this,_sid,_w,_h);
+};
+djTui_win_ButtonGrid.__name__ = ["djTui","win","ButtonGrid"];
+djTui_win_ButtonGrid.__super__ = djTui_Window;
+djTui_win_ButtonGrid.prototype = $extend(djTui_Window.prototype,{
+	setButtonStyle: function(buttonStyle,buttonWidth,padOut,padIn) {
+		this.btn_style = buttonStyle;
+		this.btn_width = buttonWidth;
+		this.btn_padOut = padOut;
+		this.btn_padIn = padIn;
+		return this;
+	}
+	,setColumnStyle: function(sep,Xpad,Vpad) {
+		if(Vpad == null) {
+			Vpad = 0;
+		}
+		if(Xpad == null) {
+			Xpad = 1;
+		}
+		if(sep == null) {
+			sep = -1;
+		}
+		this.pad_el = Vpad;
+		this.padX = Xpad;
+		if(sep > -1) {
+			this.sep_enable = true;
+			if(sep == 0) {
+				if(this.borderStyle > 0) {
+					sep = this.borderStyle;
+				} else {
+					sep = 1;
+				}
+			}
+			this.sep_symbol = djTui_Styles.border[sep].charAt(7);
+			if(this.padX == 0) {
+				this.padX = 1;
+			}
+		}
+		this.setupColumns();
+	}
+	,size: function(_w,_h) {
+		djTui_Window.prototype.size.call(this,_w,_h);
+		this.setupColumns();
+		return this;
+	}
+	,setupColumns: function() {
+		var colWidth = Math.floor(this.width / this.col_count);
+		var _g1 = 0;
+		var _g = this.col_count;
+		while(_g1 < _g) {
+			var i = _g1++;
+			this.col_pos[i] = colWidth * i;
+		}
+	}
+	,add: function(col,text,_sid) {
+		var b = new djTui_el_Button(_sid,text,this.btn_style,this.btn_width);
+		b.flag_lock_focus = true;
+		if(this.btn_style > 0) {
+			b.setSideSymbolPad(this.btn_padOut,this.btn_padIn);
+		}
+		this.putEl(col,b);
+		var this1 = this.posMap;
+		var key = b.SID;
+		var value = "" + col + "," + (this.rowsAt(col) - 1);
+		var _this = this1;
+		if(__map_reserved[key] != null) {
+			_this.setReserved(key,value);
+		} else {
+			_this.h[key] = value;
+		}
+		return b;
+	}
+	,putEl: function(col,el) {
+		var xx = this.x + this.col_pos[col] + this.padX;
+		var yy = this.y + this.padY;
+		if(this.col_el[col] == null) {
+			this.col_el[col] = [];
+		} else {
+			yy = this.col_el[col][this.rowsAt(col) - 1].y + 1 + this.pad_el;
+		}
+		el.pos(xx,yy);
+		this.addChild(el);
+		this.col_el[col].push(el);
+	}
+	,focusNext: function(loop) {
+		if(loop == null) {
+			loop = true;
+		}
+		if(djTui_Window.prototype.focusNext.call(this,loop)) {
+			var key = this.active.SID;
+			var _this = this.posMap;
+			var pp = (__map_reserved[key] != null ? _this.getReserved(key) : _this.h[key]).split(",");
+			this.c_x = Std.parseInt(pp[0]);
+			this.c_y = Std.parseInt(pp[1]);
+			return true;
+		}
+		return false;
+	}
+	,onKey: function(key) {
+		djTui_Window.prototype.onKey.call(this,key);
+		switch(key) {
+		case "down":
+			this.focusRelY(1);
+			break;
+		case "left":
+			this.focusRelX(-1);
+			break;
+		case "right":
+			this.focusRelX(1);
+			break;
+		case "up":
+			this.focusRelY(-1);
+			break;
+		default:
+		}
+	}
+	,focusRelY: function(dir) {
+		if(this.col_el[this.c_x][this.c_y + dir] == null) {
+			if(this.flag_loop) {
+				if(this.c_y + dir < 0) {
+					this.c_y = this.rowsAt(this.c_x) - 1;
+				} else {
+					this.c_y = 0;
+				}
+			} else {
+				return;
+			}
+		} else {
+			this.c_y += dir;
+		}
+		this.col_el[this.c_x][this.c_y].focus();
+	}
+	,focusRelX: function(dir) {
+		if(this.col_el[this.c_x + dir] == null) {
+			if(this.flag_loop) {
+				if(this.c_x + dir < 0) {
+					this.c_x = this.col_count - 1;
+				} else {
+					this.c_x = 0;
+				}
+			} else {
+				return;
+			}
+		} else {
+			this.c_x += dir;
+		}
+		if(this.col_el[this.c_x][this.c_y] == null) {
+			this.c_y = this.rowsAt(this.c_x) - 1;
+		}
+		this.col_el[this.c_x][this.c_y].focus();
+	}
+	,rowsAt: function(col) {
+		return this.col_el[col].length;
+	}
+	,getData: function() {
+		return this.c_x + "," + this.c_y;
+	}
+	,focus: function() {
+		if(!this.flag_return_focus_once || this.active_last == null) {
+			this.c_x = 0;
+			this.c_y = 0;
+		}
+		djTui_Window.prototype.focus.call(this);
+	}
+	,draw: function() {
+		djTui_Window.prototype.draw.call(this);
+		if(this.sep_enable) {
+			djTui_WM.T.reset().fg(this.colorFG).bg(this.colorBG);
+			var _g1 = 1;
+			var _g = this.col_count;
+			while(_g1 < _g) {
+				var i = _g1++;
+				djTui_WM.D.lineV(this.x + this.col_pos[i],this.y + this.padY,this.height - this.padY * 2,this.sep_symbol);
+			}
+		}
+	}
+	,__class__: djTui_win_ButtonGrid
+});
+var djTui_win_MenuBar = function(Sid,Width,PadX) {
+	if(PadX == null) {
+		PadX = 0;
+	}
+	if(Width == null) {
+		Width = 1;
+	}
+	this._gStyle = 0;
+	this._bStyle = 0;
+	this._bFixSize = 0;
+	djTui_Window.call(this,Sid,Width,1);
+	this.padX = PadX;
+	this.setPanelStyle(this.style.text,this.style.bg);
+	this.setItemStyle();
+};
+djTui_win_MenuBar.__name__ = ["djTui","win","MenuBar"];
+djTui_win_MenuBar.__super__ = djTui_Window;
+djTui_win_MenuBar.prototype = $extend(djTui_Window.prototype,{
+	setItemStyle: function(Align,FixedSize,SymbolID,pad0,pad1,padBetween) {
+		if(padBetween == null) {
+			padBetween = 1;
+		}
+		if(pad1 == null) {
+			pad1 = 1;
+		}
+		if(pad0 == null) {
+			pad0 = 1;
+		}
+		if(SymbolID == null) {
+			SymbolID = 0;
+		}
+		if(FixedSize == null) {
+			FixedSize = 0;
+		}
+		if(Align == null) {
+			Align = "left";
+		}
+		this.menuAlign = Align;
+		this._bFixSize = FixedSize;
+		this._bStyle = SymbolID;
+		this._bPad0 = pad0;
+		this._bPad1 = pad1;
+		this._bPad2 = padBetween;
+		if(this._gStyle > 0 && this._bPad2 == 0) {
+			haxe_Log.trace("Warning: Border style needs element padding > 0",{ fileName : "MenuBar.hx", lineNumber : 92, className : "djTui.win.MenuBar", methodName : "setItemStyle"});
+			this._bPad2 = 1;
+		}
+		if(this.items != null) {
+			haxe_Log.trace("Error: Call this function before adding items",{ fileName : "MenuBar.hx", lineNumber : 97, className : "djTui.win.MenuBar", methodName : "setItemStyle"});
+		}
+	}
+	,setPanelStyle: function(col1,col0,Gstyle) {
+		if(Gstyle == null) {
+			Gstyle = -1;
+		}
+		this._gStyle = Gstyle;
+		if(Gstyle == -1) {
+			this.padY = 0;
+			this.height = 1;
+		} else {
+			this.padY = 1;
+			this.height = 3;
+			if(Gstyle > 0 && this.padX == 0) {
+				this.padX = 1;
+			}
+		}
+		this.modifyStyle({ borderStyle : 0, bg : col0, elem_idle : { fg : col1}, elem_focus : { fg : col0, bg : col1}});
+		if(this.items != null) {
+			haxe_Log.trace("Error: Call this function before adding items",{ fileName : "MenuBar.hx", lineNumber : 141, className : "djTui.win.MenuBar", methodName : "setPanelStyle"});
+		}
+	}
+	,setItems: function(ar) {
+		if(ar == null) {
+			return this;
+		}
+		this.currentIndex = 0;
+		if(this.items != null) {
+			this.lockDraw = true;
+			var _g = 0;
+			var _g1 = this.items;
+			while(_g < _g1.length) {
+				var i = _g1[_g];
+				++_g;
+				this.removeChild(i);
+			}
+			this.lastAdded = null;
+			this.lockDraw = false;
+		}
+		this.items = [];
+		this._gSizes = [];
+		var totalW = 0;
+		var i1 = 0;
+		while(i1 < ar.length) {
+			var b = new djTui_el_Button("" + i1,ar[i1],this._bStyle,this._bFixSize);
+			b.setSideSymbolPad(this._bPad0,this._bPad1);
+			this.items.push(b);
+			++i1;
+			this._gSizes.push(b.width + this._bPad2);
+			totalW += b.width + this._bPad2;
+		}
+		this._gSizes[0]++;
+		this._gSizes.push(this.height);
+		totalW -= this._bPad2;
+		if(totalW + this.padX * 2 > this.width) {
+			this.width = totalW + this.padX * 2;
+		}
+		this.addStackInline(this.items,0,this._bPad2,this.menuAlign);
+		return this;
+	}
+	,onElementCallback: function(st,el) {
+		djTui_Window.prototype.onElementCallback.call(this,st,el);
+		if(st == "fire" && this.onSelect != null) {
+			this.onSelect(this.currentIndex);
+		} else if(st == "focus") {
+			this.currentIndex = Std.parseInt(el.SID);
+			if(this._gStyle == 0) {
+				this.drawThick(this.active);
+			}
+			if(this.onChange != null) {
+				this.onChange(this.currentIndex);
+			}
+		} else if(st == "unfocus") {
+			if(this._gStyle == 0) {
+				this.drawThick(this.items[Std.parseInt(el.SID)]);
+			}
+		}
+	}
+	,draw: function() {
+		djTui_Window.prototype.draw.call(this);
+		if(this._gStyle > 0) {
+			djTui_WM.T.reset().fg(this.colorFG).bg(this.colorBG);
+			djTui_WM.D.drawGrid(this.items[0].x - 1,this.y,null,[this._gSizes.slice()],this._gStyle,this._gStyle);
+		}
+	}
+	,drawThick: function(el) {
+		djTui_WM.T.bg(el.colorBG);
+		djTui_WM.D.rect(el.x,el.y + 1,el.width,1);
+		djTui_WM.D.rect(el.x,el.y - 1,el.width,1);
+	}
+	,setCursor: function(index) {
+		if(index == this.currentIndex) {
+			return;
+		}
+		this.currentIndex = index;
+		if(this.currentIndex > 0) {
+			this.items[this.currentIndex].focus();
+		}
+	}
+	,setData: function(val) {
+		this.setItems((js_Boot.__cast(val , String)).split(","));
+	}
+	,getData: function() {
+		return this.currentIndex;
+	}
+	,__class__: djTui_win_MenuBar
+});
+var djTui_win_MessageBox = function(text,_type,_resCallback,_width,_style) {
+	if(_width == null) {
+		_width = 30;
+	}
+	this.flag_auto_close = true;
+	djTui_Window.call(this);
+	if(_style == null) {
+		this.set_style(djTui_WM.global_style_pop);
+	} else {
+		this.set_style(_style);
+	}
+	this.mbType = _type;
+	this.resultCallback = _resCallback;
+	this.flag_lock_focus = true;
+	this.padding(2,1);
+	this.tbox = new djTui_el_TextBox(null,_width - 2,0);
+	this.tbox.setData(text);
+	this.tbox.flag_focusable = false;
+	this.buttons = [];
+	var _g = this.mbType;
+	switch(_g) {
+	case 0:
+		this.add_b("OK");
+		break;
+	case 1:
+		this.add_b("OK");
+		this.add_b("CANCEL");
+		break;
+	case 2:
+		this.add_b("YES");
+		this.add_b("NO");
+		break;
+	default:
+	}
+	this.size(_width,this.tbox.height + 5);
+	this.addStack(this.tbox,1);
+	this.addStackInline(this.buttons,1,3,"center");
+};
+djTui_win_MessageBox.__name__ = ["djTui","win","MessageBox"];
+djTui_win_MessageBox.create = function(text,_type,_resCallback,_width,_style) {
+	if(_width == null) {
+		_width = 30;
+	}
+	var m = new djTui_win_MessageBox(text,_type,_resCallback,_width,_style);
+	djTui_WM.A.screen(m);
+	m.openAnimated();
+};
+djTui_win_MessageBox.__super__ = djTui_Window;
+djTui_win_MessageBox.prototype = $extend(djTui_Window.prototype,{
+	onElementCallback: function(st,el) {
+		djTui_Window.prototype.onElementCallback.call(this,st,el);
+		if(st == "fire") {
+			if(this.resultCallback != null) {
+				this.resultCallback(this.buttons.indexOf(el));
+			}
+			if(this.flag_auto_close) {
+				this.close();
+			}
+		}
+	}
+	,add_b: function(name) {
+		var b = new djTui_el_Button(null,name,djTui_win_MessageBox.BUTTON_STYLE);
+		b.flag_leftright_escape = true;
+		this.buttons.push(b);
+	}
+	,__class__: djTui_win_MessageBox
+});
+var djTui_win_WindowForm = function(_sid,_w,_h) {
+	if(_h == null) {
+		_h = 8;
+	}
+	if(_w == null) {
+		_w = 15;
+	}
+	djTui_Window.call(this,_sid,_w,_h);
+	this.labelMap = new haxe_ds_ObjectMap();
+	this.align = "none";
+	this.align_padx = 1;
+	this.setLabelFocusColor(this.style.elem_focus.bg,this.style.elem_focus.fg);
+};
+djTui_win_WindowForm.__name__ = ["djTui","win","WindowForm"];
+djTui_win_WindowForm.__super__ = djTui_Window;
+djTui_win_WindowForm.prototype = $extend(djTui_Window.prototype,{
+	setAlign: function(_align,_padx,_fixedStart) {
+		if(_fixedStart == null) {
+			_fixedStart = -2;
+		}
+		if(_padx == null) {
+			_padx = 1;
+		}
+		this.align = _align;
+		this.align_padx = _padx;
+		this.align_fix_start = _fixedStart;
+		if(this.align_fix_start < 0) {
+			this.align_fix_start = Math.floor(this.get_inWidth() / -this.align_fix_start);
+		}
+		if(["fixed","center","none"].indexOf(this.align) < 0) {
+			haxe_Log.trace("Alignment Mode \"" + _align + "\" not valid.",{ fileName : "WindowForm.hx", lineNumber : 84, className : "djTui.win.WindowForm", methodName : "setAlign"});
+			throw new js__$Boot_HaxeError("WindowForm.SetAlign()");
+		}
+		haxe_Log.trace("> Alignment set align:" + this.align + ", padX:" + this.align_padx + ", divider:" + this.align_fix_start,{ fileName : "WindowForm.hx", lineNumber : 89, className : "djTui.win.WindowForm", methodName : "setAlign"});
+		return this;
+	}
+	,add: function(labelText,el) {
+		if(this.lastAdded != null && this.lastAdded.y == this.y + this.height - this.padY - 1) {
+			haxe_Log.trace("ERROR: WindowForm can't fit anymore elements",{ fileName : "WindowForm.hx", lineNumber : 105, className : "djTui.win.WindowForm", methodName : "add"});
+			throw new js__$Boot_HaxeError("WindowForm.add() overflow");
+		}
+		var l = new djTui_el_Label(labelText);
+		l.color_focus = this.colorLabelFocus;
+		this.labelMap.set(el,l);
+		var _g = this.align;
+		switch(_g) {
+		case "center":
+			this.addStackInline([l,el],0,this.align_padx,"center");
+			break;
+		case "fixed":
+			l.setTextWidth(this.align_fix_start - this.padX - this.align_padx);
+			this.addStack(l);
+			el.pos(this.x + this.align_fix_start,l.y);
+			this.addChild(el);
+			break;
+		case "none":
+			this.addStack(l);
+			el.posNext(l,this.align_padx);
+			this.addChild(el);
+			break;
+		default:
+		}
+	}
+	,setLabelFocusColor: function(fg,bg) {
+		if(fg == null) {
+			this.colorLabelFocus = null;
+		} else {
+			this.colorLabelFocus = { fg : fg, bg : bg};
+		}
+	}
+	,onElementCallback: function(st,el) {
+		if(st == "focus") {
+			var l = this.labelMap.h[el.__id__];
+			if(l != null) {
+				l.focusSetup(true);
+				l.draw();
+			}
+		} else if(st == "unfocus") {
+			var l1 = this.labelMap.h[el.__id__];
+			if(l1 != null) {
+				l1.focusSetup(false);
+				l1.draw();
+			}
+		}
+		djTui_Window.prototype.onElementCallback.call(this,st,el);
+	}
+	,addQ: function(labelText,enc) {
+		var e = null;
+		var s = enc.split(",");
+		var i = function(n) {
+			return Std.parseInt(s[n]);
+		};
+		var w2 = this.width - this.align_fix_start - this.padX;
+		var _g = s[0];
+		switch(_g) {
+		case "button":
+			e = new djTui_el_Button(s[1],s[2],i(3),i(4) == 1 ? w2 : 0);
+			break;
+		case "input":
+			e = new djTui_el_TextInput(s[1],this.align == "fixed" ? w2 - 1 : 0,s[2]);
+			break;
+		case "label":
+			e = new djTui_el_Label(s[1],i(2) == 1 ? w2 : 0,s[3]);
+			break;
+		case "popOpt":
+			e = new djTui_el_PopupOption(s[1],s[2].split("|"),i(3),i(4));
+			break;
+		case "slNum":
+			e = new djTui_el_SliderNum(s[1],i(2),i(3),i(4));
+			break;
+		case "slOpt":
+			e = new djTui_el_SliderOption(s[1],s[2].split("|"),i(3));
+			break;
+		case "toggle":
+			e = new djTui_el_Toggle(s[1],s[2] == "true");
+			break;
+		default:
+			throw new js__$Boot_HaxeError("Unsupported");
+		}
+		this.add(labelText,e);
+		return e;
+	}
+	,__class__: djTui_win_WindowForm
 });
 var haxe_IMap = function() { };
 haxe_IMap.__name__ = ["haxe","IMap"];
@@ -2381,6 +5437,41 @@ var haxe_Log = function() { };
 haxe_Log.__name__ = ["haxe","Log"];
 haxe_Log.trace = function(v,infos) {
 	js_Boot.__trace(v,infos);
+};
+var haxe_Timer = function(time_ms) {
+	var me = this;
+	this.id = setInterval(function() {
+		me.run();
+	},time_ms);
+};
+haxe_Timer.__name__ = ["haxe","Timer"];
+haxe_Timer.prototype = {
+	stop: function() {
+		if(this.id == null) {
+			return;
+		}
+		clearInterval(this.id);
+		this.id = null;
+	}
+	,run: function() {
+	}
+	,__class__: haxe_Timer
+};
+var haxe_ds_ObjectMap = function() {
+	this.h = { __keys__ : { }};
+};
+haxe_ds_ObjectMap.__name__ = ["haxe","ds","ObjectMap"];
+haxe_ds_ObjectMap.__interfaces__ = [haxe_IMap];
+haxe_ds_ObjectMap.prototype = {
+	set: function(key,value) {
+		var id = key.__id__ || (key.__id__ = ++haxe_ds_ObjectMap.count);
+		this.h[id] = value;
+		this.h.__keys__[id] = key;
+	}
+	,get: function(key) {
+		return this.h[key.__id__];
+	}
+	,__class__: haxe_ds_ObjectMap
 };
 var haxe_ds_StringMap = function() {
 	this.h = { };
@@ -2406,6 +5497,31 @@ haxe_ds_StringMap.prototype = {
 		} else {
 			return this.rh["$" + key];
 		}
+	}
+	,existsReserved: function(key) {
+		if(this.rh == null) {
+			return false;
+		}
+		return this.rh.hasOwnProperty("$" + key);
+	}
+	,keys: function() {
+		return HxOverrides.iter(this.arrayKeys());
+	}
+	,arrayKeys: function() {
+		var out = [];
+		for( var key in this.h ) {
+		if(this.h.hasOwnProperty(key)) {
+			out.push(key);
+		}
+		}
+		if(this.rh != null) {
+			for( var key in this.rh ) {
+			if(key.charCodeAt(0) == 36) {
+				out.push(key.substr(1));
+			}
+			}
+		}
+		return out;
 	}
 	,__class__: haxe_ds_StringMap
 };
@@ -2644,6 +5760,13 @@ js_Boot.__instanceof = function(o,cl) {
 		return o.__enum__ == cl;
 	}
 };
+js_Boot.__cast = function(o,t) {
+	if(js_Boot.__instanceof(o,t)) {
+		return o;
+	} else {
+		throw new js__$Boot_HaxeError("Cannot cast " + Std.string(o) + " to " + Std.string(t));
+	}
+};
 js_Boot.__nativeClassName = function(o) {
 	var name = js_Boot.__toStr.call(o).slice(8,-1);
 	if(name == "Object" || name == "Function" || name == "Math" || name == "JSON") {
@@ -2676,6 +5799,64 @@ Bool.__ename__ = ["Bool"];
 var Class = { __name__ : ["Class"]};
 var Enum = { };
 var __map_reserved = {};
+REG.APP_WIDTH = 80;
+REG.APP_HEIGHT = 25;
+REG.LOG_FILE = "a:\\log.txt";
+REG.states = (function($this) {
+	var $r;
+	var _g = new haxe_ds_StringMap();
+	{
+		var value = State_$Misc_$01;
+		if(__map_reserved["Misc_01"] != null) {
+			_g.setReserved("Misc_01",value);
+		} else {
+			_g.h["Misc_01"] = value;
+		}
+	}
+	{
+		var value1 = State_$ButtonGrid;
+		if(__map_reserved["Button Grid"] != null) {
+			_g.setReserved("Button Grid",value1);
+		} else {
+			_g.h["Button Grid"] = value1;
+		}
+	}
+	{
+		var value2 = State_$Buttons;
+		if(__map_reserved["Buttons"] != null) {
+			_g.setReserved("Buttons",value2);
+		} else {
+			_g.h["Buttons"] = value2;
+		}
+	}
+	{
+		var value3 = State_$Textbox;
+		if(__map_reserved["Textboxes"] != null) {
+			_g.setReserved("Textboxes",value3);
+		} else {
+			_g.h["Textboxes"] = value3;
+		}
+	}
+	{
+		var value4 = State_$Textbox;
+		if(__map_reserved["Labels"] != null) {
+			_g.setReserved("Labels",value4);
+		} else {
+			_g.h["Labels"] = value4;
+		}
+	}
+	{
+		var value5 = State_$Textbox;
+		if(__map_reserved["Window Form"] != null) {
+			_g.setReserved("Window Form",value5);
+		} else {
+			_g.h["Window Form"] = value5;
+		}
+	}
+	$r = _g;
+	return $r;
+}(this));
+REG.startState = State_$Buttons;
 djNode_Keycode.CTRLC = "\x03";
 djNode_Keycode.ESC = "\x1B";
 djNode_Keycode.UP = "\x1B[A";
@@ -2717,9 +5898,25 @@ djNode_tools_LOG.param_memory_buffer = 8192;
 djTui_BaseElement.UID_GEN = 1;
 djTui_Styles.DEF_WINDOW_SIZE_X = 20;
 djTui_Styles.DEF_WINDOW_SIZE_Y = 8;
-djTui_WM.flag_tab_switch_windows = false;
+djTui_WM.VERSION = "0.1";
+djTui_WM.backgroundColor = "black";
+djTui_WM.flag_debug_trace_element_callbacks = false;
+djTui_WM._isInited = false;
+djTui_el_Button.SMB = ["[]","{}","()","<>"];
+djTui_el_Button.CONF_DEF = "Are you sure?";
+djTui_el_PopupOption.WIN_MIN_WIDTH = 15;
+djTui_el_ScrollBar.SYMBOL_BAR = "│";
+djTui_el_ScrollBar.SYMBOL_IND = "█";
+djTui_el_TextInput.DEFAULT_SIZE = 12;
+djTui_el_TextInput.DEFAULT_CARET = "▄";
+djTui_el_TextInput.CARET_BLINK_RATE = 200;
+djTui_el_TextInput.BANK_LETTERS = "QAZWSXEDCRFVTGBYHNUJMIKOLPqazwsxedcrfvtgbyhnujmikolp";
+djTui_el_TextInput.BANK_NUMBERS = "1234567890";
+djTui_el_TextInput.BANK_SYMBOLS = " `~!@#$%^&*()_+-=[]{}\\|;:'\",.<>/?";
+djTui_win_MessageBox.BUTTON_STYLE = 2;
+haxe_ds_ObjectMap.count = 0;
 js_Boot.__toStr = ({ }).toString;
-DevMain.main();
+Main.main();
 })(typeof window != "undefined" ? window : typeof global != "undefined" ? global : typeof self != "undefined" ? self : this);
 
 //# sourceMappingURL=app.js.map

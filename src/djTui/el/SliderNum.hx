@@ -77,6 +77,8 @@ class SliderNum extends BaseMenuItem
 	
 	override function onKey(k:String):Void 
 	{
+		if (disabled) return;
+		
 		switch(k)
 		{
 			case "left": 	if (data != min) sd(data - inc);

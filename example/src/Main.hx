@@ -16,7 +16,7 @@ import djTui.win.WindowForm;
  */
 class Main extends BaseApp 
 {
-
+	
 	// Initialize Program Information / Arguments here.
 	override function init():Void 
 	{
@@ -57,20 +57,14 @@ class Main extends BaseApp
 			scrollbar_focus:{fg:"white",bg:"red"}
 		}, WM.global_style_win);
 		
+		
+		//WM.global_style_win = Styles.createWinStyle("white", "yellow", "black", "darkblue");
+		WM.global_style_pop = Styles.win.get("pop_red");
+		
 		// Set the background color for the whole terminal area
-		// WM.backgroundColor = "blue";
+		 //WM.backgroundColor = "blue";
 		
-		
-		
-		#if (debug && false) // quickly go to a state
-		
-		//var st = new State_ButtonGrid();
-		//st.open();
-		//return;
-		
-		#end
-		
-		
+		 
 		//--------------------------------------------
 		//- Draw some stuff that will be visible in all
 		
@@ -82,8 +76,6 @@ class Main extends BaseApp
 				bg:"cyan", text:"black", borderStyle:2, borderColor:{fg:"darkblue"}
 			});
 			head.addStack(new Label("djTUI V" + WM.VERSION + " - Demo  "));
-		WM.add(head);
-		
 		
 		// : Footer
 		var foot = new Window( -1, 1);
@@ -92,38 +84,30 @@ class Main extends BaseApp
 			foot.modifyStyle({
 				bg:"gray", text:"darkblue", borderStyle:0
 			});
-			foot.addStack(new Label("[Arrow Keys / TAB] = MOVE    |   [ENTER] = SELECT", foot.inWidth, "center"));
+			foot.addStack(new Label("[Arrow Keys / TAB] = MOVE | [ENTER] = SELECT | [ESC] = SELECT", foot.inWidth, "center"));
 			foot.pos(0, WM.height - foot.height);
-		WM.add(foot);
+			
+		WM.add(foot); // <-- Add the footer, this will be visible with all statesb
 		
 		
 		// : Demo Selector ::
 		
-		var states:Map<String,Class<WindowState>> = [
-			"Misc_01" => State_Misc_01,
-			"Button Grid" => State_ButtonGrid,
-			
-			"Textboxes" => State_Textbox,
-			"Buttons" => State_Textbox,
-			"Labels" => State_Textbox,
-			"Window Form" => State_Textbox,
-		];
 		
 		// NOTE: -2,-2 = half the screen width, half the screen height
 		var menu = new Window( -2, -2);
 			menu.addStack(new Label("Select a demo :").setColor("blue", "white"));
 			menu.addSeparator();
 			
-			for (i in states.keys())
+			for (i in REG.states.keys())
 			{
-				var b = new Button(i, i, 0);
+				var b = new Button(i,i,1,0);
 				menu.addStack(b);
 			}
 			
 			menu.listen(function(msg, el){
 				if (el.type == ElementType.button && msg == "fire")
 				{
-					var st = Type.createInstance(states.get(el.SID), []);
+					var st = Type.createInstance(REG.states.get(el.SID), []);
 					WM.STATE.open(st);
 				}
 			});
@@ -157,6 +141,17 @@ class Main extends BaseApp
 		// Dynamically create a state with those 2 windows
 		// This way I can open/close quickly
 		WM.STATE.create("main", [head, menu, qWin]);
+
+		
+		#if debug
+		
+		if (REG.startState != null)
+		{
+			WM.STATE.open(Type.createInstance(REG.startState, []));
+			return;
+		}
+		
+		#end
 		
 		WM.STATE.goto("main");
 		
@@ -167,6 +162,25 @@ class Main extends BaseApp
 	{
 		T.move(0, WM.height); // Hack for real terminals
 		super.onExit();
+	}//---------------------------------------------------;
+	
+	override function exitError(text:String, showHelp:Bool = false):Void 
+	{
+		if (WM._isInited)
+		{
+			
+			var m = new MessageBox(
+				"CRITICAL ERROR:\n" + text, 0, 
+				function(a){Sys.exit(1); }, 
+				WM.width - 10, Styles.win.get("error")
+				);
+			WM.A.screen(m);
+			m.open(true);		
+		}
+		else
+		{
+			super.exitError(text, showHelp);
+		}
 	}//---------------------------------------------------;
 	
 	// --

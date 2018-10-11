@@ -11,7 +11,7 @@ import djTui.Styles.PrintColor;
  * - Offers Focused/Idle Colors handling
  * - Use setColorFocus() and setColorIdle() to set colors
  * - Automatic Symbol management at string ends, (for buttons, arrows, etc)
- * 
+ * - Disabled elements, when restored to enabled, will ALWAYS restore to default colors
  */
 class BaseMenuItem extends BaseElement 
 {	
@@ -29,7 +29,7 @@ class BaseMenuItem extends BaseElement
 	var textAlign:String;
 	
 	// Whether this control can be interacted with
-	// public var disabled:Bool = false; TODO
+	public var disabled(default, set):Bool = false;
 	
 	/** Optional DESCRIPTION text associated with current control **/
 	public var desc:String;
@@ -51,11 +51,25 @@ class BaseMenuItem extends BaseElement
 	}//---------------------------------------------------;
 	
 	/**
+	   Quick disable/enable with a chainable function
+	   @param V True to Disable, False to Enable
+	   @param alsoUnselectable If True and Disabled will make the element unselectable
+	**/
+	public function disable(V:Bool = true, alsoUnselectable:Bool = false):BaseMenuItem
+	{
+		disabled = V; 
+		if (alsoUnselectable && V) flag_focusable = false;
+		else if (!V) flag_focusable = true;
+		return this;
+	}//---------------------------------------------------;
+	/**
 	   Just added in a Window
 	   Called by Window
 	**/
 	override function onAdded():Void 
 	{
+		// DEVNOTE: Check this, in case user has already set custom colors
+		
 		if (color_idle == null)
 		{
 			color_idle = parent.style.elem_idle;
@@ -65,6 +79,10 @@ class BaseMenuItem extends BaseElement
 		{
 			color_focus = parent.style.elem_focus;
 		}
+		
+		// NOTE: Hacky way to apply disabled colors on the element
+		// 		 BUT ONLY if the element is disabled
+		if (disabled == true) disabled = true;
 	}//---------------------------------------------------;
 	
 	/**
@@ -86,13 +104,7 @@ class BaseMenuItem extends BaseElement
 	public function colorIdle(fg:String, ?bg:String):BaseMenuItem
 	{
 		color_idle = {fg:fg, bg:bg};
-		
-		if (parent != null) 
-		{
-			focusSetup(isFocused);
-			if (visible) draw();
-		}
-		
+		colorChangeDraw();
 		return this;
 	}//---------------------------------------------------;
 	
@@ -100,16 +112,19 @@ class BaseMenuItem extends BaseElement
 	public function colorFocus(fg:String, ?bg:String):BaseMenuItem
 	{
 		color_focus = {fg:fg, bg:bg};
-		
+		colorChangeDraw();
+		return this;
+	}//---------------------------------------------------;
+	
+	// Colors were changed. Check if it can be drawn and draw
+	function colorChangeDraw()
+	{
 		if (parent != null) 
 		{
 			focusSetup(isFocused);
-			if (visible) draw();
+			if (visible && !lockDraw) draw();
 		}		
-		
-		return this;
 	}//---------------------------------------------------;
-		
 	/**
 	   Print the generic 'rText' with the currently active colors
 	**/
@@ -188,6 +203,41 @@ class BaseMenuItem extends BaseElement
 	}//---------------------------------------------------;
 
 	
+	/**
+	   Apply and re-apply disabled status along with COLORS
+	   @param	val
+	**/
+	public function set_disabled(val:Bool)
+	{
+		disabled = val;
+		
+		if (!disabled)
+		{
+			flag_focusable = true;
+		}
+		
+		if (parent != null)
+		{
+			var s = parent.style;
+			if (disabled)
+			{
+				color_focus = s.elem_disable_f;
+				color_idle = s.elem_disable_i;
+			}else
+			{
+				// Reset colors to defaults of the style
+				// Will overwrite any custom user colors :-/
+				color_idle = s.elem_idle;
+				color_focus = s.elem_focus;
+			}
+			colorChangeDraw();
+		}
+		return val;
+	}//---------------------------------------------------;
+	
+	
+	
+	
 	//====================================================;
 	// Side Symbols
 	// Text will be enclosed if the symbols are set
@@ -220,5 +270,5 @@ class BaseMenuItem extends BaseElement
 		s_smb_l = l;
 		s_smb_r = r;
 	}//---------------------------------------------------;
-		
+	
 }//--

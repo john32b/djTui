@@ -2,6 +2,7 @@ package djTui.win;
 
 import djTui.BaseElement;
 import djTui.Styles.WinStyle;
+import djTui.Window;
 import djTui.el.Button;
 import djTui.el.TextBox;
 
@@ -39,7 +40,7 @@ class MessageBox extends Window
 	/**
 	   Create a messagebox window.
 	   @param	text
-	   @param	_type 0:OK | 1:OK,CANCEL | 2:YES,NO
+	   @param	_type 0:OK | 1:OK,CANCEL | 2:YES,NO | 3:NOTHING
 	   @param	_resCallback fn(int) -> index of button clicked
 	   @param	_width
 	**/
@@ -58,7 +59,7 @@ class MessageBox extends Window
 		
 		
 		// - Create the textbox
-		tbox = new TextBox(_width - 2, 0);
+		tbox = new TextBox(_width - padX * 2, 0);
 		tbox.setData(text);
 		tbox.flag_focusable = false;
 		
@@ -75,14 +76,18 @@ class MessageBox extends Window
 			case 2:
 				add_b("YES");
 				add_b("NO");
+			case 3:
+				
 			default:
 		}
-		
 		
 		// - Window
 		size(_width, tbox.height + 5);
 		addStack(tbox, 1);
 		addStackInline(cast buttons, 1, 3, "center");
+		
+		// In case of no buttons, there is no last added
+		if (lastAdded != null) hack_always_focus_this = lastAdded.SID;
 	}//---------------------------------------------------;
 	
 	override function onElementCallback(st:String, el:BaseElement) 
@@ -121,11 +126,12 @@ class MessageBox extends Window
 	   @param	_resCallback fn(int) -> index of button clicked
 	   @param	_width
 	**/
-	public static function create(text:String, _type:Int, ?_resCallback:Int->Void, _width:Int = 30, ?_style:WinStyle)
+	public static function create(text:String, _type:Int, ?_resCallback:Int->Void, _width:Int = 30, ?_style:WinStyle, animated:Bool = false ):Window
 	{
 		var m = new MessageBox(text, _type, _resCallback, _width,_style);
 			WM.A.screen(m);
-			m.openAnimated();
+			if (animated) m.openAnimated(); else m.open(true);
+			return m;
 	}//---------------------------------------------------;
 	
 }// --

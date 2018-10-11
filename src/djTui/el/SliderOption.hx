@@ -53,6 +53,8 @@ class SliderOption extends BaseMenuItem
 	// --
 	override function onKey(k:String):Void 
 	{
+		if (disabled) return;
+		
 		switch(k)
 		{
 			case "left": 	if (index != 0) sd(index - 1);

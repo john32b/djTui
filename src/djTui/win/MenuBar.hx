@@ -16,7 +16,13 @@ import djTui.el.Button;
  *  - setPanelStyle(), setItemStyle() for customization
  * 
  * TODO:
- * 	- Popup menus support for items
+ * 	- Nested menus with popups
+ * 
+ * 
+ * EXAMPLE:
+ * 	bar = new MenuBar("main",-1,2);
+ *  bar.setItems(["one","two"]);
+ * 	
  * 
  */
 class MenuBar extends Window 
@@ -42,10 +48,10 @@ class MenuBar extends Window
 	var _gSizes:Array<Int>;	// Helper Array, store a button sizes to push to drawer
 	var _gStyle:Int = 0;	// Grid/Panel Thickness Style
 	
-	/** Quick callback for when an Item becomes highlighted */
+	/** Quick callback for when an Item becomes highlighted. Index starts at 0 */
 	public var onChange:Int->Void;
 	
-	/** Quick callback for when an Item gets selected */
+	/** Quick callback for when an Item gets selected. Index starts at 0 */
 	public var onSelect:Int->Void;
 		
 	
@@ -54,7 +60,7 @@ class MenuBar extends Window
 	   Call `setup()` first for styling and then `setItems()` to push data
 	   @param	Sid Set an SID to have it pushed to the global WM.DB object
 	   @param	Width -1 For full screen width. If Size too small for items, it will be resized
-	   @param	Side Window Padding.
+	   @param	PadX Side Window Padding.
 	**/
 	public function new(?Sid:String, Width:Int = 1, PadX:Int = 0) 
 	{

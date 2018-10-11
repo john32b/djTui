@@ -25,6 +25,8 @@ import haxe.Timer;
 class Window extends BaseElement 
 {
 	
+	public static var windowAnimationTick:Int = 90;
+	
 	/** Sets the window title drawn at the top. Can be changed whenever */
 	public var title(default, set):String;
 	
@@ -78,16 +80,21 @@ class Window extends BaseElement
 	var callback_wm:String->Window->Void;
 
 	/// FLAGS :
-	
-	
+		
 	/** If true, will close this window on `Escape` key. */
 	public var flag_close_on_esc:Bool = false;
-		
+	/** If true, will close this window on `BackSpace` key. */
+	public var flag_close_on_bksp:Bool = false;
+	
 	/** If true, when this window gets focus, will try to focus last element focused
 	 *  ! Will only apply once ! So it's needed to be set every time  */
 		@:allow(djTui.WM)
 	var flag_return_focus_once:Bool = false;
 	
+	/** If set, will always focus this element on window focus */
+	public var hack_always_focus_this:String;
+	
+	//====================================================;
 	
 	/**
 	   Create a Window
@@ -162,6 +169,16 @@ class Window extends BaseElement
 		// Note, this is faster than an array.filter, because it will not parse all the elements
 		for (el in display_list) if (el.SID == sid) return el;
 		return null;
+	}//---------------------------------------------------;
+	
+	
+	/**
+	   Return the element with target index. 
+	   Note : Index 0 is always the border, so start at 1
+	**/
+	public function getElIndex(ind:Int):BaseElement
+	{
+		if (display_list.length > ind) return display_list[ind]; return null;
 	}//---------------------------------------------------;
 	
 	
@@ -336,6 +353,17 @@ class Window extends BaseElement
 	}//---------------------------------------------------;
 	
 	/**
+	   Quickly set some parameters for this window to behave as a
+	   quick options popup
+	**/
+	public function isOptionsPopup()
+	{
+		flag_close_on_esc = true;
+		flag_close_on_bksp = true;
+		flag_lock_focus = true;
+	}//---------------------------------------------------;
+	
+	/**
 	   Add a horizontal line separator. ( A quick label element )
 	   @param forceStyle Set a border style (0-6) - Default to same style as the window border
 	**/
@@ -381,7 +409,7 @@ class Window extends BaseElement
 	public function openAnimated()
 	{
 		var st = [0.3, 0.6];
-		var t = new Timer(80);
+		var t = new Timer(windowAnimationTick);
 		var c:Int = 0;
 		t.run = function()
 		{
@@ -452,12 +480,19 @@ class Window extends BaseElement
 		lockDraw = false;
 		// Focus an element
 		if (display_list.length == 0) return;
+				
+			if (hack_always_focus_this!=null) {
+				var e = getEl(hack_always_focus_this); if (e != null) e.focus();
+				return;
+			}
+			
 		if (flag_return_focus_once && active_last != null)
 		{
 			active_last.focus();
 			flag_return_focus_once = false;
 		}else
 		{
+		
 			// Focus the first selectable element :
 			BaseElement.focusNext(display_list, null);
 		}
@@ -510,6 +545,20 @@ class Window extends BaseElement
 	}//---------------------------------------------------;
 	
 	
+	/**
+	   The index of the selected element
+	   @return
+	**/
+	public function getActiveIndex():Int
+	{
+		if (active != null)
+			for (i in 0...display_list.length)
+				if (display_list[i] == active) return i;
+		return -1;
+	}//---------------------------------------------------;
+	
+	
+	
 	// Focus next element, will loop through the edges
 	@:allow(djTui.WM)
 	@:allow(djTui.BaseElement)
@@ -559,7 +608,14 @@ class Window extends BaseElement
 	{
 		switch(key)
 		{
+			
+			case 'backsp':
+					if (flag_close_on_bksp) 
+						close();
+						
 			case 'tab':	
+				
+				if (WM._TAB_LEVEL == 0) return;
 				
 				if (activeIsLastFocusable())
 				{
@@ -579,9 +635,10 @@ class Window extends BaseElement
 				}
 					
 			case 'esc':
-					// DEVNOTE: I am not sure if this is useful, since WM handles the ESC key
+					// DEVNOTE: Esc FLAG is handled by the WM
+					// 			It then pushes ESC here if flag is off
 					callback('escape');
-				
+					
 			default:
 				
 				if (active == null) return;

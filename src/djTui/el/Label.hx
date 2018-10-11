@@ -30,7 +30,7 @@ class Label extends BaseMenuItem
 		@param  Align   		Alignment within the label itself. Enabled onlt 
 								when target width is set
 	**/
-	public function new(Text:String, TextWidth:Int = 0, Align:String = "left")
+	public function new(Text:String = "", TextWidth:Int = 0, Align:String = "left")
 	{
 		super();
 		type = ElementType.label;

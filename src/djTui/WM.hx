@@ -73,7 +73,8 @@ class WM
 	
 	/// Internal :
 	
-	// TAB Capture Level ( 0 = none, 1 = window, 2 = WM ) */
+	// TAB Capture Level ( 0 = NONE, 1 = WM, 2 = WINDOW ) */
+	@:allow(djTui.Window)
 	static var _TAB_LEVEL:Int;
 	// Encoded behavior, depends on _TAB_LEVEL */
 	@:allow(djTui.Window)
@@ -90,6 +91,8 @@ class WM
 	public static var flag_debug_trace_element_callbacks:Bool = false;
 	#end
 	
+	// Is the WM created with no problems
+	public static var _isInited(default, null):Bool = false;
 	//====================================================;
 	
 
@@ -137,6 +140,8 @@ class WM
 		closeAll();
 		
 		set_TAB_behavior(); // default values
+		
+		_isInited = true;
 		
 		// -
 		trace('== Window Manager Created =');
@@ -196,7 +201,7 @@ class WM
 		if (w.y < 0) w.pos(w.x, 0); else
 		if (w.y + w.height > height) w.pos(w.x, height - w.height);
 		
-		trace('WM -> Adding Window : UID:${w.UID}, SID:${w.SID} | Size: (${w.width},${w.height}) | Pos: ${w.x},${w.y} ');
+		// trace('WM -> Adding Window : UID:${w.UID}, SID:${w.SID} | Size: (${w.width},${w.height}) | Pos: ${w.x},${w.y} ');
 		
 		// --
 		if (win_list.indexOf(w) == -1)
@@ -380,7 +385,7 @@ class WM
 			}
 		}else
 		
-		if (_TAB_LEVEL == 2 && key == "tab")
+		if (_TAB_LEVEL == 1 && key == "tab")
 		{
 			// If a window is already locked, don't switch windows
 			// just send 'tab' to that window

@@ -41,7 +41,9 @@ typedef WinStyle =
 	
 	elem_focus:PrintColor,
 	elem_idle:PrintColor,
-	elem_disable:PrintColor,
+	
+	elem_disable_f:PrintColor,
+	elem_disable_i:PrintColor,
 	
 	scrollbar_idle:PrintColor,
 	?scrollbar_focus:PrintColor,
@@ -109,11 +111,13 @@ class Styles
 			'█▄▌▐█'
 		];
 		
-		//-- Default Tui Skins ::
+		//-- Create some predefined styles
 		win = new Map();
-		win.set("default", createWinStyle("green", "blue", "white", "black"));
-		win.set("default_pop", createWinStyle("green", "black", "white", "blue"));
-		win.set("error", createWinStyle("yellow", "red", "yellow", "red"));
+		win.set("default", createWinStyle("yellow", "darkblue", "white", "black", "gray"));
+		win.set("default_pop", createWinStyle("yellow", "black", "white", "blue", "cyan"));
+		
+		win.set("pop_red", createWinStyle("yellow", "red", "yellow", "red", "darkred"));
+		win.set("win_01", createWinStyle("black", "yellow", "white", "blue", "cyan"));
 		
 	}//---------------------------------------------------;
 	
@@ -150,7 +154,7 @@ class Styles
 	   @param C Foreground
 	   @param D Background
 	**/
-	public static function createWinStyle(A:String, B:String, C:String, D:String, BorderStyle:Int = 1):WinStyle
+	public static function createWinStyle(A:String, B:String, C:String, D:String, E:String, BorderStyle:Int = 1):WinStyle
 	{
 		// No bg color converts to Window BG color
 		var s:WinStyle = 
@@ -163,9 +167,11 @@ class Styles
 			borderStyle : BorderStyle,
 			borderColor : { fg : C },
 			
-			elem_focus    : { fg : D, bg:A },
+			elem_focus    : { fg : B, bg:A },
 			elem_idle     : { fg : C },
-			elem_disable  : { fg : B },
+			
+			elem_disable_f  : { fg : D, bg:E },	
+			elem_disable_i  : { fg : E },
 			
 			scrollbar_idle  : { fg : C },
 			scrollbar_focus : { fg : A, bg : B},

@@ -28,7 +28,13 @@ class VList extends TextBox
 	// The color the highlighted element gets.
 	var color_cursor:PrintColor;
 	
-	// --
+	/** Quickly get a callback for selected elements fn(index) */
+	public var onSelect:Int->Void;
+	
+	/** Jump to letters on keystrokes. Works best on sorted lists */
+	public var flag_letter_jump:Bool = false;
+	
+	//====================================================;
 	public function new(?sid:String, _width:Int, _slots:Int)
 	{
 		super(sid, _width, _slots);
@@ -85,9 +91,33 @@ class VList extends TextBox
 			case "pageup": cursor_pageUp();
 			case "home": cursor_top();
 			case "end": cursor_bottom();
-			case "space": callback("fire");
-			case "enter": callback("fire");
+			case "space": callback("fire"); if (onSelect != null) onSelect(index);
+			case "enter": callback("fire"); if (onSelect != null) onSelect(index);
 			default:
+			// Check for letter jumps:
+			if (!flag_letter_jump) return;
+			
+				k = k.toUpperCase();
+
+				// Cycle through same letter on multiple presses :
+				if (lines[index].charAt(0).toUpperCase() == k)
+				{
+					if (lines[index + 1] != null && lines[index + 1].charAt(0).toUpperCase() == k)
+					{
+						cursor_down(); return;
+					}
+				}
+			
+				// Force go to the start of a letter :
+				var x = 0;
+				do {
+					if (lines[x].charAt(0).toUpperCase() == k) {
+						cursor_to(x);
+						return;	
+					}
+				}while (++x < lines.length);
+			
+				
 		}
 	}//---------------------------------------------------;
 	
@@ -126,10 +156,13 @@ class VList extends TextBox
 	}//---------------------------------------------------;
 	
 
-	// --
-	// Set the currently selected index,
-	// moves the cursor.
-	// Hacky to way to scroll, it works but it's ugly.
+	/**
+	   Move the cursor to target index.
+	   NOTE: Hacky to way to scroll, it works but it's ugly
+			 ( It scrolls one by one from the top until it reaches the element 
+			   but at least it will draw at every cursor jump, just once )
+	   @param	val Index to scroll to. Starts at 0
+	**/
 	public function cursor_to(val:Int)
 	{
 		if (val == index) return;
@@ -162,14 +195,18 @@ class VList extends TextBox
 	// Draw the highlighted element (cursor)
 	function cursor_draw()
 	{
-		WM.T.reset().fg(color_cursor.fg).bg(color_cursor.bg);
-		drawSlotIndex(index_slot);
+		if (!lockDraw) {
+			WM.T.reset().fg(color_cursor.fg).bg(color_cursor.bg);
+			drawSlotIndex(index_slot);
+		}
 	}//---------------------------------------------------;
 	
 	// Drawing over the old selected element
 	function draw_current_slot_unfocused()
 	{
-		_readyCol(); drawSlotIndex(index_slot);
+		if (!lockDraw) {
+			_readyCol(); drawSlotIndex(index_slot);
+		}
 	}//---------------------------------------------------;
 	
 	

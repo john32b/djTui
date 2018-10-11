@@ -50,7 +50,7 @@ class Toggle extends BaseMenuItem
 	
 	override function onKey(k:String):Void 
 	{
-		if (k == "enter" || k == "space")
+		if ((k == "enter" || k == "space") && !disabled)
 		{
 			setData(!data);
 			callback("change");

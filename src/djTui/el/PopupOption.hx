@@ -78,7 +78,7 @@ class PopupOption extends BaseMenuItem
 	
 	override function onKey(k:String):Void 
 	{
-		if (k == "space" || k == "enter")
+		if ((k == "space" || k == "enter") && !disabled)
 		{
 			// Open the popup and put it relative to current control.
 			list.cursor_to(index);

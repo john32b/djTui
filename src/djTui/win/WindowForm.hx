@@ -19,6 +19,9 @@ import djTui.el.Toggle;
  * - use setLabelColors(..); to set label colorin
  * - use add(..); to add element + Label
  * - use addQ(..); to quickly add an element + Label
+ * 
+ * NOTE: 
+ * - Setting the style doesn't alter the focused label color, you have to set it separately
  */
 class WindowForm extends Window 
 {
@@ -54,7 +57,7 @@ class WindowForm extends Window
 		align_padx = 1;
 		
 		// Default color for when highlighting an element
-		setLabelFocusColor(style.elem_focus.fg);
+		setLabelFocusColor(style.elem_focus.bg, style.elem_focus.fg);
 	}//---------------------------------------------------;
 	
 	
