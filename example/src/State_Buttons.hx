@@ -23,7 +23,7 @@ class State_Buttons extends WindowState
 		// Create a bunch of buttons in a window
 		var w1 = new Window(40, 10);
 			w1.padding(3, 2).pos(3, 3);
-			w1.style = Styles.win.get("win_01");
+			w1.style = Styles.win.get("green.1");
 		WM.A.screen(w1);
 		
 		w1.addStack( new Button("b1", "Normal Button") );
@@ -44,7 +44,6 @@ class State_Buttons extends WindowState
 	
 	override public function open(?data:Dynamic) 
 	{
-		WM.set_TAB_behavior("WINDOW", "keep");
 		super.open(data);
 	}//---------------------------------------------------;
 	

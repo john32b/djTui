@@ -126,8 +126,8 @@ class WM
 		
 		Styles.init();
 		
-		if (styleWin == null) styleWin = "default";
-		if (stylePop == null) stylePop = "default_pop";
+		if (styleWin == null) styleWin = Styles.DEF_STYLE_WIN;
+		if (stylePop == null) stylePop = Styles.DEF_STYLE_POP;
 		
 		global_style_win = Reflect.copy(Styles.win.get(styleWin));
 		global_style_pop = Reflect.copy(Styles.win.get(stylePop));
@@ -382,6 +382,8 @@ class WM
 				{
 					return; // The window state is going to change, no need to continue
 				}
+				
+				active.onKey("esc");
 			}
 		}else
 		

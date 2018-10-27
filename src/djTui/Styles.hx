@@ -42,8 +42,8 @@ typedef WinStyle =
 	elem_focus:PrintColor,
 	elem_idle:PrintColor,
 	
-	elem_disable_f:PrintColor,
-	elem_disable_i:PrintColor,
+	elem_disable_f:PrintColor,	// Disabled Focused
+	elem_disable_i:PrintColor,	// Disabled Idle
 	
 	scrollbar_idle:PrintColor,
 	?scrollbar_focus:PrintColor,
@@ -60,7 +60,11 @@ typedef WinStyle =
  * Static class that holds some global Style parameters and utilities
  */
 class Styles 
-{	
+{
+	
+	public inline static var DEF_STYLE_WIN = "blue.1";
+	public inline static var DEF_STYLE_POP = "red.1";
+	
 	// Some Inline Defaults:
 	public inline static var DEF_WINDOW_SIZE_X:Int = 20;
 	public inline static var DEF_WINDOW_SIZE_Y:Int = 8;
@@ -113,11 +117,12 @@ class Styles
 		
 		//-- Create some predefined styles
 		win = new Map();
-		win.set("default", createWinStyle("yellow", "darkblue", "white", "black", "gray"));
-		win.set("default_pop", createWinStyle("yellow", "black", "white", "blue", "cyan"));
 		
-		win.set("pop_red", createWinStyle("yellow", "red", "yellow", "red", "darkred"));
-		win.set("win_01", createWinStyle("black", "yellow", "white", "blue", "cyan"));
+		win.set("blue.1", 	createWinStyle("yellow", "magenta", "white", "blue", "darkblue"));
+		win.set("green.1", 	createWinStyle("yellow", "red", 	"white", "green", "darkgreen"));
+		win.set("red.1",	createWinStyle("yellow", "magenta", "white", "red", "darkred"));
+		win.set("magenta.1",createWinStyle("cyan", "black", "white", "magenta", "darkcyan"));
+		win.set("black.1",	createWinStyle("yellow", "red", "white", "black", "gray"));
 		
 	}//---------------------------------------------------;
 	
@@ -153,6 +158,7 @@ class Styles
 	   @param B Accent BG
 	   @param C Foreground
 	   @param D Background
+	   @param E Disabled Color
 	**/
 	public static function createWinStyle(A:String, B:String, C:String, D:String, E:String, BorderStyle:Int = 1):WinStyle
 	{

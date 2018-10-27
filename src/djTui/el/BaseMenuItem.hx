@@ -130,7 +130,7 @@ class BaseMenuItem extends BaseElement
 	**/
 	override public function draw():Void 
 	{
-		WM.T.reset().fg(colorFG).bg(colorBG);
+		_readyCol();
 		WM.T.move(x, y).print(rText);
 	}//---------------------------------------------------;
 	
@@ -234,9 +234,6 @@ class BaseMenuItem extends BaseElement
 		}
 		return val;
 	}//---------------------------------------------------;
-	
-	
-	
 	
 	//====================================================;
 	// Side Symbols

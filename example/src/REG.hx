@@ -28,7 +28,7 @@ class REG
 	#if debug
 	
 	// If set, will skip main menu and present this state at first run
-	public static var startState:Class<WindowState> = State_Buttons;
+	public static var startState:Class<WindowState> = State_Misc_01;
 	
 	#end
 	

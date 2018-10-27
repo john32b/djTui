@@ -2,6 +2,7 @@ package djTui.el;
 
 import djTui.BaseElement;
 import djTui.Styles.PrintColor;
+import haxe.ds.Either;
 
 /**
  * A TEXTBOX that display lines of text
@@ -202,7 +203,7 @@ class TextBox extends BaseElement
 	   Set new data, either a `String` or `array<String>`
 	   If <string> will cut it down to multiple lines
 	**/
-	override public function setData(val:Any) 
+	override public function setData(val:Any):Void
 	{
 		reset();
 		
@@ -240,14 +241,6 @@ class TextBox extends BaseElement
 		flag_empty = (lines.length == 0);
 	}//---------------------------------------------------;
 	
-	/**
-	   Returns Scroll percent
-	   Devnote: No meaningful data to get from a textbox
-	**/
-	override public function getData():Any 
-	{
-		return scroll_ratio;
-	}//---------------------------------------------------;
 	
 	/**
 	   SETTER, autocalculates scroll percent and updates scrollbar

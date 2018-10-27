@@ -185,6 +185,7 @@ class BaseElement
 	   @virtual 
 	   Called every time the focus changes
 	   Handles focus colors etc
+	   - Is also called on focusable elements when they are added on a window (to init colors)
 	**/
 	function focusSetup(focus:Bool):Void {}
 	
@@ -266,9 +267,7 @@ class BaseElement
 	static public function focusNext(ar:Array<BaseElement>, act:BaseElement, loop:Bool = true):Bool
 	{
 		if (ar.length == 0) return false;
-		
 		var ia = ar.indexOf(act);
-		
 		var j = ia; // counter
 		while (true)
 		{
@@ -296,5 +295,42 @@ class BaseElement
 		return true;
 	}//---------------------------------------------------;
 	
+	/**
+	   Focus previous element of an Array of BaseElements
+	   @param	ar
+	   @param	act
+	   @param	loop
+	   @return
+	**/
+	static public function focusPrev(ar:Array<BaseElement>, act:BaseElement, loop:Bool = true):Bool
+	{
+		if (ar.length == 0) return false;
+		var ia = ar.indexOf(act);
+		var j = ia; // counter
+		if (ia ==-1) j = ar.length;
+		while (true)
+		{
+			j--;
+			if (j < 0)
+			{
+				// Looped from 0 to end, so no elements found:
+				if (ia ==-1) return false;
+				if (loop)
+				{
+					// Proceed looping normally:
+					j = ar.length - 1;
+				}else
+				{
+					return false;
+				}
+			}
+			
+			if (j == ia) return false; // Nothing found
+			if (ar[j].flag_focusable && ar[j].visible) break;
+		}//-
+		
+		ar[j].focus();
+		return true;
+	}//---------------------------------------------------;
 	
 }//-- end BaseDrawable

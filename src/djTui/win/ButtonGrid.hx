@@ -264,7 +264,7 @@ class ButtonGrid extends Window
 	   Return the current Cursor Posion in "x,y" format
 	   Starts at (0,0) for top-left
 	**/
-	override public function getData():Any 
+	public function getCursorPos():Any 
 	{
 		return c_x + ',' + c_y;
 	}//---------------------------------------------------;

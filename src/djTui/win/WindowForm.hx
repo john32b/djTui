@@ -2,6 +2,7 @@ package djTui.win;
 
 import djTui.BaseElement;
 import djTui.Styles.PrintColor;
+import djTui.Styles.WinStyle;
 import djTui.el.BaseMenuItem;
 import djTui.el.Button;
 import djTui.el.Label;
@@ -47,10 +48,10 @@ class WindowForm extends Window
 	   @param	_h Height
 	   @param	_borderStyle
 	**/
-	public function new(?_sid:String, _w:Int = 15, _h:Int = 8)
+	public function new(?_sid:String, _w:Int = -2, _h:Int = -2, _style:WinStyle = null)
 	{
-		super(_sid, _w, _h);
-
+		super(_sid, _w, _h, _style);
+		
 		labelMap = new Map();
 		
 		align = "none";

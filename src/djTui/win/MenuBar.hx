@@ -270,7 +270,6 @@ class MenuBar extends Window
 		}
 	}//---------------------------------------------------;
 	
-	
 	/**
 	   Feed with CSV
 	   @param	val CSV data, like "one,two,three"
@@ -281,7 +280,7 @@ class MenuBar extends Window
 	}//---------------------------------------------------;
 	
 	/** Return current selected INDEX */
-	override public function getData():Any 
+	public function getIndex():Any 
 	{
 		return currentIndex;
 	}//---------------------------------------------------;

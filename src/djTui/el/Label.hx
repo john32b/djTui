@@ -43,13 +43,20 @@ class Label extends BaseMenuItem
 		anim_scroll = 0;
 	}//---------------------------------------------------;
 	
+	/** Chainable */
+	public function setSID(s:String):Label
+	{
+		SID = s; return this;
+	}//---------------------------------------------------;
+	
 	// NOTE: I need this because I want to get the parent window BG color,
 	// 		 and it's not available at new()
 	override function onAdded():Void 
 	{
 		super.onAdded();
 		// If not already userset, set a default
-		if (colorFG == null) setColor(parent.style.text);
+		if (colorFG == null) setColor(parent.colorFG); else
+		if (colorBG == null) colorBG = parent.colorBG;
 	}//---------------------------------------------------;
 		
 	/**

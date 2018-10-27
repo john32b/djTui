@@ -41,7 +41,7 @@ class State_Misc_01 extends WindowState
 	**/
 	override function open(?data:Dynamic) 
 	{
-		WM.set_TAB_behavior("WINDOW","keep");
+		WM.set_TAB_behavior("WM","keep");
 		super.open();
 	}//---------------------------------------------------;
 	
@@ -73,7 +73,8 @@ class State_Misc_01 extends WindowState
 		var w = new Window( -2, -2);
 			w.title = "VLIST demo";
 
-		var l = new VList(w.inWidth, w.inHeight-3);
+		var l = new VList(w.inWidth, w.inHeight - 3);
+			l.flag_ghost_active = true;
 			l.flag_scrollbar_autohide = true;
 			l.setData([
 				"PopupOption",

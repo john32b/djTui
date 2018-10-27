@@ -52,8 +52,13 @@ class Window extends BaseElement
 	
 	// Padding of elements from the edges
 	// Applied to automatic positioning functions like addStack()
+	// This is the real pad from window (0,0)
 	var padX:Int;
 	var padY:Int;
+	
+	// Requested User pad. From the border
+	var rPadX:Int = 0;
+	var rPadY:Int = 0;
 	
 	// Effective width, inside the window
 	public var inWidth(get, null):Int;
@@ -101,8 +106,9 @@ class Window extends BaseElement
 	   @param	sid Optional String ID. If set then this window will be stored to WM.DB for quick retrieval 
 	   @param	_w Window Width ( Negative integers to set to FULLWIDTH/N )
 	   @param	_h Window Height ( Negative integers to set to FULLHEIGHT/N )
+	   @param	_style Force a custom style to this window. WILL COPY IT
 	**/
-	public function new(?sid:String, _w:Int = 5, _h:Int = 5)
+	public function new(?sid:String, _w:Int = 5, _h:Int = 5, _style:WinStyle = null)
 	{
 		// DEVNOTE: Don't mess with the ordering, it matters
 		
@@ -127,14 +133,12 @@ class Window extends BaseElement
 		border_el = new Border();
 		addChild(border_el);
 		
-		// DevNotes: Setting the style will also set the `borderStyle`
-		style = Reflect.copy(WM.global_style_win);
-		
-		if (borderStyle > 0) 
-			padding(1, 1);
+		// DEVNOTE: Setting the style will also set the `borderStyle`
+		if (_style != null) 
+			style = Reflect.copy(_style);
 		else
-			padding(0, 0);
-
+			style = Reflect.copy(WM.global_style_win);
+			
 		size(_w, _h);
 	}//---------------------------------------------------;
 	
@@ -224,16 +228,23 @@ class Window extends BaseElement
 	
 
 	/**
-	   Set padding for the edges of the window. Returns self for chaining.
-	   NOTE: You can call padding(X) and it will apply padding(X,X);
+	   Set padding for content. Counts from the border (if any)
+	   NOTE: - You can call padding(X) and it will apply padding(X,X);
+			 - Call this before adding any elements to the window
 	   @param	xx Sides
 	   @param	yy Top/Bottom
-	   @return
+	   @return  self for chaining.
 	**/
 	public function padding(xx:Int, yy:Int = -1):Window
 	{
-		if (yy ==-1) yy = xx;
-		padX = xx; padY = yy; return this;
+		if (yy ==-1) yy = xx; 
+		rPadX = xx; rPadY = yy;
+		padX = xx; padY = yy;
+		if (borderStyle > 0)
+		{
+			padX++; padY++;
+		}
+		return this;
 	}//---------------------------------------------------;
 	
 	/**
@@ -572,16 +583,7 @@ class Window extends BaseElement
 	@:allow(djTui.BaseElement)
 	function focusPrev():Bool
 	{
-		var ind = display_list.indexOf(active);
-		if (ind < 1) return false;
-		while (ind--> 0)
-		{
-			if (display_list[ind].flag_focusable)
-			{
-				display_list[ind].focus(); return true;
-			}
-		}
-		return false;
+		return BaseElement.focusPrev(display_list, active, false);
 	}//---------------------------------------------------;
 	
 	// Checks if <active> is the last focusable on the window list
@@ -608,10 +610,9 @@ class Window extends BaseElement
 	{
 		switch(key)
 		{
-			
 			case 'backsp':
-					if (flag_close_on_bksp) 
-						close();
+				if (flag_close_on_bksp) 
+					close();
 						
 			case 'tab':	
 				
@@ -649,10 +650,22 @@ class Window extends BaseElement
 					// If it actually focused another element on the window return,
 					// else pass the key to the element itself.
 					if (key == "up" && focusPrev()) return;	
-					if (key == "down" && focusNext(false)) return;	
-				}
+					if (key == "down" && focusNext(false)) return;
+					if (key == "home") {
+						BaseElement.focusNext(display_list, null, false);
+						return;
+					}
+					if (key == "end") {
+						BaseElement.focusPrev(display_list, null, false);
+						return;
+					}
+					// TODO: PageDown, PageUp ?
+
+				
+				}//- end if
 				
 				active.onKey(key);
+				
 		}// -
 		
 	}//---------------------------------------------------;
@@ -713,6 +726,9 @@ class Window extends BaseElement
 
 		border_el.style = borderStyle;
 		
+		// Reflect changes to style object, so that if I `modifyStyle` later it will not switch back to old border
+		style.borderStyle = borderStyle;
+		
 		if (visible && !lockDraw)
 		{
 			border_el.draw();
@@ -720,11 +736,14 @@ class Window extends BaseElement
 		}
 		
 		#if debug
-		if (borderStyle > 0 && (padX == 0 || padY == 0))
-		{
+		if (borderStyle > 0 && (padX == 0 || padY == 0)) {
 			trace('WARNING: Window "SID:${SID}" should have padding since it uses a border style');
+			padX = 1; padY = 1;
 		}
 		#end
+			
+		// Force the padding values to be recalculated
+		padding(rPadX, rPadY);
 		
 		return val;
 	}//---------------------------------------------------;

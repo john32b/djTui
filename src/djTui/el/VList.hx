@@ -34,6 +34,9 @@ class VList extends TextBox
 	/** Jump to letters on keystrokes. Works best on sorted lists */
 	public var flag_letter_jump:Bool = false;
 	
+	/** If true, the active index will be highlighted when element is unfocused */
+	public var flag_ghost_active:Bool = false;
+	
 	//====================================================;
 	public function new(?sid:String, _width:Int, _slots:Int)
 	{
@@ -55,9 +58,9 @@ class VList extends TextBox
 		if (color_cursor == null) {
 			color_cursor = parent.style.vlist_cursor;
 		}
-			
+		
 	}//---------------------------------------------------;
-
+	
 	/** Set the highlighted element color */
 	public function setColorCursor(fg:String, bg:String)
 	{
@@ -68,7 +71,14 @@ class VList extends TextBox
 	override public function draw():Void 
 	{
 		super.draw();
+		
 		if (isFocused && !flag_empty) cursor_draw();
+		
+		if (!isFocused && flag_ghost_active)
+		{
+			WM.T.reset().fg(parent.style.elem_disable_f.fg).bg(parent.style.elem_disable_f.bg);
+			drawSlotIndex(index_slot);	
+		}
 	}//---------------------------------------------------;
 	
 	// --
@@ -116,8 +126,6 @@ class VList extends TextBox
 						return;	
 					}
 				}while (++x < lines.length);
-			
-				
 		}
 	}//---------------------------------------------------;
 	
@@ -160,7 +168,7 @@ class VList extends TextBox
 	   Move the cursor to target index.
 	   NOTE: Hacky to way to scroll, it works but it's ugly
 			 ( It scrolls one by one from the top until it reaches the element 
-			   but at least it will draw at every cursor jump, just once )
+			   but at least it will not draw at every cursor jump, just once )
 	   @param	val Index to scroll to. Starts at 0
 	**/
 	public function cursor_to(val:Int)

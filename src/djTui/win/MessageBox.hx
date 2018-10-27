@@ -46,17 +46,13 @@ class MessageBox extends Window
 	**/
 	public function new(text:String, _type:Int, ?_resCallback:Int->Void, _width:Int = 30, ?_style:WinStyle) 
 	{
-		super();
-		if(_style==null)
-			style = WM.global_style_pop;
-			else
-			style = _style;
+		if (_style == null) _style = WM.global_style_pop;
+		super(_style);
 		
 		mbType = _type;
 		resultCallback = _resCallback;
 		flag_lock_focus = true;
-		padding(2, 1);
-		
+		padding(1, 0);
 		
 		// - Create the textbox
 		tbox = new TextBox(_width - padX * 2, 0);
@@ -96,15 +92,16 @@ class MessageBox extends Window
 		
 		if (st == "fire")
 		{
-			if (resultCallback != null)
-			{
-				resultCallback(buttons.indexOf(cast el));
-			}
-			
 			if (flag_auto_close)
 			{
 				close();
 			}
+						
+			if (resultCallback != null)
+			{
+				resultCallback(buttons.indexOf(cast el));
+			}
+
 		}
 		
 	}//---------------------------------------------------;
