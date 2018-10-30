@@ -121,6 +121,7 @@ class TextInput extends BaseMenuItem
 				draw();
 			case "enter":
 				callback("fire");
+				if (parent.flag_enter_goto_next) parent.focusNext();
 			case "space":
 				text += " ";
 				draw();

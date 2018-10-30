@@ -3,23 +3,20 @@ package;
 import djNode.BaseApp;
 import djNode.tools.LOG;
 import djTui.*;
-import djTui.el.*;
 import djTui.adaptors.djNode.*;
-import djTui.win.ButtonGrid;
+import djTui.el.*;
 import djTui.win.MenuBar;
 import djTui.win.MessageBox;
-import djTui.win.WindowForm;
 import djTui.win.WindowLabel;
-import haxe.CallStack;
 
 /**
- * Test main for djTui
- * ...
+ * Showcase and code usage for djTUI
  */
 class Main extends BaseApp 
 {
 	
 	// Initialize Program Information / Arguments here.
+	// --
 	override function init():Void 
 	{
 		PROGRAM_INFO.name  = "djTui development";
@@ -29,8 +26,9 @@ class Main extends BaseApp
 		super.init();
 	}//---------------------------------------------------;
 	
-	// --
+	
 	// This is the user code entry point :
+	// --
 	override function onStart() 
 	{
 		// Initialize the Terminal
@@ -45,90 +43,96 @@ class Main extends BaseApp
 			REG.APP_WIDTH, REG.APP_HEIGHT	
 		);
 		
+		// More detailed log
 		//WM.flag_debug_trace_element_callbacks = true;
-		WM.set_TAB_behavior("WINDOW", "exit");
+		
+		WM.set_TAB_behavior("WM", "keep");
 
 		// Set the background color for the whole terminal area
-		//WM.backgroundColor = "blue";
+		WM.backgroundColor = "darkblue";
 		
-		//WM.backgroundColor = "gray";
-		 
 		//--------------------------------------------
 		//- Draw some stuff that will be visible in all
 		
 		// : Title Window
-		var head = new WindowLabel(["== djTUI  V" + WM.VERSION + " ==" , " - Demo and use examples - "], "center", ["black", "cyan"]);
+		var head = new WindowLabel(['== ${WM.NAME} V ${WM.VERSION} ==', " - Demo and use examples - "], "center", ["black", "cyan"]);
+		
 		// : Footer
-		var foot = new WindowLabel(["[Arrow Keys / TAB] = MOVE | [ENTER] = SELECT | [ESC] = SELECT"], "center", [0, 0, 0], ["black", "red"]);
+		var foot = new WindowLabel(["[Arrow Keys / TAB] = MOVE | [ENTER] = SELECT | [ESC] = BACK"], "center", [0, 0, 0], ["black", "cyan"]);
 			foot.placeBottom();
 		WM.add(foot); // <-- Add the footer, this will be visible with all statesb
 		
-		
-		// : Demo Selector ::
-		
 	
-		// NOTE: -2,-2 = half the screen width, half the screen height
-		var menu = new Window( -2, -2);
-			menu.addStack(new Label("Select a demo :").setColor("blue", "white"));
+		// : Main Menu 
+		var menu = new Window( 40, 18);
+			menu.addStack(new Label("Select a demo :").setColor("black", "white"));
 			menu.addSeparator();
+			menu.pos(3, 4);
 			
+			// Add a button for every state
 			for (i in REG.states.keys())
 			{
-				var b = new Button(i,i,1,0);
+				var b = new Button(i, i, 0, 0);
+					b.setSideSymbolPad(2, 0);
+					b.onPush(function(){
+						menu.flag_return_focus_once = true;
+						WM.STATE.open(Type.createInstance(REG.states.get(b.SID), []));
+					});
 				menu.addStack(b);
 			}
 			
-			menu.listen(function(msg, el){
-				if (el.type == ElementType.button && msg == "fire")
-				{
-					var st = Type.createInstance(REG.states.get(el.SID), []);
-					WM.STATE.open(st);
-				}
-			});
-			
-		// Position the menu
-		WM.A.screen(menu).move(0, -2);
-		
-		
-		// Quit Menu
+
+		// Quit/About Menu
 		// --
 		var qWin = new MenuBar(menu.width, 2);
 			qWin.setItemStyle("center", 0, 1);
-			qWin.setPanelStyle("white", "darkcyan");
+			qWin.setPanelStyle("white", "magenta");
 			qWin.setItems(["QUIT", "ABOUT"]);
 			WM.A.down(qWin, menu);
 			qWin.onSelect = function(s){
 				if (s == 0) // QUIT
 				{
 					var a = qWin.active;
-					var p = [a.x - 2, a.y - 2];
+					var p = [a.x - 2, a.y - 3];
 					WM.popupConfirm(function(){Sys.exit(0);}, "Really Quit", p);
 					
-				}else
+				}else // ABOUT
 				{	
-					var m = new MessageBox("Re-inventing the wheel for no particular reason.", 0);
+					var m = new MessageBox("Terminal User Interface, made from scratch.", 0);
 						m.flag_close_on_esc = true;
 						WM.A.screen(m).move(2, 2);
 						qWin.openSub(m, true);
 				}
 			}
 			
-		// Dynamically create a state with those 2 windows
-		// This way I can open/close quickly
-		WM.STATE.create("main", [head, menu, qWin]);
-
-		#if debug
+			
+			
+		// TextBox
+		var wint = new Window(30, 15, Styles.win.get('gray.1'));
+			wint.flag_focusable = false;
+			wint.posNext(menu, 2).move(0, 3);
+			var tb = new TextBox(wint.inWidth, wint.inHeight);
+				tb.setData(
+				"DJTui is a render agnostic Terminal Interface. Build with HAXE, it can target many environments. This demo runs on nodeJS on a real terminal.\n\n== Use the arrow keys to navigate. Enter to select , Esc to go back."
+				);
+			wint.addStack(tb);
 		
-		if (REG.startState != null)
-		{
+			
+			
+		// Dynamically create a state with those 2 windows
+		// This way I can open/close these windows quickly
+		WM.STATE.create("main", [head, menu, qWin, wint]);
+
+		
+		#if debug
+		// Skip the main menu and go to a state for quick testing
+		if (REG.startState != null) {
 			WM.STATE.open(Type.createInstance(REG.startState, []));
 			return;
 		}
-		
 		#end
 		
 		WM.STATE.goto("main");
-		
 	}//---------------------------------------------------;
 
 	// --

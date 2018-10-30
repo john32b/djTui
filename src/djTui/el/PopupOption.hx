@@ -19,6 +19,10 @@ class PopupOption extends BaseMenuItem
 	// The list on the window
 	var list:VList;
 	
+	// popup window max width
+	var w_maxW:Int;
+	var w_slots:Int;
+	
 	/**
 	   @param	sid  --
 	   @param	src  Array with choices
@@ -31,12 +35,14 @@ class PopupOption extends BaseMenuItem
 		type = ElementType.option;
 		options = src.copy(); // safer this way
 		height = 1;
-			// -- Calculate the max width of options
-			var maxW = options[0].length;
-			for (i in 0...options.length){
-				if (options[i].length > maxW) maxW = options[i].length;
-			}
-		createPopup(maxW + 1, slots);
+		
+		// -- Calculate the popup window vars
+		w_slots = slots;
+		w_maxW = options[0].length;
+		for (i in 0...options.length){
+			if (options[i].length > w_maxW) w_maxW = options[i].length;
+		}
+	
 		setSideSymbolPad(0, 1);
 		setSideSymbols('[', ']');
 		setData(start);
@@ -46,6 +52,7 @@ class PopupOption extends BaseMenuItem
 	override function onAdded():Void 
 	{
 		super.onAdded();
+		createPopup(w_maxW + 1, w_slots);
 	}//---------------------------------------------------;
 	
 	
@@ -55,8 +62,14 @@ class PopupOption extends BaseMenuItem
 		if (_width < WIN_MIN_WIDTH) _width = WIN_MIN_WIDTH;
 		
 		// --
-		win = new Window(1);
-		win.padding(1, 1).size(_width, slots + 2);
+		var s = parent.style;
+		win = new Window(parent.style);
+		win.modifyStyle({
+			bg:s.elem_focus.fg,
+			vlist_cursor : {fg:s.elem_idle.bg, bg:s.elem_idle.fg}
+		});
+		
+		win.padding(0,0).size(_width, slots + 2);
 		win.flag_lock_focus = true;
 		win.flag_close_on_esc = true;
 		
@@ -83,8 +96,6 @@ class PopupOption extends BaseMenuItem
 			// Open the popup and put it relative to current control.
 			list.cursor_to(index);
 			win.pos(x + 1, y - Math.floor(win.height / 3));
-									  // TODO: Other style?
-			win.style = parent.style; // Make sure the popup takes the parent window style
 			parent.openSub(win);
 		}
 	}//---------------------------------------------------;

@@ -259,9 +259,15 @@ class Button extends BaseMenuItem
 		if (flag_leftright_escape)
 		{
 			if (k == "left") parent.focusPrev();
-				else if (k == "right") parent.focusNext(false);
+				else if (k == "right") parent.focusNext();
 		}
 
+	}//---------------------------------------------------;
+	
+	
+	override public function getData():Any 
+	{
+		return SID;
 	}//---------------------------------------------------;
 	
 	/**

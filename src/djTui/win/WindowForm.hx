@@ -29,17 +29,14 @@ class WindowForm extends Window
 	// Map element SID to labels, so that they can be highlighted
 	// So that they can 
 	var labelMap:Map<BaseElement,Label>;
-
 	// Current alignment type for when adding 
 	var align:String;
 	// If align=="fixed". The element divider relative X from window 0,0
 	var align_fix_start:Int;
 	// X Padding of the elements
 	var align_padx:Int;
-
 	// When an element is focused, colorize the label with this color (fg+bg)
 	var colorLabelFocus:PrintColor;
-	
 	//====================================================;
 	
 	/**	
@@ -60,7 +57,6 @@ class WindowForm extends Window
 		// Default color for when highlighting an element
 		setLabelFocusColor(style.elem_focus.bg, style.elem_focus.fg);
 	}//---------------------------------------------------;
-	
 	
 	/**
 	   Set the alignment of LABEL + ELEMENT
@@ -99,7 +95,6 @@ class WindowForm extends Window
 	@:access(djTui.el.BaseMenuItem.color_focus)
 	public function add(labelText:String, el:BaseElement)
 	{
-		
 		#if debug // Check for overflow
 			if (lastAdded != null && lastAdded.y == y + height - padY - 1)
 			{
@@ -181,10 +176,10 @@ class WindowForm extends Window
 	
 	/**
 	   Quickly add a menu item using a special encoded string
-		- input,sid,maxChars,type
+		- input,sid,maxChars,type(number,all)
 		- button,sid,text,btnStyle,fullwidth(1:0)
 		- label,text,fullWidth(1:0),alignMode
-		- toggle,sid,start
+		- toggle,sid,start(bool)
 		- slNum,sid,min,max,inc,startValue
 		- slOpt,sid,el1|el2|...,startIndex
 		- popOpt,sid,sid,el1|el2|...,slots,startIndex

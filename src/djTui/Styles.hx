@@ -119,10 +119,12 @@ class Styles
 		win = new Map();
 		
 		win.set("blue.1", 	createWinStyle("yellow", "magenta", "white", "blue", "darkblue"));
-		win.set("green.1", 	createWinStyle("yellow", "red", 	"white", "green", "darkgreen"));
+		win.set("green.1", 	createWinStyle("yellow", "red", 	"white", "darkgreen", "darkgray"));
 		win.set("red.1",	createWinStyle("yellow", "magenta", "white", "red", "darkred"));
-		win.set("magenta.1",createWinStyle("cyan", "black", "white", "magenta", "darkcyan"));
+		win.set("magenta.1",createWinStyle("black", "cyan", "black", "magenta", "darkcyan"));
 		win.set("black.1",	createWinStyle("yellow", "red", "white", "black", "gray"));
+		win.set("cyan.1",	createWinStyle("black", "magenta", "black", "cyan", "gray"));
+		win.set("gray.1",	createWinStyle("white", "blue", "black", "gray", "darkgray"));
 		
 	}//---------------------------------------------------;
 	
@@ -173,17 +175,17 @@ class Styles
 			borderStyle : BorderStyle,
 			borderColor : { fg : C },
 			
-			elem_focus    : { fg : B, bg:A },
+			elem_focus    : { fg : B, bg : A },
 			elem_idle     : { fg : C },
 			
-			elem_disable_f  : { fg : D, bg:E },	
+			elem_disable_f  : { fg : D, bg : E },	
 			elem_disable_i  : { fg : E },
 			
 			scrollbar_idle  : { fg : C },
 			scrollbar_focus : { fg : A, bg : B},
 	
-			textbox : {fg : A },		
-			vlist_cursor : {fg:D, bg:A}
+			textbox : { fg : C },	
+			vlist_cursor : { fg : D, bg : A }
 		}
 		
 		return s;

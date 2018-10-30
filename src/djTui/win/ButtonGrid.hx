@@ -49,6 +49,11 @@ class ButtonGrid extends Window
 	//  CURSORPOS : `x,y` starting at 0,0 for top left
 	var posMap:Map<String,String>;
 	
+	/* Optional, if set will trigger when a button is pressed
+	 * callback(SID, POS) - SID is the element sid,
+	 * POS is the position of the element in the grid, starting at (0,0) top left */
+	public var onPush:Button->String->Void;
+	
 	/**
 	   @param	_w Width -
 	   @param	_h Height -
@@ -88,7 +93,7 @@ class ButtonGrid extends Window
 	   NOTE: the separator color is `style.text`. This is if you want a different color than the border
 	   @param	sep  Separator symbol Index. -1 for none. 0 to follow border style. Else to apply border ID style
 	   @param	Xpad  Left Edge Padding 
-	   @param	Vpad  Vertical padding between elementrs
+	   @param	Vpad  Vertical padding between elements
 	**/
 	public function setColumnStyle(sep:Int = -1, Xpad:Int = 1, Vpad:Int = 0)
 	{
@@ -181,7 +186,7 @@ class ButtonGrid extends Window
 	/**
 	   (Autocalled) in cases like [TAB] key was pressed
 	**/
-	override function focusNext(loop:Bool = true)
+	override function focusNext(loop:Bool = false)
 	{
 		if (super.focusNext(loop))
 		{
@@ -264,9 +269,22 @@ class ButtonGrid extends Window
 	   Return the current Cursor Posion in "x,y" format
 	   Starts at (0,0) for top-left
 	**/
-	public function getCursorPos():Any 
+	public function getCursorPos():String 
 	{
 		return c_x + ',' + c_y;
+	}//---------------------------------------------------;
+	
+	override function onElementCallback(st:String, el:BaseElement) 
+	{
+		super.onElementCallback(st, el);
+		
+		if (st == "fire")
+		{	
+			if (onPush != null)
+			{
+				onPush(cast el, posMap.get(el.SID));
+			}
+		}
 	}//---------------------------------------------------;
 	
 	// Adjust pointer location
@@ -280,7 +298,7 @@ class ButtonGrid extends Window
 		super.focus();
 	}//---------------------------------------------------;
 	
-
+	// 
 	override public function draw():Void 
 	{
 		super.draw();

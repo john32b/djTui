@@ -18,7 +18,8 @@ import djTui.win.MessageBox;
 
 class WM 
 {
-	public inline static var VERSION:String = "0.1";
+	public inline static var NAME 	 = "djTUI";
+	public inline static var VERSION = "0.1";
 	
 	// A created Terminal Renderer
 	public static var T(default, null):ITerminal;
@@ -157,6 +158,7 @@ class WM
 		if (col == backgroundColor) return col;
 		backgroundColor = col;
 		clearBG();
+		for (i in win_list) i.draw();
 		return col;
 	}//---------------------------------------------------;
 	
@@ -434,7 +436,7 @@ class WM
 				// - If there are no more windows left, focus the same one again
 				if (!BaseElement.focusNext(cast win_list, cast active))
 				{
-					win.focusNext();
+					win.focusNext(true);
 				}
 				
 			case "close":

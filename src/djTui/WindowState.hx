@@ -21,6 +21,9 @@ class WindowState
 	// #USER SET
 	public var onEscGoto:String;
 	
+	// If set will change the WM background to this color when this state is called
+	public var bgColor:String;
+	var lastBgColor:String;
 	
 	/**
 	   Create a Window State
@@ -57,6 +60,11 @@ class WindowState
 	public function close()
 	{
 		for (w in list) w.close();
+		if (lastBgColor != null)
+		{
+			WM.backgroundColor = lastBgColor;
+			lastBgColor = null;
+		}
 	}
 	
 	/**
@@ -65,6 +73,10 @@ class WindowState
 	**/
 	public function open(?data:Dynamic)
 	{
+		if (bgColor != null) {
+			lastBgColor = WM.backgroundColor; 
+			WM.backgroundColor = bgColor;
+		}
 		for (w in list) w.open();
 		// Focus first focusable Window
 		BaseElement.focusNext(cast list, null);

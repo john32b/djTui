@@ -85,6 +85,7 @@ class SliderNum extends BaseMenuItem
 			case "right":	if (data != max) sd(data + inc);
 			case "home":	if (data != min) sd(min);
 			case "end":		if (data != max) sd(max);
+			case "enter":	if (parent.flag_enter_goto_next) parent.focusNext();
 			default:
 		}
 	}//---------------------------------------------------;

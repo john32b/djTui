@@ -61,6 +61,7 @@ class SliderOption extends BaseMenuItem
 			case "right":	if (index != index_max) sd(index + 1);
 			case "home":	if (index != 0) sd(0);
 			case "end":		if (index != index_max) sd(index_max);
+			case "enter":	if (parent.flag_enter_goto_next) parent.focusNext();			
 			default:
 		}
 	}//---------------------------------------------------;

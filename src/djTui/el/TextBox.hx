@@ -43,6 +43,10 @@ class TextBox extends BaseElement
 	/** Are there any lines */
 	public var flag_empty(default, null):Bool;
 	
+	// How many lines
+	public var linesCount(get, null):Int;
+	function get_linesCount() { return lines.length; }
+	
 	/**
 	   Create a new TextBox
 	   @param	_width Width of the lines
@@ -65,15 +69,15 @@ class TextBox extends BaseElement
 	{
 		if (flag_empty) {
 			if (k == "up") parent.focusPrev(); else
-			if (k == "down") parent.focusNext(false);
+			if (k == "down") parent.focusNext();
 			return;
 		}
 		
 		switch(k)
 		{
 			case "up": if (scroll_offset == 0) parent.focusPrev(); else scrollUp();
-			case "down": if (scroll_offset == scroll_max) parent.focusNext(false); else scrollDown();
-			case "right": parent.focusNext(false);
+			case "down": if (scroll_offset == scroll_max) parent.focusNext(); else scrollDown();
+			case "right": parent.focusNext();
 			case "left": parent.focusPrev();
 			case "pagedown": scrollPageDown();
 			case "pageup": scrollPageUp();
@@ -92,6 +96,7 @@ class TextBox extends BaseElement
 		{
 			addScrollbar();
 		}
+		
 	}//---------------------------------------------------;
 	
 	// --
@@ -239,6 +244,11 @@ class TextBox extends BaseElement
 		if (scroll_max > 0) addScrollbar();
 		
 		flag_empty = (lines.length == 0);
+		
+		if (visible && !lockDraw)
+		{
+			draw();
+		}
 	}//---------------------------------------------------;
 	
 	
@@ -259,6 +269,8 @@ class TextBox extends BaseElement
 
 		if (scrollbar != null) scrollbar.scroll_ratio = scroll_ratio; // :: setter draw
 		if (visible && !lockDraw) draw();
+		
+		callback('scroll');
 		
 		return val;
 	}//---------------------------------------------------;

@@ -15,7 +15,7 @@ import haxe.Timer;
  * - Callback Statuses. Place a callback listener with .listen(..);
  * 
  *		escape : Esc key got pressed
- * 		focus  : Element/Window has been focused ; (check element.type or SID)
+ * 		focus  : Element/Window has been focused   ; (check element.type or SID)
  * 		unfocus: Element/Window has been unfocused ; (check element.type or SID)
  * 		fire   : Element was activated
  * 		change : Element was changed
@@ -91,10 +91,14 @@ class Window extends BaseElement
 	/** If true, will close this window on `BackSpace` key. */
 	public var flag_close_on_bksp:Bool = false;
 	
+	/** If true, on form elements, enter will jump to the next one */
+	public var flag_enter_goto_next:Bool = false;
+	
+	
 	/** If true, when this window gets focus, will try to focus last element focused
 	 *  ! Will only apply once ! So it's needed to be set every time  */
-		@:allow(djTui.WM)
-	var flag_return_focus_once:Bool = false;
+	//@:allow(djTui.WM)
+	public var flag_return_focus_once:Bool = false;
 	
 	/** If set, will always focus this element on window focus */
 	public var hack_always_focus_this:String;
@@ -365,7 +369,8 @@ class Window extends BaseElement
 	
 	/**
 	   Quickly set some parameters for this window to behave as a
-	   quick options popup
+	   quick options popup. 
+	   - A popup window that will close on esc/backspace
 	**/
 	public function isOptionsPopup()
 	{
@@ -573,7 +578,7 @@ class Window extends BaseElement
 	// Focus next element, will loop through the edges
 	@:allow(djTui.WM)
 	@:allow(djTui.BaseElement)
-	function focusNext(loop:Bool = true):Bool
+	function focusNext(loop:Bool = false):Bool
 	{
 		return BaseElement.focusNext(display_list, active, loop);
 	}//---------------------------------------------------;
@@ -610,10 +615,6 @@ class Window extends BaseElement
 	{
 		switch(key)
 		{
-			case 'backsp':
-				if (flag_close_on_bksp) 
-					close();
-						
 			case 'tab':	
 				
 				if (WM._TAB_LEVEL == 0) return;
@@ -632,7 +633,7 @@ class Window extends BaseElement
 				}
 				else
 				{
-					focusNext();
+					focusNext(true);
 				}
 					
 			case 'esc':
@@ -644,25 +645,27 @@ class Window extends BaseElement
 				
 				if (active == null) return;
 		
+				// Do not pass cursor movement keys to locked elements (textboxes, lists)
 				if (!active.flag_lock_focus)
 				{
-					// [UP]/[DOWN] by default will change focus of elements
-					// If it actually focused another element on the window return,
-					// else pass the key to the element itself.
 					if (key == "up" && focusPrev()) return;	
-					if (key == "down" && focusNext(false)) return;
-					if (key == "home") {
+					if (key == "down" && focusNext()) return;
+					if (key == "home" || key == "pageup") {
 						BaseElement.focusNext(display_list, null, false);
 						return;
 					}
-					if (key == "end") {
+					if (key == "end" || key == "pagedown") {
 						BaseElement.focusPrev(display_list, null, false);
 						return;
 					}
-					// TODO: PageDown, PageUp ?
-
 				
 				}//- end if
+				
+				if (key == 'backsp' && flag_close_on_bksp)
+				{
+					close();
+					return;
+				}
 				
 				active.onKey(key);
 				
@@ -719,7 +722,9 @@ class Window extends BaseElement
 	**/
 	function set_borderStyle(val):Int
 	{
-		if (borderStyle == val) return val;
+		//NOTE: It's better to skip this check. So that the border can be drawn by set_style
+		//      when the just color was changed
+		//if (borderStyle == val) return val;
 			borderStyle = val;
 	
 		if (borderStyle > Styles.border.length - 1) borderStyle = 1;

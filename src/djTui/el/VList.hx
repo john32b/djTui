@@ -94,9 +94,9 @@ class VList extends TextBox
 		switch(k)
 		{
 			case "up": if (index == 0) parent.focusPrev(); else cursor_up();
-			case "down": if (index == index_max) parent.focusNext(false); else cursor_down();
+			case "down": if (index == index_max) parent.focusNext(); else cursor_down();
 			case "left": parent.focusPrev();
-			case "right":parent.focusNext(false);
+			case "right":parent.focusNext();
 			case "pagedown": cursor_pageDown();
 			case "pageup": cursor_pageUp();
 			case "home": cursor_top();
