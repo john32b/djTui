@@ -424,6 +424,11 @@ class Window extends BaseElement
 	**/
 	public function openAnimated()
 	{
+		if (WM.active != null)
+		{
+			WM.active.unfocus();
+		}
+		
 		var st = [0.3, 0.6];
 		var t = new Timer(windowAnimationTick);
 		var c:Int = 0;

@@ -47,7 +47,7 @@ class WM
 	public static var win_list(default, null):Array<Window>;
 	
 	// Pointer to currently active/focused window
-	static var active:Window;
+	public static var active:Window;
 	
 	// Pointer to the last active window, 
 	// It is used to focus the last window when a window closes
@@ -265,7 +265,7 @@ class WM
 	   @param	Q Custom Question. Default for "Are you Sure"
 	   @param	pos [x,y], Null for center
 	**/
-	public static function popupConfirm(callback:Void->Void, ?Q:String, ?pos:Array<Int> )
+	public static function popupConfirm(callback:Void->Void, ?Q:String, ?pos:Array<Int>):MessageBox
 	{
 		var m = new MessageBox(Q, 2, function(res){
 			if (res == 0) callback();
@@ -283,6 +283,7 @@ class WM
 		else
 			m.openAnimated();
 		
+		return m;
 	}//---------------------------------------------------;
 	
 

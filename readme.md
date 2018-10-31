@@ -8,9 +8,6 @@
 **Version:** 0.1 **Platform:** Multiple 
 
 
-## :warning: This readme is incomplete.
-
-
 ## :question: What is it
 **djTui** is a Terminal User Interface Library with a **platform agnostic** renderer and input manager. You can basically run this on whatever **HAXE** supports building to. From nodeJS, running on a real terminal, to openFL and openGL, etc.
 
@@ -29,6 +26,10 @@ djTUI provides some basic tools to create simple forms that allow data entry, se
 - Present information in textboxes and some user interaction
 ![demo 02](images/demo_02.gif)
 
+- Create Grids where you can navigate with the arrow keys
+- ![demo 03](images.demo_03.gif)
+
+>### :notebook: More examples in the source code
 
 ## :electric_plug: Engine
 
@@ -38,6 +39,13 @@ djTUI provides some basic tools to create simple forms that allow data entry, se
 The Window manager is the root of the engine. It manages and displays windows and it handles input keys either to navigate through windows or send commands to windows.
 
 There can be multiple open windows at once, but only one can be an **active** window, which will receive all user inputs.
+
+#### WM contains
+- `A` - **Align Tools**, use this object to quickly align windows to the screen or to other windows
+- `T` - **Terminal**, if you want to directly draw characters to the terminal screen
+- `D` - **Draw**,  provides some functions for drawing rectangles and grids on the screen
+- `STATE` - **State Manager**, basic window state manager. Handles bundles of windows. Useful for creating multiple screens with separate windows
+- `DB` - **Window Database**, Will automatically store windows based on their **SID** so you can retrieve them more quickly
 
 ### `Window`
 
@@ -54,9 +62,14 @@ WM.A.screen(win);
 win.open();
 ```
 
+> Calling `window.open()` will automatically make the `WM` 
+
 ### `BaseElement`
 
 Base Elements are objects that will go inside a `window` This is a general class and everything that goes in a window must derive from that. All base elements callback messages to the parent window and/or the user by simple callbacks.
+
+All BaseElements can **callback** custom status messages to the user. (*on button pushes, on element focus/unfocus, etc*)
+
 
 **Some base Elements in the library**
 
@@ -69,6 +82,55 @@ Base Elements are objects that will go inside a `window` This is a general class
 - Vertical List
 - TextBox
 
+
+## Building the examples
+
+The included examples run on a real terminal with the help of nodeJS. To build the example you need:
+- Haxe 3.4+
+- https://github.com/johndimi/djNode ( a simple nodeJS helper )
+- https://github.com/HaxeFoundation/hxnodejs ( the nodeJS externs for haxe )
+- nodeJS
+
+Open a terminal , navigate to the folder `djTui\source\example\`  and type: \
+**`haxe build.hxml`**\
+Then goto the `/bin/` folder and run **`node app.js`** to run the demo
+
+- For a better understanding of djTUI you can study the source code and example project, I have tried to provide meaningful comments in most places.
+
+![The included demo application](images/demo_program.png)
+
+
+
+## Starting UP
+
+Depending on your build target, you must first initialize the global `WM` object, by giving it a renderer and input handler. e.g.
+```haxe
+WM.create(
+	new nodeJSInput(), 	// Input interface
+	new nodeJSTerminal(),   // Terminal interface
+	80,40			// Terminal screen width/height
+);
+```
+Then you can set optional `flags` or custom `styles`
+```haxe
+// Specify what the [TAB] key does
+WM.set_TAB_behavior("WM", "keep");
+// Set the background color for the whole terminal area
+WM.backgroundColor = "darkblue";
+// Set a global style for windows
+WM.global_style_win = getCustomStyle_userFunction();
+// .. and more ..
+```
+Then you can start creating windows. 
+```haxe
+// Create a specialized window that quickly creates lines of text
+var win = new WindowLabel(['Hello World','from djTUI'],"center");
+// place the window at x,y coordinates (5,10)
+win.pos(5,10);
+// Open the window. This will make it visible
+win.open();
+```
+...
 
 ## :rocket: Help
 

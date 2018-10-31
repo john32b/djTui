@@ -20,7 +20,7 @@ class REG
 			"Textbox" => State_Textbox,
 			"VList" => State_VList,
 			"Window Form" => State_WinForm,
-			"Demos_01" => State_Test_1
+			"Miscellaneous 1" => State_Test_1
 		];
 		
 	// Random text, used in textboxes	

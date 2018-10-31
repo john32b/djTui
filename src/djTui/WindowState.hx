@@ -44,6 +44,11 @@ class WindowState
 		return win;
 	}
 	
+	public function addM(wins:Array<Window>)
+	{
+		for (w in wins) add(w);
+	}
+	
 	/**
 	   Search for a window with target SID
 	   Note: This is to be used in dynamic states. To quickly get a window
