@@ -1,50 +1,27 @@
 package;
 
-import djNode.BaseApp;
-import djNode.tools.LOG;
 import djTui.*;
-import djTui.adaptors.djNode.*;
 import djTui.el.*;
 import djTui.win.MenuBar;
 import djTui.win.MessageBox;
 import djTui.win.WindowLabel;
 
+
 /**
+ * Platform generic -
  * Showcase and code usage for djTUI
+ * -----
+ * You need to create the WM object before starting the demo
  */
-class Main extends BaseApp 
+class ShowcaseDemo 
 {
-	
-	// Initialize Program Information / Arguments here.
-	// --
-	override function init():Void 
+
+	public function new() 
 	{
-		PROGRAM_INFO.name  = "djTui development";
-		
-		LOG.pipeTrace(); // all traces will redirect to LOG object
-		LOG.setLogFile(REG.LOG_FILE, true);
-		super.init();
-	}//---------------------------------------------------;
+	}
 	
-	
-	// This is the user code entry point :
-	// --
-	override function onStart() 
+	public function start()
 	{
-		// Initialize the Terminal
-		T.pageDown();
-		T.clearScreen();
-		T.cursorHide();
-		
-		// Init the Window Manager and set some parameters :
-		WM.create(
-			new InputObj(), 
-			new TerminalObj(), 
-			REG.APP_WIDTH, REG.APP_HEIGHT	
-		);
-		
-		// More detailed log
-		//WM.flag_debug_trace_element_callbacks = true;
 		
 		WM.set_TAB_behavior("WM", "keep");
 
@@ -94,7 +71,11 @@ class Main extends BaseApp
 				{
 					var a = qWin.active;
 					var p = [a.x - 2, a.y - 3];
-					WM.popupConfirm(function(){Sys.exit(0);}, "Really Quit", p);
+					WM.popupConfirm(function(){
+						#if terminal
+						Sys.exit(0);
+						#end
+					}, "Really Quit", p);
 					
 				}else // ABOUT
 				{	
@@ -133,37 +114,7 @@ class Main extends BaseApp
 		#end
 		
 		WM.STATE.goto("main");
+		
 	}//---------------------------------------------------;
-
-	// --
-	override function onExit() 
-	{
-		T.move(0, WM.height); // Hack for real terminals
-		super.onExit();
-	}//---------------------------------------------------;
-	
-	override function exitError(text:String, showHelp:Bool = false):Void 
-	{
-		if (WM._isInited)
-		{
-			var m = new MessageBox(
-				"CRITICAL ERROR:\n" + text, 0, 
-				function(a){Sys.exit(1); }, 
-				WM.width - 10, Styles.win.get("red.1")
-				);
-			WM.A.screen(m);
-			m.open(true);		
-		}
-		else
-		{
-			super.exitError(text, showHelp);
-		}
-	}//---------------------------------------------------;
-	
-	// --
-	static function main()  {
-		new Main();
-	}//---------------------------------------------------;
-
 	
 }// --

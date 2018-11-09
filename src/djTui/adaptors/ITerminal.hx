@@ -35,6 +35,7 @@ interface ITerminal
 	public function setCursorSymbol(s:String):Void;
 	
 	// Puts text at current cursor position with currently set FG and BG colors
+	// Note: Don't forget to alter the cursor position after printing
 	public function print(s:String):ITerminal;
 	
 	// Move the cursor to X,Y 

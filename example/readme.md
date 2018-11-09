@@ -1,11 +1,30 @@
 ## Example Project
 
 A simple project showcasing many components of **djTui**.
-Even though djTui can have many targets, this particular example is for **nodeJS** only, so it runs on a real terminal.
+djTUI is agnostic and can run into any HAXE target.
 
-#### Requirements
+#### General Requirements
 - Haxe 3.4+
+- Optional , use HAXEDEVELOP to open the project file `tui_example.hxproj`
+
+
+### Building for nodeJs
+
+**Requirements**:
+
+- nodeJS setup on system
 - https://github.com/johndimi/djNode ( a simple nodeJS helper )
 - https://github.com/HaxeFoundation/hxnodejs ( the nodeJS externs for haxe )
-- nodeJS
-- Optional ,use HAXEDEVELOP to open the project file `tui_example.hxproj`
+
+Using a command line, navigate to the `examples` folder and run **`haxe build_nodejs.hxml`**\
+This will create `bin/nodejs/app.js`, which can be run with `nodejs`
+
+### Building for openFL
+
+**Requirements**:
+
+- https://github.com/openfl/openfl
+
+You can build to all openFL targets. Running the included **`build_openfl.bat`** will create a flash build of the demo in the `/bin/` folder.
+
+

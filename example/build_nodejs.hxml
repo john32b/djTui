@@ -1,0 +1,9 @@
+# Build for nodeJS
+
+-lib hxnodejs
+-lib djNode
+-cp ../src/
+-cp src/
+-main Main_nodejs
+-js bin/nodejs/app.js
+-D terminal

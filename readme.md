@@ -27,7 +27,7 @@ djTUI provides some basic tools to create simple forms that allow data entry, se
 ![demo 02](images/demo_02.gif)
 
 - Create Grids where you can navigate with the arrow keys
-- ![demo 03](images.demo_03.gif)
+![demo 03](images/demo_03.gif)
 
 >### :notebook: More examples in the source code
 
@@ -83,19 +83,12 @@ All BaseElements can **callback** custom status messages to the user. (*on butto
 - TextBox
 
 
-## Building the examples
+## Examples
 
-The included examples run on a real terminal with the help of nodeJS. To build the example you need:
-- Haxe 3.4+
-- https://github.com/johndimi/djNode ( a simple nodeJS helper )
-- https://github.com/HaxeFoundation/hxnodejs ( the nodeJS externs for haxe )
-- nodeJS
-
-Open a terminal , navigate to the folder `djTui\source\example\`  and type: \
-**`haxe build.hxml`**\
-Then goto the `/bin/` folder and run **`node app.js`** to run the demo
+The included example project is ready to be compiled and run on both **nodeJS** ( running on a real Terminal ) and **openFL** ( which can pretty much run on anything )
 
 - For a better understanding of djTUI you can study the source code and example project, I have tried to provide meaningful comments in most places.
+- Check the `example/readme.md` file for more info
 
 ![The included demo application](images/demo_program.png)
 
@@ -131,6 +124,13 @@ win.pos(5,10);
 win.open();
 ```
 ...
+
+## Interfaces
+Currently djTUI comes with interfaces for 
+
+- **nodeJS** 
+- **openFL**
+- More interfaces are possible and easy to make. Just implement the generic interfaces `IInput.hx` and `ITerminal.hx`
 
 ## :rocket: Help
 

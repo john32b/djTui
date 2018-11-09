@@ -53,8 +53,8 @@ class Window extends BaseElement
 	// Padding of elements from the edges
 	// Applied to automatic positioning functions like addStack()
 	// This is the real pad from window (0,0)
-	var padX:Int;
-	var padY:Int;
+	var padX:Int = 0;
+	var padY:Int = 0;
 	
 	// Requested User pad. From the border
 	var rPadX:Int = 0;
@@ -112,7 +112,7 @@ class Window extends BaseElement
 	   @param	_h Window Height ( Negative integers to set to FULLHEIGHT/N )
 	   @param	_style Force a custom style to this window. WILL COPY IT
 	**/
-	public function new(?sid:String, _w:Int = 5, _h:Int = 5, _style:WinStyle = null)
+	public function new(?sid:String, ?_w:Int = 5, ?_h:Int = 5, _style:WinStyle = null)
 	{
 		// DEVNOTE: Don't mess with the ordering, it matters
 		
@@ -142,7 +142,7 @@ class Window extends BaseElement
 			style = Reflect.copy(_style);
 		else
 			style = Reflect.copy(WM.global_style_win);
-			
+		
 		size(_w, _h);
 	}//---------------------------------------------------;
 	
@@ -747,8 +747,9 @@ class Window extends BaseElement
 		
 		#if debug
 		if (borderStyle > 0 && (padX == 0 || padY == 0)) {
-			trace('WARNING: Window "SID:${SID}" should have padding since it uses a border style');
-			padX = 1; padY = 1;
+			//trace('WARNING: Window "SID:${SID}" should have padding since it uses a border style');
+			//padX = 1; padY = 1;
+			// Don't need this^  because it is reset later in padding(..)
 		}
 		#end
 			

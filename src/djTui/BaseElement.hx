@@ -193,7 +193,7 @@ class BaseElement
 	   @virtual
 	   Called whenever the element needs to be drawn
 	**/
-	dynamic public function draw():Void {}
+	public function draw():Void {}
 	
 	
 	/** Will clear the entire element with the window background color 

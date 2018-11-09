@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<project>
+	
+	<meta title="djTui in openFL" package="org.johndimi.djtui" version="0.1.0" company="johndimi" />
+	
+	<app main="Main_openfl" path="bin" file="app" />
+	
+	<source path="src" />
+	<source path="../src/" />
+	
+	<haxelib name="openfl" />
+	
+	<!-- window -->
+	<window background="#000000" fps="30" />
+	<window width="1024" height="480" unless="mobile" />
+	
+</project>
