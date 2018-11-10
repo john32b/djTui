@@ -1,4 +1,5 @@
 
+
 ## DJTUI 
 
 **Name**: djTUI *(Terminal User Interface Library)*\
@@ -90,7 +91,10 @@ The included example project is ready to be compiled and run on both **nodeJS** 
 - For a better understanding of djTUI you can study the source code and example project, I have tried to provide meaningful comments in most places.
 - Check the `example/readme.md` file for more info
 
-![The included demo application](images/demo_program.png)
+### :star: Online FLASH demo is available :star:
+
+[![The included demo application.](images/demo_program_sm.png)](https://johndimi.github.io/djTui/)\
+Click here to view the online demo *(Flash Required)*
 
 
 
