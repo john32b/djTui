@@ -35,7 +35,10 @@ class MessageBox extends Window
 	public var flag_auto_close:Bool = true;
 	
 	// Global button style for the buttons
-	public static var BUTTON_STYLE:Int = 2;
+	public static var BUTTON_STYLE:Int = 1;
+	
+	// # USER SET, Will always focus the last button added at first
+	public static var FOCUS_LAST:Bool = false;
 	
 	/**
 	   Create a messagebox window.
@@ -43,8 +46,9 @@ class MessageBox extends Window
 	   @param	_type 0:OK | 1:OK,CANCEL | 2:YES,NO | 3:NOTHING
 	   @param	_resCallback fn(int) -> index of button clicked
 	   @param	_width
+	   @param	_style
 	**/
-	public function new(text:String, _type:Int, ?_resCallback:Int->Void, _width:Int = 30, ?_style:WinStyle) 
+	public function new(text:String, _type:Int, ?_resCallback:Int->Void, _width:Int = 30, ?_style:WinStyle)
 	{
 		if (_style == null) _style = WM.global_style_pop;
 		super(_style);
@@ -82,8 +86,11 @@ class MessageBox extends Window
 		addStack(tbox, 1);
 		addStackInline(cast buttons, 1, 3, "center");
 		
-		// In case of no buttons, there is no last added
-		if (lastAdded != null) hack_always_focus_this = lastAdded.SID;
+
+		// Focus the last button added ( if any )
+		if (FOCUS_LAST && lastAdded != null) 
+			hack_always_focus_this = lastAdded.SID;
+			
 	}//---------------------------------------------------;
 	
 	override function onElementCallback(st:String, el:BaseElement) 

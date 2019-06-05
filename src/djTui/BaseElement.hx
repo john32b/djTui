@@ -162,7 +162,13 @@ class BaseElement
 	function callback(msg:String, caller:BaseElement = null)
 	{
 		if (caller == null) caller = this;
-		for (i in callbacks) i(msg, caller);
+		//for (i in callbacks) i(msg, caller);
+		
+		// EXPERIMENTAL :
+		// Try to avoid filling up the callstack
+		for (i in callbacks) {
+			haxe.Timer.delay(i.bind(msg, caller), 0);
+		}
 	}//---------------------------------------------------;
 	
 	

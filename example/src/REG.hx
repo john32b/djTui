@@ -10,7 +10,7 @@ class REG
 	public static var APP_HEIGHT:Int = 25;
 	
 	// Log traces to this file, with realtime updates
-	public static var LOG_FILE:String = "a:\\log.txt";
+	public static var LOG_FILE:String = "a:\\djTui_log.txt";
 	
 	// Present these States in the main menu 
 	public static var states:Map<String,Class<WindowState>> = [

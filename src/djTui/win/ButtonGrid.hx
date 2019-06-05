@@ -8,7 +8,8 @@ import djTui.el.Button;
  * --
  * - Multiple columns
  * - Primarily used for adding buttons, but you can add anything else with put();
- * - use getData() to get current cursor position
+ * - add() to add content
+ * - getData() to get current cursor position
  * - setButtonStyle() to customize buttons
  * - setColumnStyle() to customize padding and separator
  */
@@ -279,11 +280,8 @@ class ButtonGrid extends Window
 		super.onElementCallback(st, el);
 		
 		if (st == "fire")
-		{	
-			if (onPush != null)
-			{
-				onPush(cast el, posMap.get(el.SID));
-			}
+		{
+			Tools.tCall(onPush, cast el, posMap.get(el.SID));
 		}
 	}//---------------------------------------------------;
 	

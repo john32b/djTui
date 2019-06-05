@@ -22,7 +22,7 @@ class Main_nodejs extends BaseApp
 		PROGRAM_INFO.name  = "djTui development";
 		
 		LOG.pipeTrace(); // all traces will redirect to LOG object
-		LOG.setLogFile(REG.LOG_FILE, true);
+		LOG.setLogFile(REG.LOG_FILE);
 		super.init();
 	}//---------------------------------------------------;
 	
@@ -49,10 +49,10 @@ class Main_nodejs extends BaseApp
 	}//---------------------------------------------------;
 
 	// --
-	override function onExit() 
+	override function onExit(code:Int) 
 	{
 		T.move(0, WM.height); // Hack for real terminals
-		super.onExit();
+		super.onExit(code);
 	}//---------------------------------------------------;
 	
 	
@@ -77,7 +77,7 @@ class Main_nodejs extends BaseApp
 	}//---------------------------------------------------;
 	
 	// --
-	static function main()  {
+	static function main() {
 		new Main_nodejs();
 	}//---------------------------------------------------;
 	

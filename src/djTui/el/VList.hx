@@ -81,6 +81,18 @@ class VList extends TextBox
 		}
 	}//---------------------------------------------------;
 	
+	/**
+	   Send a fire event for the currently selected index
+	**/
+	function fire()
+	{
+		callback("fire");
+		Tools.tCall(onSelect, index);
+		//if (onSelect != null) {
+			//haxe.Timer.delay(onSelect.bind(index), 1);
+		//}
+	}//---------------------------------------------------;
+	
 	// --
 	override function onKey(k:String):Void 
 	{
@@ -101,8 +113,7 @@ class VList extends TextBox
 			case "pageup": cursor_pageUp();
 			case "home": cursor_top();
 			case "end": cursor_bottom();
-			case "space": callback("fire"); if (onSelect != null) onSelect(index);
-			case "enter": callback("fire"); if (onSelect != null) onSelect(index);
+			case "space" | "enter": fire();
 			default:
 			// Check for letter jumps:
 			if (!flag_letter_jump) return;

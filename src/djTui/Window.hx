@@ -192,6 +192,7 @@ class Window extends BaseElement
 	
 	/**
 	   Override the basic `move` to also move all of the children
+	   - NOTE: Does not redraw over old area
 	**/
 	override public function move(dx:Int, dy:Int):BaseElement 
 	{

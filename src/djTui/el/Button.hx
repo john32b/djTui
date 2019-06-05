@@ -59,7 +59,7 @@ class Button extends BaseMenuItem
 	
 	
 	// Extra function called when this button is pushed
-	var extra_onPush:Void->Void;
+	var _onPush:Void->Void;
 		
 	/** If true, will request next/previous element focus upon left/right keys
 	 *  Useful in cases where you put buttons in a single line */
@@ -239,7 +239,7 @@ class Button extends BaseMenuItem
 		}//- (xtr null check)
 		
 		callback("fire");
-		if (extra_onPush != null) extra_onPush();
+		Tools.tCall(_onPush);
 	}//---------------------------------------------------;
 	
 	// --
@@ -275,7 +275,7 @@ class Button extends BaseMenuItem
 	**/
 	public function onPush(fn:Void->Void):Button
 	{
-		extra_onPush = fn;
+		_onPush = fn;
 		return this;
 	}//---------------------------------------------------;
 	

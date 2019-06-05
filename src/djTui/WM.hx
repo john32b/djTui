@@ -18,7 +18,7 @@ import djTui.win.MessageBox;
 
 class WM 
 {
-	public inline static var NAME 	 = "djTUI";
+	public inline static var NAME 	 = "djTui";
 	public inline static var VERSION = "0.1";
 	
 	// A created Terminal Renderer
@@ -96,7 +96,6 @@ class WM
 	public static var _isInited(default, null):Bool = false;
 	//====================================================;
 	
-
 	
 	
 	/**
@@ -374,7 +373,6 @@ class WM
 	**/
 	static function _onKey(key:String)
 	{
-		
 		if (key == "esc")
 		{
 			if (active != null && active.flag_close_on_esc)

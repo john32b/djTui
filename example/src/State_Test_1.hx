@@ -10,6 +10,7 @@ import djTui.win.ButtonGrid;
 import djTui.win.WindowForm;
 import djTui.win.WindowLabel;
 import haxe.Timer;
+import js.Error;
 
 /**
  * Test State
@@ -41,6 +42,9 @@ class State_Test_1 extends WindowState
 		
 		win.listen(function(a, b){
 			if (a == "fire"){
+				trace("GET CALL FROM WINDOW.LISTEN -> BUTTON PUSHED");
+				trace(new Error().stack);
+				
 				win.close();
 				if (b.SID == ".1") demo_textbox(); else
 				if (b.SID == ".2") demo_form(); else

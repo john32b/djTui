@@ -1,5 +1,4 @@
 package djTui;
-import sys.db.Types.SId;
 
 /**
  * A state is a collection of windows
@@ -12,6 +11,8 @@ import sys.db.Types.SId;
 class WindowState 
 {
 	// Holds all the windows of the state.
+	// TIP: You can push windows directly to this ( on extended classes ) and all those
+	//      windows will auto-open at state open
 	var list:Array<Window>;
 	
 	// A unique identifier/name

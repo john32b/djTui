@@ -1,6 +1,7 @@
 package djTui.win;
 
 import djTui.BaseElement;
+import djTui.Styles.WinStyle;
 import djTui.Window;
 import djTui.el.Button;
 
@@ -53,7 +54,6 @@ class MenuBar extends Window
 	
 	/** Quick callback for when an Item gets selected. Index starts at 0 */
 	public var onSelect:Int->Void;
-		
 	
 	/**
 	   Create a MenuBar
@@ -70,6 +70,12 @@ class MenuBar extends Window
 		setPanelStyle(style.text, style.bg);
 		setItemStyle();
 	}//---------------------------------------------------;
+	
+	override function set_style(val):WinStyle 
+	{
+		trace("WARNING: Use setPanelStyle() to set colors and style");
+		return style = val;
+	}
 	
 	/**
 	   Setup the item/	button Style
@@ -211,7 +217,8 @@ class MenuBar extends Window
 		
 		if (st == "fire" && onSelect != null)
 		{
-			onSelect(currentIndex);
+			Tools.tCall(onSelect, currentIndex);
+			//onSelect(currentIndex);
 		}else
 	
 		
@@ -220,7 +227,8 @@ class MenuBar extends Window
 			currentIndex = Std.parseInt(el.SID);
 			if (_gStyle==0) drawThick( active );
 		
-			if (onChange != null) onChange(currentIndex);
+			Tools.sCall(onChange, currentIndex);
+			//if (onChange != null) onChange(currentIndex);
 			
 		} else
 		
