@@ -3,9 +3,9 @@
 ## DJTUI 
 
 **Name**: djTUI *(Terminal User Interface Library)*\
-**Author:** John Dimi, <johndimi@outlook.com> *twitter*: [@jondmt](https://twitter.com/jondmt)\
+**Author:** John Dimi, <johndimi@outlook.com>
 **Project Page and Sources:** [https://github.com/johndimi/djTui](https://github.com/johndimi/djTui)\
-**Language:** HAXE 3.4.7, **Licence:** MIT\
+**Language:** HAXE 4.1.3 , **License:** MIT\
 **Version:** 0.1 **Platform:** Multiple 
 
 
@@ -88,12 +88,12 @@ All BaseElements can **callback** custom status messages to the user. (*on butto
 
 The included example project is ready to be compiled and run on both **nodeJS** ( running on a real Terminal ) and **openFL** ( which can pretty much run on anything )
 
-- For a better understanding of djTUI you can study the source code and example project, I have tried to provide meaningful comments in most places.
+- For a better understanding of `djTui` you can study the source code and example project, I have tried to provide meaningful comments in most places.
 - Check the `example/readme.md` file for more info
 
-### :star: Online FLASH demo is available :star:
+### :star: Online demo is available :star:
 
-[![The included demo application.](images/demo_program_sm.png)](https://johndimi.github.io/djTui/)\
+[![The included demo application.](images/demo_program_sm.png)](https://johndimi.github.io/djTui/)
 Click here to view the online demo *(Flash Required)*
 
 
@@ -136,11 +136,4 @@ Currently djTUI comes with interfaces for
 - **openFL**
 - More interfaces are possible and easy to make. Just implement the generic interfaces `IInput.hx` and `ITerminal.hx`
 
-## :rocket: Help
-
-Feel free to provide feedback and contact me on social media and email. Donations are always welcome! :smile:
-
-[![Donate](https://www.paypalobjects.com/en_US/i/btn/btn_donate_LG.gif)](https://www.paypal.me/johndimi)
-
-Thanks for checking this out,\
-John.
+## :arrow_forward: End notes

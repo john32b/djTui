@@ -1,5 +1,6 @@
 package djTui.el;
 
+import djA.StrT;
 import djTui.BaseElement;
 import djTui.Tools;
 
@@ -143,7 +144,7 @@ class Button extends BaseMenuItem
 				case "?":
 					xtr.conf = true;
 					xtr.confQ = c1;
-					if (Tools.isEmpty(xtr.confQ))
+					if (StrT.isEmpty(xtr.confQ))
 					{
 						xtr.confQ = CONF_DEF;
 					}

@@ -4,9 +4,11 @@
   "license": "MIT",
   "tags": ["TUI","graphic","interface","terminal","nodejs","openfl"],
   "description": "A simple TUI framework with an agnostic renderer.",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "classPath": "src/",
   "releasenote": "First Release",
   "contributors": ["JohnDimi"],
-  "dependencies": { }
+  "dependencies": { 
+	"dJA" : ""
+  }
 }

@@ -29,14 +29,14 @@ class State_Labels extends WindowState
 			dec.flag_focusable = false;
 			dec.addStack(new Label('DjTui Demo ** ', dec.inWidth).scroll(150).setColor("red"));
 			dec.addStack(new Label('-+-+==+-+', dec.inWidth).scroll(300));
-			WM.A.screen(dec, "right", "bottom", 1);
+			WM.A.screen(dec, "r", "b", 1);
 			
 			
 		// -- Main Win
 		var win = new Window( 34, 18, Styles.win.get('blue.1'));
 			win.addStack(new Label("Normal Label"));
-			win.addStack(new Label("Aligned Right", win.inWidth, "right"));
-			win.addStack(new Label("Aligned Center", win.inWidth, "center"));
+			win.addStack(new Label("Aligned Right", win.inWidth, "r"));
+			win.addStack(new Label("Aligned Center", win.inWidth, "c"));
 			win.addStack(new Label("Colored 1").setColor("red"));
 			win.addStack(new Label("Colored 2").setColor("yellow", "magenta"));			
 			win.addSeparator(3);

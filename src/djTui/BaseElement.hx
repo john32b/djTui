@@ -36,8 +36,8 @@ class BaseElement
 	
 	// General Use color holders
 	// Usually used for current color for printing
-	var colorFG:String;	
-	var colorBG:String; // The color the background will be filled with
+	var colorFG:String = null;
+	var colorBG:String = null; // The color the background will be filled with
 	
 	/** Is this element currenty visible/onscreen */
 	public var visible(default, set):Bool;

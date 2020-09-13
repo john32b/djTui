@@ -1,5 +1,6 @@
 package djTui.el;
 
+import djA.StrT;
 import djTui.BaseElement;
 import djTui.Styles.PrintColor;
 import haxe.ds.Either;
@@ -169,7 +170,7 @@ class TextBox extends BaseElement
 		
 		flag_empty = false; // Just in case
 		
-		lines.push(StrTool.padString(line, width));
+		lines.push(StrT.padString(line, width));
 		
 		// Max allowed scroll
 		scroll_max = lines.length - slots_count;
@@ -216,7 +217,7 @@ class TextBox extends BaseElement
 		
 		if (Std.is(val, String))
 		{
-			src = StrTool.splitToLines(val, width);
+			src = StrT.splitToLines(val, width);
 		}
 		else if (Std.is(val, Array))
 		{
@@ -228,7 +229,7 @@ class TextBox extends BaseElement
 		
 		for (i in src)
 		{
-			lines.push(StrTool.padString(i, width));
+			lines.push(StrT.padString(i, width));
 		}
 		
 		// Autocalculate height

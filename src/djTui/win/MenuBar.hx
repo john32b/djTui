@@ -66,28 +66,22 @@ class MenuBar extends Window
 	{
 		super(Sid, Width, 1);
 		padX = PadX;
-		// Setup with the default params
 		setPanelStyle(style.text, style.bg);
 		setItemStyle();
 	}//---------------------------------------------------;
 	
-	override function set_style(val):WinStyle 
-	{
-		trace("WARNING: Use setPanelStyle() to set colors and style");
-		return style = val;
-	}
 	
 	/**
-	   Setup the item/	button Style
+	   Setup the item/button Style
 	   ! Call this BEFORE setItems();
-	   @param	Align Align inside the panel (left,center)
+	   @param	Align Align inside the panel (l,c) (left,center)
 	   @param	FixedSize Force this size to all items ( Be careful with pad0 and pad1 )
 	   @param	SymbolID Side symbol for items, (0..4) | 0 for none 
 	   @param	pad0 Symbol Outer Pad
 	   @param	pad1 Symbol Inner Pad
 	   @param	padBetween Padding Between Items
 	**/
-	public function setItemStyle(   Align:String = "left", FixedSize:Int = 0,
+	public function setItemStyle(   Align:String = "l", FixedSize:Int = 0,
 									SymbolID:Int = 0, pad0:Int = 1, pad1:Int = 1,
 								    padBetween:Int = 1 )
 	{
@@ -139,7 +133,6 @@ class MenuBar extends Window
 				padX = 1;
 			}
 		}
-		
 		modifyStyle({
 			borderStyle:0,
 			bg : col0,

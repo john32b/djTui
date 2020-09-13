@@ -1,4 +1,5 @@
 package djTui;
+import djA.DataT;
 import djTui.BaseElement;
 import djTui.el.Border;
 import djTui.el.Button;
@@ -44,11 +45,10 @@ class Window extends BaseElement
 	
 	/**
 	   This window style, defaults to `WM.global_style`
-	   NOTE: 
-		- You can assign a new style to this object and it will be applied with the setter
-		- If you want to modify parts of the style call .modifyStyle(), it will apply the changes
+	   - Apply a new style with `setStyle()`
+	   - If you want to modify parts of the style call .modifyStyle(), it will apply the changes
 	**/
-	public var style(default, set):WinStyle;
+	public var style(default, null):WinStyle;
 	
 	// Padding of elements from the edges
 	// Applied to automatic positioning functions like addStack()
@@ -139,11 +139,24 @@ class Window extends BaseElement
 		
 		// DEVNOTE: Setting the style will also set the `borderStyle`
 		if (_style != null) 
-			style = Reflect.copy(_style);
+			setStyle(DataT.copyDeep(_style));
 		else
-			style = Reflect.copy(WM.global_style_win);
-		
+			setStyle(DataT.copyDeep(WM.global_style_win));
+			
 		size(_w, _h);
+	}//---------------------------------------------------;
+	
+	/**
+	   Sets a new window style + border included in the style object
+	**/
+	public function setStyle(val:WinStyle)
+	{
+		if (style == val) return;
+		style = val;
+		setColor(style.text, style.bg);	 // Sets window fg/bg color, some elements will read this.
+		border_el.setColor(style.borderColor);
+		borderStyle = style.borderStyle; // setter
+		return;
 	}//---------------------------------------------------;
 	
 	/**
@@ -159,9 +172,8 @@ class Window extends BaseElement
 	**/
 	public function modifyStyle(o:Dynamic)
 	{
-		var t = Reflect.copy(style);
-		Tools.copyFields(o, t);
-		style = t; // Sets and applies
+		//setStyle(DataT.copyFields(o, DataT.copyDeep(style)));
+		setStyle(DataT.copyFields(o, style));
 		
 		// Experimental: Works but not in all cases
 		for (i in display_list) i.focusSetup(i.isFocused);
@@ -245,8 +257,9 @@ class Window extends BaseElement
 		if (yy ==-1) yy = xx; 
 		rPadX = xx; rPadY = yy;
 		padX = xx; padY = yy;
-		if (borderStyle > 0)
-		{
+		
+		// All border styles have a 1 thickness, so add 1
+		if (borderStyle > 0) {
 			padX++; padY++;
 		}
 		return this;
@@ -301,15 +314,15 @@ class Window extends BaseElement
 	   Add a single element below the previously added element
 	   @param	el Add an element to a line
 	   @param	yPad Padding form the element above it
-	   @param	align left|center|right|none
+	   @param	align l|c|r|none (left center right, any for none)
 	**/
-	public function addStack(el:BaseElement, yPad:Int = 0, align:String = "left"):BaseElement
+	public function addStack(el:BaseElement, yPad:Int = 0, align:String = "l"):BaseElement
 	{
 		switch(align)
 		{
-			case "left": el.x = x + padX;	
-			case "right": el.x = x + width - el.width;
-			case "center": el.x = x + Std.int((width / 2) - (el.width / 2));
+			case "l": el.x = x + padX;	
+			case "r": el.x = x + width - el.width;
+			case "c": el.x = x + Std.int((width / 2) - (el.width / 2));
 			default : // No alignment
 		}
 		
@@ -331,9 +344,9 @@ class Window extends BaseElement
 	   @param	el The elements to add
 	   @param	yPad From the previously added element
 	   @param	xPad In between the elements
-	   @param   align center left
+	   @param   align l|c (left,center)
 	**/
-	public function addStackInline(el:Array<BaseElement>, yPad:Int = 0, xPad:Int = 1, align:String = "left")
+	public function addStackInline(el:Array<BaseElement>, yPad:Int = 0, xPad:Int = 1, align:String = "l")
 	{
 		// Calculate starting Y
 		var yloc:Int = 0;
@@ -349,7 +362,7 @@ class Window extends BaseElement
 		
 		// Alignment :
 		var startX = 0;
-		if (align == "center") 
+		if (align == "c") 
 			startX = x + Std.int(width / 2 - totalWidth / 2);
 		else
 			startX = x + padX;
@@ -705,23 +718,11 @@ class Window extends BaseElement
 		// Pipe callbacks to user
 		callback(st, el);
 	}//---------------------------------------------------;
-
+	
 	//====================================================;
 	// GETTER, SETTERS
 	//====================================================;
 	
-	/**
-	   Sets a new window style + border included in the style object
-	**/
-	function set_style(val):WinStyle
-	{
-		if (style == val) return val;
-		style = val;
-		setColor(style.text, style.bg);	 // Sets window fg/bg color, some elements will read this.
-		border_el.setColor(style.borderColor);
-		borderStyle = style.borderStyle; // setter
-		return style;
-	}//---------------------------------------------------;
 	
 	/**
 	   If borderstyle index out of bounds, it will be set to the first one
@@ -746,14 +747,6 @@ class Window extends BaseElement
 			if (title_el != null) title_el.draw();
 		}
 		
-		#if debug
-		if (borderStyle > 0 && (padX == 0 || padY == 0)) {
-			//trace('WARNING: Window "SID:${SID}" should have padding since it uses a border style');
-			//padX = 1; padY = 1;
-			// Don't need this^  because it is reset later in padding(..)
-		}
-		#end
-			
 		// Force the padding values to be recalculated
 		padding(rPadX, rPadY);
 		

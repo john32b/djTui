@@ -19,8 +19,7 @@ class REG
 			"Buttons" => State_Buttons,
 			"Textbox" => State_Textbox,
 			"VList" => State_VList,
-			"Window Form" => State_WinForm,
-			"Miscellaneous 1" => State_Test_1
+			"Window Form" => State_WinForm
 		];
 		
 	// Random text, used in textboxes	
@@ -30,7 +29,7 @@ class REG
 		
 	#if debug
 	// If set, will skip main menu and present this state at first run
-	public static var startState:Class<WindowState> = State_Test_1;
+	public static var startState:Class<WindowState> = null;
 	#end
 	
 }// --

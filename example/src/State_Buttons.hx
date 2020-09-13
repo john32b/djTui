@@ -1,5 +1,6 @@
 package;
 import djTui.*;
+import djA.DataT;
 import djTui.WM;
 import djTui.el.Button;
 import djTui.el.Label;
@@ -48,7 +49,7 @@ class State_Buttons extends WindowState
 			w1.addStack( new Button("", "Write Text ^").onPush( 
 				function(){
 					var b:Button = cast w1.getEl("b_text");
-						b.text = Tools.randAr(["random", "test 01", "other", "hello", "world", "djtui"]);
+						b.text = DataT.randAr(["random", "test 01", "other", "hello", "world", "djtui"]);
 				}));
 				
 				
@@ -106,8 +107,8 @@ class State_Buttons extends WindowState
 			
 			
 		// - Place the windows	
-		WM.A.inLine([w1, w3], 3, "center");
-		WM.A.screen(w2, "center", "bottom", 2);
+		WM.A.inLine([w1, w3], 3, "c");
+		WM.A.screen(w2, "c", "b", 2);
 		
 		// NOTE:	
 		// Whatever windows list[] includes, will be opened at once later when the state is opened

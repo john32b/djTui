@@ -94,7 +94,7 @@ class ShowcaseDemo
 			wint.posNext(menu, 2).move(0, 3);
 			var tb = new TextBox(wint.inWidth, wint.inHeight);
 				tb.setData(
-				"DJTui is a render agnostic Terminal Interface. Build with HAXE, it can target many environments. This demo runs on nodeJS on a real terminal.\n\n== Use the arrow keys to navigate. Enter to select , Esc to go back."
+				"DJTui is a render agnostic Terminal Interface. Built with HAXE, it can target many environments. This demo runs on nodeJS on a real terminal.\n\n== Use the arrow keys to navigate. Enter to select , Esc to go back."
 				);
 			wint.addStack(tb);
 		

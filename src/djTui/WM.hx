@@ -1,25 +1,27 @@
-
+/********************************************************************
+ * WINDOW MANAGER
+ * ---------------
+ * - Holds and Manages Windows
+ * - Provides some Terminal and Input Interfaces
+ * - Provides a Window State Manager
+ * - AutoHolds a DataBase of created Windows
+ * 
+ * 
+ *******************************************************************/
 package djTui;
 
-import djTui.adaptors.*;
+import djA.DataT;
+import djTui.adaptors.IInput;
+import djTui.adaptors.ITerminal;
 import djTui.Styles.WinStyle;
 import djTui.WindowState.WindowStateManager;
 import djTui.win.MessageBox;
 
 
-/**
- * Window Manager
- * --------------
- * - Holds and Manages Windows
- * - Provides some Terminal and Input Interfaces
- * - Provides a Window State Manager
- * - AutoHolds a DataBase of created Windows
- */
-
 class WM 
 {
 	public inline static var NAME 	 = "djTui";
-	public inline static var VERSION = "0.1";
+	public inline static var VERSION = "0.2";
 	
 	// A created Terminal Renderer
 	public static var T(default, null):ITerminal;
@@ -97,7 +99,6 @@ class WM
 	//====================================================;
 	
 	
-	
 	/**
 	   Create/Init the Window Manager
 	   NOTE: Create the WM before creating any windows
@@ -129,8 +130,11 @@ class WM
 		if (styleWin == null) styleWin = Styles.DEF_STYLE_WIN;
 		if (stylePop == null) stylePop = Styles.DEF_STYLE_POP;
 		
-		global_style_win = Reflect.copy(Styles.win.get(styleWin));
-		global_style_pop = Reflect.copy(Styles.win.get(stylePop));
+		//global_style_win = Reflect.copy(Styles.win.get(styleWin));
+		//global_style_pop = Reflect.copy(Styles.win.get(stylePop));
+		
+		global_style_win = DataT.copyDeep(Styles.win.get(styleWin));
+		global_style_pop = DataT.copyDeep(Styles.win.get(stylePop));
 		
 		// --
 		I.onKey = _onKey;

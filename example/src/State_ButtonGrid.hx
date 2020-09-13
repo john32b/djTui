@@ -95,8 +95,8 @@ class State_ButtonGrid extends WindowState
 		
 	
 		// - Pace windows
-		WM.A.screen(inf1, "center", "bottom", 2);
-		WM.A.inLine([g1, g2], 2, "center");
+		WM.A.screen(inf1, "c", "b", 2);
+		WM.A.inLine([g1, g2], 2, "c");
 		WM.A.down(inf, g1, -3, 1);
 		
 		

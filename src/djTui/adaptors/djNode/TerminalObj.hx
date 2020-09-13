@@ -70,14 +70,14 @@ class TerminalObj implements ITerminal
 	// Set the active foreground color
 	public function fg(col:String):ITerminal
 	{
-		t.fg(col);
+		t.fg(TColor.createByName(col));
 		return this;
 	}
 
 	// Set the active background color
 	public function bg(col:String):ITerminal
 	{
-		t.bg(col);
+		t.bg(TColor.createByName(col));
 		return this;
 	}
 	

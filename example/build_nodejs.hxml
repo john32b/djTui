@@ -1,9 +1,12 @@
 # Build for nodeJS
 
--lib hxnodejs
--lib djNode:0.4.0
+
+# Library Source, this instead of including the lirary with -lib
 -cp ../src/
+# Example Source
 -cp src/
+
+-lib djNode
 -main Main_nodejs
 -js bin/nodejs/app.js
 -D terminal

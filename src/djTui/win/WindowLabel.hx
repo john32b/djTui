@@ -21,7 +21,7 @@ class WindowLabel extends Window
 	   @param _pb  Quick Set of [borderStyle, PadX, PadY]
 	   @param _col Quick Set of [FgColor, BgColor]
 	**/
-	public function new(texts:Array<String>, align:String = "left", ?_style:WinStyle, ?_pb:Array<Int>, ?_col:Array<String>)
+	public function new(texts:Array<String>, align:String = "l", ?_style:WinStyle, ?_pb:Array<Int>, ?_col:Array<String>)
 	{
 		super(null, 10, 10, _style);
 		

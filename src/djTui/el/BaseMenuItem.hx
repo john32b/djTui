@@ -1,5 +1,6 @@
 package djTui.el;
 
+import djA.StrT;
 import djTui.BaseElement;
 import djTui.Styles.PrintColor;
 
@@ -46,7 +47,7 @@ class BaseMenuItem extends BaseElement
 	public function new(?sid:String) 
 	{
 		super(sid);
-		textAlign = "center";
+		textAlign = "c";
 		textWidth = 0;	// Autosize
 	}//---------------------------------------------------;
 	
@@ -151,9 +152,9 @@ class BaseMenuItem extends BaseElement
 		// If side symbols are set:
 		if (s_smb_l != null)
 		{
-			v = s_smb_l + StrTool.empty(s_padIn) + 
+			v = s_smb_l + StrT.rep(s_padIn," ") + 
 				v +
-				StrTool.empty(s_padIn) + s_smb_r;
+				StrT.rep(s_padIn, " ") + s_smb_r;
 			
 			// DevNote: Why did I need this line, just apply outer pad to all fixed widths
 			//if (textWidth == 0) 
@@ -161,7 +162,7 @@ class BaseMenuItem extends BaseElement
 		
 		// Apply outer pad to all occasions.
 		if (s_padOut > 0)
-		v = StrTool.empty(s_padOut) + v + StrTool.empty(s_padOut);
+		v = StrT.rep(s_padOut, " ") + v + StrT.rep(s_padOut, " ");
 		
 		/* Upon renaming, if the new text is shorter than the old text
 		   clear the space behind it, so the text doesn't overlap */
@@ -175,7 +176,7 @@ class BaseMenuItem extends BaseElement
 			rText = v;
 		}else
 		{
-			rText = StrTool.padString(v, textWidth, textAlign);
+			rText = StrT.padString(v, textWidth, textAlign);
 		}
 		
 		width = rText.length; // Either textWidth or whatever text length is
@@ -192,9 +193,9 @@ class BaseMenuItem extends BaseElement
 	   Re-Set the width and alignment
 	   NOTE: Meant to be used in Labels mostly
 	   @param _w Text Width Set 0 for autosize.
-	   @param _a Align center,left,right
+	   @param _a Align c,l,r
 	**/
-	public function setTextWidth(_w:Int, _a:String = "left"):BaseMenuItem
+	public function setTextWidth(_w:Int, _a:String = "l"):BaseMenuItem
 	{
 		textWidth = _w;
 		textAlign = _a;

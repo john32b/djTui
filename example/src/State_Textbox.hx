@@ -80,7 +80,7 @@ class State_Textbox extends WindowState
 			});
 			
 		//--
-		WM.A.screen(win1, "center", "top", 3);
+		WM.A.screen(win1, "c", "t", 3);
 		win2.pos(1, win1.y + win1.height + 2);
 		WM.A.right(ctr, win2,1);
 		

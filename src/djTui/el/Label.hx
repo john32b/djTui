@@ -1,4 +1,5 @@
 package djTui.el;
+import djA.StrT;
 import djTui.BaseElement;
 import haxe.Timer;
 
@@ -30,7 +31,7 @@ class Label extends BaseMenuItem
 		@param  Align   		Alignment within the label itself. Enabled onlt 
 								when target width is set
 	**/
-	public function new(Text:String = "", TextWidth:Int = 0, Align:String = "left")
+	public function new(Text:String = "", TextWidth:Int = 0, Align:String = "l")
 	{
 		super();
 		type = ElementType.label;
@@ -100,9 +101,9 @@ class Label extends BaseMenuItem
 		{
 			anim_blink = !anim_blink;
 			if (anim_blink){
-				rText = StrTool.padString(text, width);
+				rText = StrT.padString(text, width);
 			}else{
-				rText = StrTool.padString("", width);
+				rText = StrT.padString("", width);
 			}
 			draw();
 		}
@@ -116,7 +117,7 @@ class Label extends BaseMenuItem
 	public function blinkOff()
 	{
 		stop();
-		rText = StrTool.padString("", width);
+		rText = StrT.padString("", width);
 		anim_blink = false;
 		draw();
 	}//---------------------------------------------------;

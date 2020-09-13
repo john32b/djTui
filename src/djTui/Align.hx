@@ -19,29 +19,29 @@ class Align
 	/**
 	 * Align a window using the Terminal Viewport as a guide
 	 * @param	win Window to align
-	 * @param	alignX left,center,right,none
-	 * @param	alignY top,center,bottom,none
+	 * @param	alignX l|c|r (left, center, right)
+	 * @param	alignY t|c|b (top, center, bottom)
 	 * @param   padding Apply this much padding 
 	 */
-	public function screen(win:Window, alignX:String = "center", alignY:String = "center", pad:Int = 0):Window
+	public function screen(win:Window, alignX:String = "c", alignY:String = "c", pad:Int = 0):Window
 	{
 		var tx:Int = 0;
 		var ty:Int = 0;
 		
 		switch(alignX)
 		{
-			case "left" : tx = 0 + pad;
-			case "right" : tx = WM.width - win.width - pad;
-			case "center" : tx = Std.int((WM.width / 2) - (win.width / 2));
-			default:
+			case "l" : tx = 0 + pad;
+			case "r" : tx = WM.width - win.width - pad;
+			case "c" : tx = Std.int((WM.width / 2) - (win.width / 2));
+			default:	// none
 		}
 		
 		switch(alignY)
 		{
-			case "top" : ty = 0 + pad;
-			case "bottom" : ty = WM.height - win.height - pad;
-			case "center" : ty = Std.int((WM.height / 2) - (win.height / 2));
-			default: 
+			case "t" : ty = 0 + pad;
+			case "b" : ty = WM.height - win.height - pad;
+			case "c" : ty = Std.int((WM.height / 2) - (win.height / 2));
+			default : // none
 		}
 		
 		win.pos(tx, ty);
@@ -81,11 +81,11 @@ class Align
 	   Move a collection of windows in the same Line
 	   @param	A Array of Windows
 	   @param	Y The Y Coordinate Line on the terminal to place the windows
-	   @param	align center,left,right
+	   @param	align c,l,r
 	   @param	p1 Padding between elements
 	   @param   p2 Padding from the edges and placement, applies to "left", "right"
 	**/
-	public function inLine(A:Array<Window>, Y:Int, align:String = "center", p1:Int = 0, p2:Int = 0)
+	public function inLine(A:Array<Window>, Y:Int, align:String = "c", p1:Int = 0, p2:Int = 0)
 	{
 		var sx:Int; 		// start x, when placing
 		function getTW() {  // Get total width of elements ( padding included )
@@ -95,11 +95,11 @@ class Align
 			return tw;
 		}
 		switch(align) {
-			case "left":
+			case "l":
 				sx = p2;
-			case "right":
+			case "r":
 				sx = p2 + WM.width - getTW();
-			case "center":
+			case "c":
 				sx = p2 + Std.int( (WM.width / 2) - (getTW() / 2));
 			default:
 				throw 'Not supported align type `$align` Typo?';

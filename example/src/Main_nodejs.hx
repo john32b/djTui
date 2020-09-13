@@ -51,7 +51,7 @@ class Main_nodejs extends BaseApp
 	// --
 	override function onExit(code:Int) 
 	{
-		T.move(0, WM.height); // Hack for real terminals
+		if (WM._isInited) T.move(0, WM.height); // Hack for real terminals
 		super.onExit(code);
 	}//---------------------------------------------------;
 	
