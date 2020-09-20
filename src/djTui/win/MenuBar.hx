@@ -1,3 +1,23 @@
+/********************************************************************
+ * Menu Bar
+ * A Window presenting Buttons / Items in a single strip.
+ *
+ * NOTES:
+ *
+ * 	- Callbacks on `fire` and on `change`
+ *  - Currently acts like a TAB Selection with no popu
+ *  - Customizable
+ *  - setPanelStyle(), setItemStyle() for customizatio
+ *
+ * TODO:
+ * 	- Nested menus with popups
+ *
+ * EXAMPLE:
+ * 	bar = new MenuBar("main",-1,2);
+ *  bar.setItems(["one","two"]);
+ *
+ *******************************************************************/
+
 package djTui.win;
 
 import djTui.BaseElement;
@@ -5,56 +25,35 @@ import djTui.Styles.WinStyle;
 import djTui.Window;
 import djTui.el.Button;
 
-/**
- * Menu Bar,
- * A Window presenting Buttons / Items in a single strip.
- * 
- * NOTES: 
- * 
- * 	- Callbacks on `fire` and on `change`
- *  - Currently acts like a TAB Selection with no popup menus
- *  - Customizable
- *  - setPanelStyle(), setItemStyle() for customization
- * 
- * TODO:
- * 	- Nested menus with popups
- * 
- * 
- * EXAMPLE:
- * 	bar = new MenuBar("main",-1,2);
- *  bar.setItems(["one","two"]);
- * 	
- * 
- */
-class MenuBar extends Window 
+class MenuBar extends Window
 {
 	// Holds all root level Items
 	var items:Array<Button>;
-	
+
 	// Currently selected <index> (0..n)
 	var currentIndex:Int;
-	
+
 	/// Style related:
-	
+
 	var menuAlign:String;	// Alignment of Items inside the panel
-	
+
 	// Button Styles :
 	var _bFixSize:Int = 0;	// Force a fixed size all Elements ( if set )
-	var _bStyle:Int = 0;	// Button style ID 
+	var _bStyle:Int = 0;	// Button style ID
 	var _bPad0:Int;			// Button Outer Symbol Pad
 	var _bPad1:Int;			// Button Inner Symbol Pad
 	var _bPad2:Int;			// Button Padding Between
-	
+
 	// Grid and Box Style :
 	var _gSizes:Array<Int>;	// Helper Array, store a button sizes to push to drawer
 	var _gStyle:Int = 0;	// Grid/Panel Thickness Style
-	
+
 	/** Quick callback for when an Item becomes highlighted. Index starts at 0 */
 	public var onChange:Int->Void;
-	
+
 	/** Quick callback for when an Item gets selected. Index starts at 0 */
 	public var onSelect:Int->Void;
-	
+
 	/**
 	   Create a MenuBar
 	   Call `setup()` first for styling and then `setItems()` to push data
@@ -62,21 +61,21 @@ class MenuBar extends Window
 	   @param	Width -1 For full screen width. If Size too small for items, it will be resized
 	   @param	PadX Side Window Padding.
 	**/
-	public function new(?Sid:String, Width:Int = 1, PadX:Int = 0) 
+	public function new(?Sid:String, Width:Int = 1, PadX:Int = 0)
 	{
 		super(Sid, Width, 1);
 		padX = PadX;
 		setPanelStyle(style.text, style.bg);
 		setItemStyle();
 	}//---------------------------------------------------;
-	
-	
+
+
 	/**
 	   Setup the item/button Style
 	   ! Call this BEFORE setItems();
 	   @param	Align Align inside the panel (l,c) (left,center)
 	   @param	FixedSize Force this size to all items ( Be careful with pad0 and pad1 )
-	   @param	SymbolID Side symbol for items, (0..4) | 0 for none 
+	   @param	SymbolID Side symbol for items, (0..4) | 0 for none
 	   @param	pad0 Symbol Outer Pad
 	   @param	pad1 Symbol Inner Pad
 	   @param	padBetween Padding Between Items
@@ -85,14 +84,14 @@ class MenuBar extends Window
 									SymbolID:Int = 0, pad0:Int = 1, pad1:Int = 1,
 								    padBetween:Int = 1 )
 	{
-		
+
 		menuAlign = Align;
 		_bFixSize = FixedSize;
 		_bStyle = SymbolID;
 		_bPad0 = pad0;
 		_bPad1 = pad1;
 		_bPad2 = padBetween;
-		
+
 		#if debug
 		if (_gStyle > 0 && _bPad2 == 0) {
 			trace("Warning: Border style needs element padding > 0");
@@ -104,8 +103,8 @@ class MenuBar extends Window
 		}
 		#end
 	}//---------------------------------------------------;
-	
-	
+
+
 	/**
 	 * Setup Panel Styles
 	   @ Call this BEFORE setItems();
@@ -116,7 +115,7 @@ class MenuBar extends Window
 	public function setPanelStyle(col1:String, col0:String, Gstyle:Int = -1)
 	{
 		_gStyle = Gstyle;
-		
+
 		if (Gstyle ==-1) // THIN BORDER ::
 		{
 			padY = 0;
@@ -126,29 +125,29 @@ class MenuBar extends Window
 		{
 			padY = 1;
 			height = 3;
-			
+
 			// A border needs padding
 			if (Gstyle > 0 && padX == 0)
 			{
 				padX = 1;
 			}
 		}
-		modifyStyle({
+		modStyle({
 			borderStyle:0,
 			bg : col0,
 			elem_idle  : {fg:col1},
 			elem_focus : {fg:col0,bg:col1}
 		});
-		
+
 		#if debug
 		if (items != null)
 		{
 			trace("Error: Call this function before adding items");
 		}
 		#end
-		
+
 	}//---------------------------------------------------;
- 	
+
 	/**
 	   Sets or Re-Sets the Menu Items
 	   Will reset cursor to the first element
@@ -157,9 +156,9 @@ class MenuBar extends Window
 	public function setItems(ar:Array<String>):MenuBar
 	{
 		if (ar == null) return this;
-		
+
 		currentIndex = 0;
-		
+
 		// - Clear old items ( if any )
 		if (items != null)
 		{
@@ -168,12 +167,12 @@ class MenuBar extends Window
 			lastAdded = null;
 			lockDraw = false;
 		}
-		
+
 		items = [];
 		_gSizes = [];
-		
+
 		var totalW:Int = 0;
-		
+
 		// Add the new items
 		var i = 0;
 		while(i < ar.length)
@@ -186,57 +185,57 @@ class MenuBar extends Window
 			_gSizes.push(b.width + _bPad2);
 			totalW += b.width + _bPad2;
 		}
-		
+
 		// Last INT in drawgrid is cell height
 		_gSizes[0]++;
 		_gSizes.push(height);
 		totalW -= _bPad2;
-		
+
 		// Re-Adjust width if it's too small
 		if (totalW + (padX * 2) > width)
 		{
 			width = totalW + (padX * 2);
 		}
-		
+
 		addStackInline(cast items, 0, _bPad2, menuAlign);
-		
+
 		return this;
 	}//---------------------------------------------------;
-	
-	
-	override function onElementCallback(st:String, el:BaseElement) 
-	{	
+
+
+	override function onElementCallback(st:String, el:BaseElement)
+	{
 		super.onElementCallback(st, el);
-		
+
 		if (st == "fire" && onSelect != null)
 		{
 			Tools.tCall(onSelect, currentIndex);
 			//onSelect(currentIndex);
 		}else
-	
-		
+
+
 		if (st == "focus")
 		{
 			currentIndex = Std.parseInt(el.SID);
 			if (_gStyle==0) drawThick( active );
-		
+
 			Tools.sCall(onChange, currentIndex);
 			//if (onChange != null) onChange(currentIndex);
-			
+
 		} else
-		
+
 		if (st == "unfocus")
 		{
 			if (_gStyle==0) drawThick( items[ Std.parseInt(el.SID) ] );
 		}
-		
+
 	}//---------------------------------------------------;
-	
-	
-	override public function draw():Void 
+
+
+	override public function draw():Void
 	{
 		super.draw();
-	
+
 		if (_gStyle > 0)
 		{
 			_readyCol();
@@ -245,8 +244,8 @@ class MenuBar extends Window
 			WM.D.drawGrid(items[0].x - 1 , y, null, [ _gSizes.copy() ] , _gStyle, _gStyle);
 		}
 	}//---------------------------------------------------;
-	
-	
+
+
 	/**
 	  Draw a line above/below a button, making it ""thicker""
 	 */
@@ -256,7 +255,7 @@ class MenuBar extends Window
 		WM.D.rect(el.x, el.y + 1, el.width, 1);
 		WM.D.rect(el.x, el.y - 1, el.width, 1);
 	}//---------------------------------------------------;
-	
+
 	/**
 	   Set the cursor to an index. 0 To select none
 	   @param	index
@@ -270,21 +269,22 @@ class MenuBar extends Window
 			items[currentIndex].focus();
 		}
 	}//---------------------------------------------------;
-	
+
 	/**
-	   Feed with CSV
-	   @param	val CSV data, like "one,two,three"
+	   - Alternative way to feed data to the Menu
+	   - This way requires a CSV string
+	   @param	val CSV String , e.g. "one,two,three"
 	**/
-	override public function setData(val:Any) 
+	override public function setData(val:Any)
 	{
 		setItems(cast(val, String).split(','));
 	}//---------------------------------------------------;
-	
+
 	/** Return current selected INDEX */
-	public function getIndex():Any 
+	public function getIndex():Any
 	{
 		return currentIndex;
 	}//---------------------------------------------------;
-	
-	
+
+
 }// --
