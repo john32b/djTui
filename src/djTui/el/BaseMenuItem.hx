@@ -1,19 +1,22 @@
+/********************************************************************
+ * Generic Menu Item
+ * ---------
+ * - General functions for *single line* menu elements
+ * - This is meant to be extended into more specific items
+ * - Offers Focused/Idle Colors handling.
+ * - Colors will be read from the parent window style
+ *   or you can use ColorFocus() and ColorIdle() to set custom colors
+ * - Automatic Symbol management at string ends, (for buttons, arrows, etc)
+ *
+ *******************************************************************/
+
 package djTui.el;
 
 import djA.StrT;
 import djTui.BaseElement;
 import djTui.Styles.PrintColor;
 
-/**
- * Generic Menu Item for SINGLE LINE elements
- * -----
- * - General functions for *single line* menu elements
- * - This is meant to be extended into more specific items
- * - Offers Focused/Idle Colors handling
- * - Use ColorFocus() and ColorIdle() to set colors
- * - Automatic Symbol management at string ends, (for buttons, arrows, etc)
- * - Disabled elements, when restored to enabled, will ALWAYS restore to default colors
- */
+
 class BaseMenuItem extends BaseElement
 {
 	// Actual string being drawn
@@ -22,14 +25,13 @@ class BaseMenuItem extends BaseElement
 	// The original Unmodified Text
 	public var text(default, set):String;
 
-	// Target width for visible text. It will be trimmed if exceeded
-	// 0 for Autosize
+	// Target width for visible text. It will be trimmed if exceeded | 0 for Autosize
 	var textWidth:Int;
 
-	// Self Alignment of the text. Only applies when textWidth>0
+	// Self Alignment of the text. Applies if textWidth>0 | l,r,c
 	var textAlign:String;
 
-	// Whether this control can be interacted with
+	/** Whether this control can be interacted with. Warning resets custom colors if they are set */
 	public var disabled(default, set):Bool = false;
 
 	/** Optional DESCRIPTION text associated with current control **/
@@ -39,7 +41,7 @@ class BaseMenuItem extends BaseElement
 	public var name:String;
 
 	// Menu Elements have pairs of colors. Automatically set on focus/blur
-	// Set custom colors right after new()
+	// TIP: Whenever you change these, call colorsRefresh() to draw/apply
 	var color_idle:PrintColor;
 	var color_focus:PrintColor;
 
@@ -113,7 +115,6 @@ class BaseMenuItem extends BaseElement
 
 	/**
 	   Re-Set the width and alignment
-	   NOTE: Meant to be used in Labels mostly
 	   @param _w Text Width Set 0 for autosize.
 	   @param _a Align c,l,r
 	**/
@@ -129,7 +130,7 @@ class BaseMenuItem extends BaseElement
 	public function colorIdle(fg:String, ?bg:String):BaseMenuItem
 	{
 		color_idle = {fg:fg, bg:bg};
-		colorChangeDraw();
+		colorsRefresh();
 		return this;
 	}//---------------------------------------------------;
 
@@ -137,12 +138,15 @@ class BaseMenuItem extends BaseElement
 	public function colorFocus(fg:String, ?bg:String):BaseMenuItem
 	{
 		color_focus = {fg:fg, bg:bg};
-		colorChangeDraw();
+		colorsRefresh();
 		return this;
 	}//---------------------------------------------------;
 
-	// Colors were changed. Check if it can be drawn and draw
-	function colorChangeDraw()
+	/**
+	   Will force-apply colorFocus/colorIdle and draw the element
+	   Call this after changing the base colors
+	**/
+	function colorsRefresh()
 	{
 		if (parent != null)
 		{
@@ -154,7 +158,8 @@ class BaseMenuItem extends BaseElement
 
 	/**
 	   Sets the actual display text
-	   Will apply any autosize and alignment
+	   - Applies textWidth and textAlign
+	   - Includes Side Symbols and Padding
 	**/
 	function set_text(v)
 	{
@@ -165,7 +170,8 @@ class BaseMenuItem extends BaseElement
 
 		text = v;
 
-		// If side symbols are set:
+		// If side symbols are set
+		// DEV: If left is set, right must be set as well, so one check.
 		if (s_smb_l != null)
 		{
 			v = s_smb_l + StrT.rep(s_padIn," ") +
@@ -233,15 +239,18 @@ class BaseMenuItem extends BaseElement
 				color_idle = s.elem_idle;
 				color_focus = s.elem_focus;
 			}
-			colorChangeDraw();
+			colorsRefresh();
 		}
 		return val;
 	}//---------------------------------------------------;
 
-	//====================================================;
-	// Side Symbols
-	// Text will be enclosed if the symbols are set
-	//====================================================;
+	/********************************************************************
+	 * -- Side Symbols --
+	 * Element text will be enclosed if the symbols are set
+	 * Used in multiple cases like adding arrows in ranges eg "< 10 >"
+	 * or decorative bounds in buttons eg " [ OK ] "
+	 * The padding is customizable so you can do "  [ OK ]  " as well as "[OK]"
+	 *******************************************************************/
 	var s_smb_l:String;		// Left Symbol
 	var s_smb_r:String;		// Right Symbol
 	var s_padIn:Int = 0;	// Padding between symbol and text

@@ -6,10 +6,10 @@
  * - Callback Statuses. Place a callback listener with .listen(..);
  *
  *		escape : Esc key got pressed
- * 		focus  : Element/Window has been focused   ; (check element.type or SID)
- * 		unfocus: Element/Window has been unfocused ; (check element.type or SID)
- * 		fire   : Element was activated
- * 		change : Element was changed
+ * 		focus  : An element/this Window has been focused   ; (check element.type or SID)
+ * 		unfocus: An element/this Window has been unfocused ; (check element.type or SID)
+ * 		fire   : A child Element was activated
+ * 		change : A child Element was changed
  * 		open   : Window was just opened
  * 		close  : Window was just closed
  *
@@ -60,10 +60,11 @@ class Window extends BaseElement
 	// Padding of elements from the edges
 	// Applied to automatic positioning functions like addStack()
 	// This is the real pad from window (0,0)
+	// It is better to set padding with the padding() function
 	var padX:Int = 0;
 	var padY:Int = 0;
 
-	// Requested User pad. From the border
+	// Requested User pad. From the border. I need to keep this
 	var rPadX:Int = 0;
 	var rPadY:Int = 0;
 
@@ -723,6 +724,7 @@ class Window extends BaseElement
 
 		border_el.style = borderStyle;
 
+		// DEV: The border will not get drawn at object constructor
 		if (visible && !lockDraw)
 		{
 			border_el.draw();

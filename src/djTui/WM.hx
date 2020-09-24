@@ -23,7 +23,7 @@ class WM
 	public inline static var NAME 	 = "djTui";
 	public inline static var VERSION = "0.2";
 
-	// A created Terminal Renderer
+	// A  Terminal Renderer
 	public static var T(default, null):ITerminal;
 
 	// Drawing operations objects
@@ -32,7 +32,7 @@ class WM
 	// Alignment functions
 	public static var A(default, null):Align;
 
-	// A created Input Renderer
+	// A Input Renderer
 	static var I(default, null):IInput;
 
 	// A global statemanager
@@ -71,8 +71,9 @@ class WM
 	/** Get ALL window element callbacks here ( not windows ) */
 	public static var onElementCallback:String->BaseElement->Void = null;
 
-	/** Get global keystrokes. */
-	public static var onKey:String->Void = null;
+	/** User handle keystrokes. Processed first,
+	 *  Keys can transform so you can cancel it if you want be returning null */
+	public static var onKey:String->String = null;
 
 	/// Internal :
 
@@ -130,9 +131,6 @@ class WM
 
 		if (styleWin == null) styleWin = Styles.DEF_STYLE_WIN;
 		if (stylePop == null) stylePop = Styles.DEF_STYLE_POP;
-
-		//global_style_win = Reflect.copy(Styles.win.get(styleWin));
-		//global_style_pop = Reflect.copy(Styles.win.get(stylePop));
 
 		global_style_win = DataT.copyDeep(Styles.win.get(styleWin));
 		global_style_pop = DataT.copyDeep(Styles.win.get(stylePop));
@@ -377,6 +375,9 @@ class WM
 	**/
 	static function _onKey(key:String)
 	{
+		// Push to user.
+		if (onKey != null) key = onKey(key);
+
 		if (key == "esc")
 		{
 			if (active != null && active.flag_close_on_esc)
@@ -415,10 +416,6 @@ class WM
 		{
 			active.onKey(key);
 		}
-
-
-		// Push to user
-		if (onKey!=null) onKey(key);
 	}//---------------------------------------------------;
 
 	// --

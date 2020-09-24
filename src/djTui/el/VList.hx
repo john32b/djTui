@@ -1,15 +1,19 @@
+/********************************************************************
+ * Vertical List of Strings
+ *
+ * - Basically a Textbox with cursor navigation
+ * - Scrolls elements vertically in a list
+ * - Can add elements on the fly
+ *
+ * + Callbacks
+ * 		fire 		;	when an element was pressed on
+ *  	change	;	when the selected element changed
+ *
+ *******************************************************************/
+
 package djTui.el;
 import djTui.Styles.PrintColor;
 
-/**
- * Vertical List of Strings
- * - Scrolls elements vertically in a list like a textbox
- * - Basically a Textbox with cursor navigation
- * - Sends status callbacks (fire,change)
- * - Useful for selecting an element from many
- * - Can add elements on the fly
- *
- */
 class VList extends TextBox
 {
 
@@ -93,9 +97,8 @@ class VList extends TextBox
 	// --
 	override function onKey(k:String):Void
 	{
-		if (flag_empty)
-		{
-			// Let textbox handle focusing other elements
+		if (flag_empty) {
+			// Just pass off focus. Let the textbox class do this
 			super.onKey(k);
 			return;
 		}
@@ -112,6 +115,7 @@ class VList extends TextBox
 			case "end": cursor_bottom();
 			case "space" | "enter": fire();
 			default:
+
 			// Check for letter jumps:
 			if (!flag_letter_jump) return;
 

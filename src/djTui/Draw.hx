@@ -1,18 +1,20 @@
-package djTui;
-
-/**
+/********************************************************************
  * Provide some Extra Drawing Functions
  * ----------------
- * @ SINGLETON, exists in WM.D
- */
-class Draw 
-{
+ * - SINGLETON, exists in WM.D
+ * - Uses `Styles.hx` for reading things
+ *
+ *******************************************************************/
 
-	public function new() 
+package djTui;
+
+class Draw
+{
+	public function new()
 	{
 	}//---------------------------------------------------;
 
-	
+
 	/**
 	   Fill a rectangle with current terminal colors
 	   @param	x Screen X to start drawing
@@ -25,14 +27,14 @@ class Draw
 	public function rect(x:Int, y:Int, width:Int, height:Int, char:String = " ")
 	{
 		var s:String = StringTools.lpad("", char, width);
-		
-		for (ff in y...y + height) 
+
+		for (ff in y...y + height)
 		{
 			WM.T.move(x, ff).print(s);
 		}
 	}//---------------------------------------------------;
-	
-	
+
+
 	/**
 	   Draw a border with current terminal colors
 	   @param	x Screen X to start drawing
@@ -56,8 +58,8 @@ class Draw
 		WM.T.move(x, y).print(bs.charAt(0)).moveR(width - 2, 0).print(bs.charAt(2));
 		WM.T.move(x, y + height - 1).print(bs.charAt(3)).moveR(width - 2, 0).print(bs.charAt(5));
 	}//---------------------------------------------------;
-	
-	
+
+
 	/**
 	 * Draws an array of strings.
 	 * - Useful for printing ASCII fonts
@@ -69,8 +71,8 @@ class Draw
 			WM.T.move(x, y + i).print(ar[i]);
 		}
 	}//---------------------------------------------------;
-	
-	
+
+
 	/**
 	   Draw a Horizontal Line
 	   @param	x Start X pos
@@ -82,8 +84,8 @@ class Draw
 	{
 		WM.T.move(x, y).print(StringTools.lpad("", s, width));
 	}//---------------------------------------------------;
-	
-	
+
+
 	/**
 	   Draw a Vertical Line
 	   @param	x Start X pos
@@ -99,28 +101,26 @@ class Draw
 			WM.T.move(x, y + c++).print(s);
 		}
 	}//---------------------------------------------------;
-	
-	
+
+
 	/**
 	   Draws a grid complex
 	   NOTES :
-		~ Full box width and height is autocalculated from the boxes
-		~ Actual Cell width/height will be less than declared, in order to accomodate 
-		  for the full box width/height
-	   @param	x Outer Border Screen Location X
-	   @param	y Outer Border Screen Location Y
+		- Full box width and height is autocalculated from the boxes
+		- Actual Cell width/height will be less than declared, in order to accomodate for the border
+		- You can only set `rowsStr` OR `rowsInt` NOT BOTH
+	   @param	x Top-Left Screen X Coordinate (outer border)
+	   @param	y Top-Left Screen Y Coordinate (outer border)
+	   @param	Sin  Style index from global border style in 'Styles.hx' for outer border | Start at 1
+	   @param	Sout Style index from global border style in 'Styles.hx' for outer border | Start at 1
 	   @param	rowsStr [ "width|width|...|height" , "width|width|...|height" ... ]
-				Every string is a row,
+				Every string is a row.
 				e.g. [ "20|20|3" , "15|25|2" ] (20,20 = width of the 2 cells, height = 3)
 	   @param	rowsInt [ [width,width,height] , [width,width...,height] ]
 				works like `rowsStr` but with INT values
-				WARNINGS - You can either set rowsSTR or rowsInt, NOT BOTH!
-						 - rowsInt will MODIFY the array in place
-	   @param	Sin Style index from global border style in 'Styles.hx' for outer border
-	   @param	Sout Style index from global border style in 'Styles.hx' for outer border
 
 	**/
-	public function drawGrid(x:Int, y:Int, ?rowsStr:Array<String>, ?rowsInt:Array<Array<Int>>, Sin:Int, Sout:Int)
+	public function drawGrid(x:Int, y:Int, Sin:Int, Sout:Int, ?rowsStr:Array<String>, ?rowsInt:Array<Array<Int>>)
 	{
 		// Total Width and Height
 		var W:Int = 0;
@@ -135,69 +135,69 @@ class Draw
 			throw "drawGrid Error";
 		}
 		#end
-		
+
 		// First pass, read arguments
 		if (rowsStr != null)
 			for (r in 0...rowsStr.length){
 			boxes[r] = rowsStr[r].split('|').map(function(s){return Std.parseInt(s);});
 			boxH[r] = boxes[r].pop();
 			}
-		
+
 		if (rowsInt != null)
 			for (r in 0...rowsInt.length){
 			boxes[r] = rowsInt[r];
 			boxH[r] = boxes[r].pop();
-			}	
-		
+			}
+
 		for (w in boxes[0]) W += w;
 		for (h in boxH) H += h;
-		
+
 		// --
 		if (Sout > 0) border(x, y, W, H, Sout);
-		
+
 		var currentRowTop:Int = y;
-	
+
 		// -
 		for (r in 0...boxH.length)
 		{
 			var rowH:Int = boxH[r] - 1;
 			if (r == 0) rowH --;
-			
+
 			// Draw the vertical bottom line only if not the last row
 			if (r != boxH.length - 1)
 			{
 				lineH(x + 1, currentRowTop + rowH + 1, W - 2,
 					 Styles.border[Sin].charAt(1));
-					 
+
 				// Draw Intersections with the outer border
 				WM.T.move(x, currentRowTop + rowH + 1)
 					.print( Styles.connectBorder(Sin, Sout, 2));
 				WM.T.moveR(W - 2, 0).print(Styles.connectBorder(Sin, Sout, 3));
-				
+
 			}
-			
+
 			// Current box right edge X position ( for each box in the loop )
 			var cBoxEdge:Int = x;
-			
+
 			// Draw Vertical lines for each box
 			for (b in 0...boxes[r].length)
 			{
 				var boxwidth:Int = boxes[r][b] - 1;
 				if (b == 0) boxwidth--;
-				
+
 				cBoxEdge += boxwidth + 1;
-				
+
 				boxes[r][b] = cBoxEdge; // Store it for future use
 										// I am storing it in the same array, I don't need it anymore
-										
+
 				if (b == boxes[r].length - 1) continue; // No need to draw right edge of last box
-				
+
 				// Draw Vertical Line
 				lineV(cBoxEdge, currentRowTop + 1, rowH, Styles.border[Sin].charAt(7));
-				
+
 				var S0:String = null;
 				var S1:String = null;
-				
+
 				if (r == 0)
 				{
 					S0 = Styles.connectBorder(Sin, Sout, 0);
@@ -213,13 +213,13 @@ class Draw
 							S0 = Styles.connectBorder(Sin, Sin, 4);
 						}
 					}
-					
+
 					if (S0 == null)
 					{
 						S0 = Styles.connectBorder(Sin, Sin, 0);
 					}
 				}
-				
+
 				if (r == boxH.length - 1)
 				{
 					S1 = Styles.connectBorder(Sin, Sout, 1);
@@ -227,18 +227,18 @@ class Draw
 				{
 					S1 = Styles.connectBorder(Sin, Sin, 1);
 				}
-				
+
 				// Draw Top/Down Symbols :
 				WM.T.move(cBoxEdge, currentRowTop).print(S0);
 				WM.T.move(cBoxEdge, currentRowTop + rowH + 1).print(S1);
-				
+
 			}//- boxes end
-			
+
 			currentRowTop += rowH + 1;
-			
+
 		}//- row end
-	
+
 	}//---------------------------------------------------;
 
-	
+
 }// - end class -

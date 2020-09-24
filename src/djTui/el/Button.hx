@@ -8,40 +8,40 @@ import djTui.Tools;
 /**
  * Text Button
  * ----------
- * 
+ *
  * - Text that can be highlighted and selected
- * - Button style for displaying text inside button like symbols [ ] 
+ * - Button style for displaying text inside button like symbols [ ]
  * - Callbacks "fire" status when selected
  * - You can capture events using Window.Callbacks ( the window owning this button)
  * - You can also call .onPush() to quickly set a callback when the button is pushed
  * - Buttons will always be `center` aligned within target width
- * 
- * EXTRA Functionality 
+ *
+ * EXTRA Functionality
  * -------------
  *  You can set some Extra Functionality by calling `extra(..)`
  *   - Auto-open a specified window on click (can customize position)
  *   - Auto-open a WindowState on click
  *   - Auto-Confirmation (YES/NO) on click, (customizable question) use with `.confirm()` or `.extra()`
- * 
+ *
  * TAGS in SID
  * ---------------
- * 
+ *
  *   "#" : 	Will go to a STATE, ( must be defined in WM.STATES )
  *   		e.g. "#stateoptions", will goto the state with sid "stateoptions"
- * 
+ *
  *   "@" :	Will open a WINDOW, ( must be defined in WM.DB )
  * 			e.g. "@details01" will open the window with sid "details01"
  */
 
-class Button extends BaseMenuItem 
+class Button extends BaseMenuItem
 {
 	// Button Style Symbols
 	// Index starting at 1
 	static var SMB = [ "[]" , "{}" , "()", "<>"];
-	
+
 	// Confirmation default question
 	static var CONF_DEF = "Are you sure?";
-		
+
 	/**
 	   Stores extra functionality parameters
 	   Access and setup with with .extra() function
@@ -57,46 +57,46 @@ class Button extends BaseMenuItem
 		?center:Bool,	// center the new [window] or [confirmation] dialog
 		?close:Bool		// close self window upon being selected
 	}
-	
-	
+
+
 	// Extra function called when this button is pushed
 	var _onPush:Void->Void;
-		
+
 	/** If true, will request next/previous element focus upon left/right keys
 	 *  Useful in cases where you put buttons in a single line */
 	public var flag_leftright_escape:Bool = false;
-	
+
 	/**
 	   Creates a button/clickable text link
 	   @param	sid SID You can include SPECIAL functionality here. It's the same as calling extra(..) later
 	   @param	Text The text to display
-	   @param	BtnStyle IF > 0 Will enable Button Style text with symbol. "1:<>,2:[],3:{},4:(),5:«»"
+	   @param	BtnStyle IF > 0 Will enable Button Style text with symbol. Check [static var SMB]
 	   @param   textWidth 0 for Autosize
 	**/
 	public function new(sid:String, Text:String, BtnStyle:Int = 0, Width:Int = 0)
 	{
 		super(sid);
 		#if debug
-			if (BtnStyle > SMB.length) 
+			if (BtnStyle > SMB.length)
 			{
 				BtnStyle = SMB.length;
 				trace("WARNING: Button Style > Available. For button", this);
 			}
 		#end
-		
+
 		type = ElementType.button;
 		height = 1;
 		textWidth = Width;
-		
+
 		if (BtnStyle > 0)
 		{
 			var s = BtnStyle - 1;
 			setSideSymbolPad(1, 1); // TODO: Parameterize ?
 			setSideSymbols(SMB[s].charAt(0), SMB[s].charAt(1));
 		}
-		
+
 		text = Text;
-		
+
 		// - In case of special TAGS on the SID, apply them
 		if (sid != null)
 		{
@@ -127,7 +127,7 @@ class Button extends BaseMenuItem
 	 *  ----
 	 * example: "@window2,close,x10,y10,?Really Open?,anim"
 	 *  will ask "Really Open?" , if yes will close the parent window and anim open window2 at (10,10)
-	 * 
+	 *
 	 * @param	tags Separated with comma. Check comments
 	 * @return
 	**/
@@ -135,7 +135,7 @@ class Button extends BaseMenuItem
 	{
 		var ar = tags.split(',');
 		if (xtr == null) xtr = {};
-		
+
 		for (i in ar)
 		{
 			var c0 = i.charAt(0);
@@ -148,7 +148,7 @@ class Button extends BaseMenuItem
 					{
 						xtr.confQ = CONF_DEF;
 					}
-		
+
 				case "#":
 					xtr.call = 0;
 					xtr.sid = c1;
@@ -160,7 +160,7 @@ class Button extends BaseMenuItem
 				case "y":
 					xtr.y = Std.parseInt(c1);
 				default:
-					
+
 					switch(i)
 					{
 						case "center":
@@ -174,10 +174,10 @@ class Button extends BaseMenuItem
 					}
 			}
 		}
-		
+
 		return this;
 	}//---------------------------------------------------;
-	
+
 	/**
 	   Set this button to automatically ask a YES/NO question upon being selected
 	   @param	text Optional Custom Question to present
@@ -191,27 +191,27 @@ class Button extends BaseMenuItem
 		if (center != null) s += ",center";
 		return extra(s);
 	}//---------------------------------------------------;
-	
-	
+
+
 	/**
 	   Act what the button is supposed to do,
 	   ~ Doesn't check for confirmation, it is done earlier
 	**/
 	function action()
 	{
-		if (xtr != null) 
+		if (xtr != null)
 		{
 			if (xtr.call != null && xtr.call == 0) // GOTO State
 			{
 				WM.STATE.goto(xtr.sid);
 				return;
 			}
-			
+
 			if (xtr.close != null)
 			{
 				parent.close();
 			}
-			
+
 			if (xtr.call != null && xtr.call == 1) // GOTO Window
 			{
 				var win = WM.DB.get(xtr.sid);
@@ -225,7 +225,7 @@ class Button extends BaseMenuItem
 					{
 						WM.A.screen(win);
 					}
-				
+
 					if (xtr.anim != null) {
 						win.openAnimated();
 					}else {
@@ -236,17 +236,17 @@ class Button extends BaseMenuItem
 					trace('WARNING: Button request to goto window SID:"${xtr.sid}" that doesn\'t exist in WM.DB');
 				}
 			}
-			
+
 		}//- (xtr null check)
-		
+
 		callback("fire");
 		Tools.tCall(_onPush);
 	}//---------------------------------------------------;
-	
+
 	// --
-	override function onKey(k:String):Void 
+	override function onKey(k:String):Void
 	{
-		if ((k == "enter" || k == "space") && !disabled) 
+		if ((k == "enter" || k == "space") && !disabled)
 		{
 			if (xtr != null && xtr.conf != null)
 			{
@@ -256,7 +256,7 @@ class Button extends BaseMenuItem
 				action();
 			}
 		}else
-		
+
 		if (flag_leftright_escape)
 		{
 			if (k == "left") parent.focusPrev();
@@ -264,13 +264,13 @@ class Button extends BaseMenuItem
 		}
 
 	}//---------------------------------------------------;
-	
-	
-	override public function getData():Any 
+
+
+	override public function getData():Any
 	{
 		return SID;
 	}//---------------------------------------------------;
-	
+
 	/**
 	   Chain this to quickly add a function to be called when this button is pushed
 	**/
@@ -279,5 +279,5 @@ class Button extends BaseMenuItem
 		_onPush = fn;
 		return this;
 	}//---------------------------------------------------;
-	
+
 }// --
