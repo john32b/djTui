@@ -72,9 +72,6 @@ class Styles
 	// Border Decoration Symbols
 	public static var border(default, null):Array<String>;
 
-	// Border Connection Symbols, used in Draw.DrawGrid()
-	public static var bCon(default, null):Array<String>;
-
 	// Hold some default Window Styles
 	public static var win(default, null):Map<String,WinStyle>;
 
@@ -94,27 +91,15 @@ class Styles
 
 		// borders : up row, bottom row, left, right
 		border = [
-			'        ', 	// 0: blank
-			'┌─┐└─┘││', 	// 1: all thin
-			'╔═╗╚═╝║║', 	// 2: all thick
-			'╓─╖╙─╜║║', 	// 3: thin horizontal
-			'╒═╕╘═╛││', 	// 4: thin vertical
-		    '/-\\\\=/||', 	// 5: simple characters
-		    '█▀██▄█▌▐',   	// 6: simple blocks
+			'        ', 		// 0: blank
+			'┌─┐└─┘││┬┴├┤┼', 	// 1: all thin
+			'╔═╗╚═╝║║╦╩╠╣╬', 	// 2: all thick
+			'╓─╖╙─╜║║╥╨╞╡╫', 	// 3: thin horizontal
+			'╒═╕╘═╛││╤╧╟╢╪', 	// 4: thin vertical
+		    '/-\\\\=/||--||T', 	// 5: simple characters
+		    '█▀██▄█▌▐█▄▌▐█',   	// 6: simple blocks
 		];
 
-
-		// Border connections. Same index as `border`
-		// connection order : up, down, left, right, intersection
-		bCon = [
-			'',
-			'┬┴├┤┼',
-			'╦╩╠╣╬',
-			'╤╧╟╢╪', // inner thin,  outer thick
-			'╥╨╞╡╫', // inner thick, outer thin
-			'--||T',
-			'█▄▌▐█'
-		];
 
 		//-- Create some predefined styles
 		win = new Map();
@@ -128,31 +113,6 @@ class Styles
 		win.set("gray.1",	createWinStyle("white", "blue", "black", "gray", "darkgray"));
 
 	}//---------------------------------------------------;
-
-	/**
-	   Returns special symbols for connecting the Standard Border Styles
-	   You can mix and match only styles <1,2> to the <from,to> parameters
-	   @param	from Border ID for Inner
-	   @param	to   Border ID for Outer
-	   @param	d    Connection Type : up, down, left, right, X ( 0,1,2,3,4 )
-
-	**/
-	public static function connectBorder(from:Int, to:Int, t:Int):String
-	{
-		if (from == 1 && to == 2)
-		{
-			return bCon[3].charAt(t);
-		}
-
-		if ( from == 2 && to == 1)
-		{
-			return bCon[4].charAt(t);
-		}
-
-		// Default:
-		return bCon[from].charAt(t);
-	}//---------------------------------------------------;
-
 
 
 	/**

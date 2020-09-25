@@ -389,7 +389,7 @@ class WM
 					return; // The window state is going to change, no need to continue
 				}
 
-				active.onKey("esc");
+				if (active != null) active.onKey("esc");
 			}
 		}else
 

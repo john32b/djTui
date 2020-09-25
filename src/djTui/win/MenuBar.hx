@@ -197,7 +197,8 @@ class MenuBar extends Window
 			_readyCol();
 			// Devnote: - (x-1) because The window already has 1 pad
 			//			- copy because drawgrid modifies the array
-			WM.D.drawGrid(items[0].x - 1 , y, _gStyle, _gStyle, [ _gSizes.copy() ]);
+			//WM.D.drawGrid2(items[0].x - 1 , y, _gStyle, _gStyle, [ _gSizes.copy() ]);
+			/// FIX ME
 		}
 	}//---------------------------------------------------;
 
