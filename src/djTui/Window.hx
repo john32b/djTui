@@ -1,7 +1,9 @@
 /********************************************************************
  * Generic Window/Panel
  * --------------------
+ *
  * - Holds and manages baseElements and derivatives
+ * - If you want to resize a window, prefer calling size() it will also manage the border
  *
  * - Callback Statuses. Place a callback listener with .listen(..);
  *
@@ -13,9 +15,11 @@
  * 		open   : Window was just opened
  * 		close  : Window was just closed
  *
+ *
  * DEV NOTES:
- * - All child elements push callbacks to `onElementCallback()`
- * - When you listen() to a window events. ALL events will go there, including child elements and self window events.
+ *
+ * 	- All child elements push callbacks to `onElementCallback()`
+ * 	- When you listen() to a window events. ALL events will go there, including child elements and self window events.
  *
  *******************************************************************/
 
@@ -46,7 +50,7 @@ class Window extends BaseElement
 	 **/
 	public var borderStyle(default, set):Int = 0;
 
-	// The border element responsible for drawing the border
+	// The border element responsible for drawing Border/Grid
 	var border_el:Border;
 
 	/**
@@ -159,10 +163,11 @@ class Window extends BaseElement
 	   Will modify specific fields of the style object.
 	   See `Styles.WinStyle` for the fields
 		e.g. window.modifyStyle( { text:"red",bg:"black"} );
-	  ! Better to modify before opening a window
+	   - Better to modify before opening a window
 	   @param	o Object with field names and values conforming to `Styles.WinStyle`
+	   @param	forceDraw Force a redraw. Do this when changing the style when the window is open
 	**/
-	public function modStyle(o:Dynamic,forceDraw:Bool = false)
+	public function modStyle(o:Dynamic, forceDraw:Bool = false)
 	{
 		setStyle(DataT.copyFields(o, style));
 		if (forceDraw) draw();
@@ -731,7 +736,7 @@ class Window extends BaseElement
 			if (title_el != null) title_el.draw();
 		}
 
-		// Force the padding values to be recalculated
+		// Force the padding values to be recalculated. Just in case.
 		padding(rPadX, rPadY);
 
 		return val;

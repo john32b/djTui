@@ -91,7 +91,7 @@ class Styles
 
 		// borders : up row, bottom row, left, right
 		border = [
-			'        ', 		// 0: blank
+			'             ', 	// 0: blank
 			'┌─┐└─┘││┬┴├┤┼', 	// 1: all thin
 			'╔═╗╚═╝║║╦╩╠╣╬', 	// 2: all thick
 			'╓─╖╙─╜║║╥╨╞╡╫', 	// 3: thin horizontal

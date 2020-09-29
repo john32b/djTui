@@ -114,14 +114,14 @@ class BaseMenuItem extends BaseElement
 	}//---------------------------------------------------;
 
 	/**
-	   Re-Set the width and alignment
+	   Re-Set the width and alignment. Prefer this over calling size()
 	   @param _w Text Width Set 0 for autosize.
-	   @param _a Align c,l,r
+	   @param _a Align Optional [c,l,r] Null for no change
 	**/
-	public function setTextWidth(_w:Int, _a:String = "l"):BaseMenuItem
+	public function setTextWidth(_w:Int, ?_a:String):BaseMenuItem
 	{
 		textWidth = _w;
-		textAlign = _a;
+		if (_a != null) textAlign = _a;
 		if (text != null) text = text; // Apply and force a redraw
 		return this;
 	}//---------------------------------------------------;

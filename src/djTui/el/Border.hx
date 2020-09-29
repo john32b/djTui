@@ -1,15 +1,23 @@
+/********************************************************************
+ * Window Border, Helper Element
+ *
+ * - Gets added as a child in windows, so that it can use draw();
+ * - Draws a border or a grid complex
+ * - BETA: In case of grid, you need to set it up manually, and it starts always at the window (0,0)
+ *
+ *******************************************************************/
 package djTui.el;
 
 import djTui.BaseElement;
 
-/**
- * Window Border
- * ...
- */
+@:allow(djTui.Window)
 class Border extends BaseElement
 {
 	// Style ID from the Styles.hx border index
 	public var style:Int;
+
+	// You can set this manually. If this is set, the grid will be drawn
+	var grid:Array<Array<Int>> = null;
 
 	/**
 	   Create a border element
@@ -23,10 +31,8 @@ class Border extends BaseElement
 		style = st;
 	}//---------------------------------------------------;
 
-	/**
-	   Draw the top portion only
-	**/
-	public function drawTop()
+	// Draw the top portion only. Used sometimes when drawing the title part of the window
+	function drawTop()
 	{
 		_readyCol();
 		WM.D.lineH(x + 1, y, width - 2, Styles.border[style].charAt(1));
@@ -38,7 +44,11 @@ class Border extends BaseElement
 	override public function draw():Void
 	{
 		_readyCol();
-		WM.D.border(x, y, width, height, style);
+		if (grid == null)
+			WM.D.border(x, y, width, height, style);
+		else{
+			WM.D.drawGrid(x, y, style, grid);
+		}
 	}//---------------------------------------------------;
 
-}
+}// --

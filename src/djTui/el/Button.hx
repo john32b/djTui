@@ -15,6 +15,7 @@ import djTui.Tools;
  * - You can capture events using Window.Callbacks ( the window owning this button)
  * - You can also call .onPush() to quickly set a callback when the button is pushed
  * - Buttons will always be `center` aligned within target width
+ * - You can set a custom Height
  *
  * EXTRA Functionality
  * -------------
@@ -59,7 +60,7 @@ class Button extends BaseMenuItem
 	}
 
 
-	// Extra function called when this button is pushed
+	// Extra function called when this button is pushed. Set with onPush()
 	var _onPush:Void->Void;
 
 	/** If true, will request next/previous element focus upon left/right keys
@@ -71,21 +72,20 @@ class Button extends BaseMenuItem
 	   @param	sid SID You can include SPECIAL functionality here. It's the same as calling extra(..) later
 	   @param	Text The text to display
 	   @param	BtnStyle IF > 0 Will enable Button Style text with symbol. Check [static var SMB]
-	   @param   textWidth 0 for Autosize
+	   @param   Width 0 for Autosize
+	   @param   Height Default is (1)
 	**/
-	public function new(sid:String, Text:String, BtnStyle:Int = 0, Width:Int = 0)
+	public function new(sid:String, Text:String, BtnStyle:Int = 0, Width:Int = 0, Height:Int = 1)
 	{
 		super(sid);
 		#if debug
-			if (BtnStyle > SMB.length)
-			{
+			if (BtnStyle > SMB.length) {
 				BtnStyle = SMB.length;
-				trace("WARNING: Button Style > Available. For button", this);
-			}
+				trace("WARNING: Button Style Overflow.", this); }
 		#end
 
 		type = ElementType.button;
-		height = 1;
+		height = Height;
 		textWidth = Width;
 
 		if (BtnStyle > 0)
@@ -104,6 +104,21 @@ class Button extends BaseMenuItem
 			{
 				extra(sid); // Initialize # and @
 							// For the full functionalities you must call extra() explicitly
+			}
+		}
+	}//---------------------------------------------------;
+
+
+	override public function draw():Void
+	{
+		if (height < 2) super.draw();
+		else{
+			_readyCol();
+			var m = Std.int(height * 0.5); // get the index that I will draw
+			var empty = StrT.rep(width, " ");
+			for (i in 0...height) {
+				WM.T.move(x, y + i);
+				WM.T.print( i == m ? rText: empty);
 			}
 		}
 	}//---------------------------------------------------;

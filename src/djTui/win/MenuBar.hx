@@ -4,8 +4,12 @@
  *
  *
  * EXAMPLE:
- * 	bar = new MenuBar("main",-1,2);
- *  bar.setItems(["one","two"]);
+ * 	var bar = new MenuBar( 1, {bWidth:18, grid:true });
+ *  bar.setData("One,Two,Three");
+ *
+ *
+ * TODO:
+ * 	- Make it accept user/custom styles for colors and borders?
  *
  *******************************************************************/
 
@@ -25,19 +29,15 @@ class MenuBar extends Window
 	// Currently selected <index> (0..n)
 	var currentIndex:Int;
 
-	/** MenuBar Style parameters */
+	// MenuBar Style parameters
 	var bSt = {
-		align:"l",	// Alignment of the whole button strip inside the panel | l,c (left,center)
-		bWidth:0,		// Fixed button width. 0 for Auto
-		bStyle:0,		// Button style ID. ie Symbol to enclose the text. Check `Button.SMB`
-		bPad:[0, 1, 1],	// Symbol PAD L | Symbol PAD R | Pad Between Buttons
-		padX:0,			// X Padding for Inner Menu Area
-		grid:-1,		// -1:thin,0:thick:1-6 border decoration
+		bs:0,			// BorderStyle (0) for no border (1-6) Border style from Styles.hx
+		grid:false,		// If true, will draw a grid. (Border between the buttons).
+		align:"l",		// Alignment of the whole button strip inside the panel | l,c (left,center) | Works on a fixed menu width
+		bWidth:0,		// Fixed button width. (0) for Auto. (-1) To stretch to MenuBar Width
+		bSmb:[0, 0, 0],	// [Button Symbol ID , Symbol Left Pad, Symbol Right Pad ] ; For button ID check `Button.hx:SMB`
+		pads:[1, 1]		// [BarWindow Inner X, Between Buttons] !! Works only when grid=false
 	}
-
-	// Grid and Box Style :
-	var _gSizes:Array<Int>;	// Helper Array, store a button sizes to push to drawer
-	var _gStyle:Int = 0;	// Grid/Panel Thickness Style
 
 	/** callback for when an Item becomes highlighted. Index starts at 0 */
 	public var onChange:Int->Void;
@@ -48,60 +48,35 @@ class MenuBar extends Window
 	/**
 	   Create a MenuBar
 	   @param	Sid Set an SID to have it pushed to the global WM.DB object
-	   @param	Width -1 For full screen width. If Size too small for items, it will be resized
+	   @param	Width (1) to autoexpand. (-1) For full screen width
+	   @param	Height Outer Height of the window. Buttons will expand to full inner height. YOU MUST ACCOMODATE FOR BORDER!
 	   @param	BarStyle Check `bSt` for details | You can override fields | null for default
 	**/
-	public function new(?Sid:String, Width:Int = 1, BarStyle:Dynamic = null )
+	public function new(?Sid:String, Width:Int = 1, Height:Int = 3, BarStyle:Dynamic = null )
 	{
-		super(Sid, Width, 1);
+		super(Sid, Width, Height);
+
 		bSt = DataT.copyFields(BarStyle, bSt);
-		setBarStyle(style.text, style.bg, bSt.grid);
-	}//---------------------------------------------------;
 
+		/// TODO, custom style ?
 
-	/**
-	 * Setup Panel Styles
-	   @ Call this BEFORE setItems(); WHY. Because then button elements can properly setup the colors
-	   @param col0 The background color
-	   @param col1 The accent color
-	   @param Gstyle -1:Thin, 0:Thick, 1-6:Thick with border style  ( Defined in Styles.border object )
-	**/
-	function setBarStyle(col1:String, col0:String, Gstyle:Int = -1)
-	{
-		#if debug
-		if (Gstyle > 0 && bSt.bPad[2] == 0) {
-			trace("Warning: Border Style needs element padding > 0");
-			bSt.bPad[2] = 1;
-		}
-		#end
-
-		_gStyle = Gstyle;
-
-		if (Gstyle == -1) // THIN BORDER ::
-		{
-			padding(bSt.padX, 0);
-			height = 1;
-		}
-		else			// THICK BORDER ::
-		{
-			// Force XPadding if borderstyle is set
-			if (Gstyle > 0 && bSt.padX == 0)
-			{
-				bSt.padX == 1;
-			}
-
-			padding(bSt.padX, 1);
-			height = 3;
-		}
+		var col0 = style.bg;
+		var col1 = style.text;
 
 		modStyle({
-			borderStyle:0,
+			borderStyle:bSt.bs,
 			bg : col0,
-			elem_idle  : {fg:col1},		// This will reflect to all the child buttons
-			elem_focus : {fg:col0,bg:col1}
+			elem_idle  : {fg:col1},		// These colors will apply to all the child buttons. Because they work with parent.style
+			elem_focus : {fg:col0, bg:col1}
 		});
 
+		if (bSt.grid) {
+			bSt.pads = [0, 1]; // No inner left pad on grid mode
+		}
+
+		padding(bSt.pads[0], 0);
 	}//---------------------------------------------------;
+
 
 	/**
 	   Sets or Re-Sets the Menu Items
@@ -111,12 +86,10 @@ class MenuBar extends Window
 	public function setItems(ar:Array<String>):MenuBar
 	{
 		if (ar == null) return this;
-
 		currentIndex = 0;
 
 		// - Clear old items ( if any )
-		if (items != null)
-		{
+		if (items != null) {
 			lockDraw = true; // prevent re-drawing at every element removal
 			for (i in items) removeChild(i);
 			lastAdded = null;
@@ -124,39 +97,44 @@ class MenuBar extends Window
 		}
 
 		items = [];
-		_gSizes = [];
+		var totalW:Int = bSt.pads[0] * 2; // Total Width . Left + Right Pad
 
-		var totalW:Int = 0;
-
-		// Add the new items
-		var i = 0;
-		while(i < ar.length)
-		{
-			// Store the index of the item on the SID
-			var b = new Button('$i', ar[i], bSt.bStyle, bSt.bWidth);
-			b.setSideSymbolPad(bSt.bPad[0], bSt.bPad[1]);
+		// -- Create the buttons
+		for(i in 0...ar.length) {
+			// Also store the index of the item as the SID
+			var b = new Button('$i', ar[i], bSt.bSmb[0], bSt.bWidth >= 0?bSt.bWidth:0);	// if -1, pass 0 to autosize
+			b.height = inHeight;
+			b.setSideSymbolPad(bSt.bSmb[1], bSt.bSmb[2]);
+			totalW += b.width + bSt.pads[1];
 			items.push(b);
-			i++;
-			_gSizes.push(b.width + bSt.bPad[2]);
-			totalW += b.width + bSt.bPad[2];
 		}
 
-		// Last INT in drawgrid is cell height
-		_gSizes[0]++;
-		_gSizes.push(height);
-		totalW -= bSt.bPad[2];
+		// -- Process <Stretchy Buttons>
+		//    Just increment the width of each button by (1) until (totalWidth == desired Width)
+		if (bSt.bWidth < 0 && width > totalW) {
+			var cb = 0; // current button index
+			while (totalW < width) {
+				items[cb].setTextWidth(items[cb].width + 1);
+				if (++cb >= items.length) cb = 0; // Loop through all the items
+				totalW++;
+			}
+		}
+
+		// -- Calculate the grid complex array
+		if (bSt.grid) {
+			var grd = [inHeight];	// RowHeight is first
+			for (i in 0...ar.length) grd.push(items[i].width);
+			border_el.grid = [grd];
+		}
 
 		// Re-Adjust width if it's too small
-		if (totalW + (padX * 2) > width)
-		{
-			width = totalW + (padX * 2);
+		if (totalW > width) {
+			size(totalW, height);
 		}
 
-		addStackInline(cast items, 0, bSt.bPad[2], bSt.align);
-
+		addStackInline(cast items, 0, bSt.pads[1], bSt.align);
 		return this;
 	}//---------------------------------------------------;
-
 
 
 	/**
@@ -188,21 +166,6 @@ class MenuBar extends Window
 	}//---------------------------------------------------;
 
 
-	override public function draw():Void
-	{
-		super.draw();
-
-		if (_gStyle > 0)
-		{
-			_readyCol();
-			// Devnote: - (x-1) because The window already has 1 pad
-			//			- copy because drawgrid modifies the array
-			//WM.D.drawGrid2(items[0].x - 1 , y, _gStyle, _gStyle, [ _gSizes.copy() ]);
-			/// FIX ME
-		}
-	}//---------------------------------------------------;
-
-
 	/**
 	  Draw a whitespace BG colored line above/below a button, making it appear """Taller"""
 	 */
@@ -226,15 +189,14 @@ class MenuBar extends Window
 		if (st == "focus")
 		{
 			currentIndex = Std.parseInt(el.SID);
-			if (_gStyle==0) drawTaller( active );
-
+			//if (bSt.grid>0) drawTaller( active );
 			Tools.sCall(onChange, currentIndex);
 
 		} else
 
 		if (st == "unfocus")
 		{
-			if (_gStyle==0) drawTaller( items[ Std.parseInt(el.SID) ] );
+			//if (bSt.grid>0) drawTaller( items[ Std.parseInt(el.SID) ] );
 		}
 
 	}//---------------------------------------------------;

@@ -49,13 +49,12 @@ class Draw
 	public function border(x:Int, y:Int, width:Int, height:Int, style:Int = 1)
 	{
 		var bs = Styles.border[style]; // pointer
-		// Top
+		// Top, Bottom
 		lineH(x + 1, y, width - 2, bs.charAt(1));
+		lineH(x + 1, y + height - 1, width - 2, bs.charAt(4));
 		// Sides
 		lineV(x, y + 1, height - 2, bs.charAt(6));
 		lineV(x + width - 1, y + 1, height - 2, bs.charAt(7));
-		// Bottom:
-		lineH(x + 1, y + height - 1, width - 2, bs.charAt(4));// , bs[3], bs[5]
 		// Four corners :
 		WM.T.move(x, y).print(bs.charAt(0)).moveR(width - 2, 0).print(bs.charAt(2));
 		WM.T.move(x, y + height - 1).print(bs.charAt(3)).moveR(width - 2, 0).print(bs.charAt(5));
@@ -68,8 +67,7 @@ class Draw
 	 */
 	public function drawArray(ar:Array<String>, x:Int, y:Int):Void
 	{
-		for (i in 0...ar.length)
-		{
+		for (i in 0...ar.length) {
 			WM.T.move(x, y + i).print(ar[i]);
 		}
 	}//---------------------------------------------------;
@@ -106,31 +104,43 @@ class Draw
 
 
 	/**
-	   Draws a grid complex
-	   - WARNING -
-	   - User should check if all cell widths accumulate to the same width + border throughout.
-	   @param	x Grid Start X pos
-	   @param	y Grid Start Y pos
-	   @param	Sin  Style index from global border style in 'Styles.hx' for inner border | Start at 1
-	   @param	Sout Style index from global border style in 'Styles.hx' for outer border | Start at 1
-	   @param	rowsEnc Declare The Rows of the Grid Manually in this format "width1|width2|widthN|...|RowHeight"
-					Accepts Array Encoded Strings, separated with `|` e.g [ "10|10|3" , "14,4,2} ,,, ]
-					or Array of Ints e.g. [ [10,10,3], [15,5,2] .. ]
-					Number of cells is variable. So for one cell per row do this "30|3" , 30 is cell width, and 3 is height
+	   Draws a grid complex. Uses ASCII characters to draw border and intersections.
+	   - WARNING : User should check if all cell widths accumulate to the same width + border throughout.
+	   @param	x Grid X pos
+	   @param	y Grid Y pos
+	   @param	borderStyle  Style index from global border style in 'Styles.hx' for the border style | Start at (1)
+	   @param	rowsEnc Declare The Rows of the Grid Manually in this format "RowHeight|width(1)|width(2)|...|width(N)"
+					- You can use STRING or ARRAY<INT> to define this.
+					  e.g. ["3|10|10", "2|14|4|2"] <<==>> [[3,10,10], [2,14,4]]
 	**/
 	public function drawGrid(x:Int, y:Int, borderStyle:Int, rowsEnc:Array<Dynamic>)
 	{
+		/** = Example:
+			  drawGrid(0, 0, 1, [ [2,1, 8, 5, 2, 1], [1, 10, 8, 1] ]);
+			> Produces this:
+			┌─┬────────┬─────┬──┬─┐
+			│ │        │     │  │ │
+			│ │        │     │  │ │
+			├─┴────────┼─────┴──┼─┤
+			│          │        │ │
+			└──────────┴────────┴─┘
+			> It is useful for creating button grids or similar UI things
+		************************************************************************/
+
 		var bs = Styles.border[borderStyle]; // Pointer to actual border symbols
 		var cy = y;	// Keep track of current Y Pos for when printing
-		var rowW:Array<Array<Int>> = [];	// Cells in a Row Widths
-		var rowH:Array<Int> = [];			// Row Heights
+		var rowW:Array<Array<Int>> = [];	// Cell Widths of each row
+		var rowH:Array<Int> = [];			// Row Height of each row
 
-		// Parse input row/cells decleration
+		// Takes in input rowsEnc, and parses it to proper vars (rowW,rowH)
 		for (r in 0...rowsEnc.length){
-			if (Std.is(rowsEnc[r], Array))
-				rowW[r] = rowsEnc[r]; else
+			if (Std.is(rowsEnc[r], Array)) {
+				var _t:Array<Int> = cast rowsEnc[r];
+				rowW[r] = _t.copy();
+			}else
 				rowW[r] = cast(rowsEnc[r], String).split('|').map((s)->Std.parseInt(s));
-			rowH[r] = rowW[r].pop();
+
+			rowH[r] = rowW[r].shift();
 		}
 
 		// Draw the main body of a row (r is index)
@@ -150,7 +160,7 @@ class Draw
 				var nc = 0;	// next row width accumulator
 				if (morerows){
 					for (i in rowW[r + 1]) { nc += (i+1); ns.push(nc); }
-					ns.pop();	// REMOVE the last one, as it will(should) always be the right edge of the grid
+					ns.pop();	// REMOVE the last one, as it always is the right edge of the grid
 				}
 			// --
 			var s = 0;	// Current cell stop
