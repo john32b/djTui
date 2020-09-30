@@ -189,16 +189,17 @@ class MenuBar extends Window
 		if (st == "focus")
 		{
 			currentIndex = Std.parseInt(el.SID);
-			//if (bSt.grid>0) drawTaller( active );
 			Tools.sCall(onChange, currentIndex);
-
-		} else
-
-		if (st == "unfocus")
-		{
-			//if (bSt.grid>0) drawTaller( items[ Std.parseInt(el.SID) ] );
 		}
+	}//---------------------------------------------------;
 
+	// Make some tweaks,
+	override function onKey(key:String):String
+	{
+		// DEV: This function will be called from the WM
+		// Block the down/up keys so that it will not navigate
+		if (key == "down" || key == "up") key = "";
+		return super.onKey(key);
 	}//---------------------------------------------------;
 
 }// --

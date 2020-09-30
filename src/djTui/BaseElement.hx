@@ -13,6 +13,7 @@
 package djTui;
 
 import djTui.WM;
+import haxe.ds.Either;
 
 class BaseElement
 {
@@ -160,10 +161,10 @@ class BaseElement
 	function callback(msg:String, caller:BaseElement = null)
 	{
 		if (caller == null) caller = this;
-		//for (i in callbacks) i(msg, caller);
 
+		// for (i in callbacks) i(msg, caller); // (old way)
 		// EXPERIMENTAL :
-		// Try to avoid filling up the callstack
+		// Try to avoid filling up the callstack :
 		for (i in callbacks) {
 			haxe.Timer.delay(i.bind(msg, caller), 0);
 		}
@@ -181,7 +182,7 @@ class BaseElement
 	   See `interface IInput` for keycode IDs
 	**/
 	@:allow(djTui.Window)
-	function onKey(k:String):Void {}
+	function onKey(k:String):String {return k;}
 
 	/**
 	   Called every time the focus changes
@@ -260,7 +261,7 @@ class BaseElement
 	   @param	ar Array of BaseElements
 	   @param	act Active Element, If Null will search from the beginning
 	   @param	loop If true will loop at the end once
-	   @return Did it actually focus anything new
+	   @return	Did it actually focus anything new
 	**/
 	static public function focusNext(ar:Array<BaseElement>, act:BaseElement, loop:Bool = true):Bool
 	{

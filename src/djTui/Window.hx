@@ -46,8 +46,7 @@ class Window extends BaseElement
 
 	/** This window border style index. Can be changed whenever
 	 *  NOTES: - Mind the padding when setting this to and from 0
-	 * 		   - Check `styles.hx` for available border styles
-	 **/
+	 * 		   - Check `styles.hx` for available border styles **/
 	public var borderStyle(default, set):Int = 0;
 
 	// The border element responsible for drawing Border/Grid
@@ -56,15 +55,14 @@ class Window extends BaseElement
 	/**
 	   This window style, defaults to `WM.global_style`
 	   - Apply a new style with `setStyle()`
-	   - If you want to modify parts of the style call .modifyStyle(), it will apply the changes
-	   - This will always be a separate copy, so you can modify it freely
-	**/
+	   - If you want to modify parts of the style call .modStyle(), it will apply the changes
+	   - This will always be a separate copy, so you can modify it freely **/
 	public var style(default, null):WinStyle;
 
 	// Padding of elements from the edges
 	// Applied to automatic positioning functions like addStack()
 	// This is the real pad from window (0,0)
-	// It is better to set padding with the padding() function
+	// You should set the padding with padding();
 	var padX:Int = 0;
 	var padY:Int = 0;
 
@@ -89,6 +87,9 @@ class Window extends BaseElement
 	// Quick access to the displayList Last element
 	var lastAdded:BaseElement;
 
+	///---------------
+	/// Can I put all these into a single struct? ::
+
 	/** If true, will close this window on `Escape` key. */
 	public var flag_close_on_esc:Bool = false;
 
@@ -104,6 +105,10 @@ class Window extends BaseElement
 
 	/** If set, will always focus this element on window focus */
 	public var hack_always_focus_this:String;
+
+	/** If >0 will always push tab to the WM without processing it.
+	 *  0:Tab key will process normally | 1:Return to the first element. 2:Return to the last focused element */
+	public var tab_mode:Int = 0;
 
 	//====================================================;
 
@@ -270,18 +275,6 @@ class Window extends BaseElement
 		display_list.push(el);
 		el.listen(onElementCallback);
 		el.parent = this;
-
-		#if debug
-			// Check Overflows
-			if (el.x + el.width > x + width - padX) {
-				trace('WARNING: Element type: "${el.type}" with "sid:${el.SID}" width overflow.');
-			}
-
-			if (el.y + el.height > y + height) {
-				trace('WARNING: Element sid:${el.SID} Y pos overflow.');
-			}
-		#end
-
 		el.onAdded();
 		el.visible = visible;
 
@@ -505,7 +498,7 @@ class Window extends BaseElement
 		WM_EVENTS("focus", this); // << This will unfocus/draw other windows and draw self if needed
 
 		lockDraw = true; // Skip drawing the whole window again
-		super.focus();	 // This will push also push the 'focus' event to listeners
+		super.focus();	 // This will also push the 'focus' event to listeners
 		lockDraw = false;
 		// Focus an element
 		if (display_list.length == 0) return;
@@ -586,20 +579,19 @@ class Window extends BaseElement
 	}//---------------------------------------------------;
 
 
-
-	// Focus next element, will loop through the edges
+	// Focus next element, can loop through the edges
 	@:allow(djTui.WM)
-	@:allow(djTui.BaseElement)
 	function focusNext(loop:Bool = false):Bool
 	{
+		if (active == null) return false;
 		return BaseElement.focusNext(display_list, active, loop);
 	}//---------------------------------------------------;
 
 	// Focus the previous element, will stop at index 0
 	@:allow(djTui.WM)
-	@:allow(djTui.BaseElement)
 	function focusPrev():Bool
 	{
+		if (active == null) return false;
 		return BaseElement.focusPrev(display_list, active, false);
 	}//---------------------------------------------------;
 
@@ -623,66 +615,74 @@ class Window extends BaseElement
 
 	// Handle keys pushed from the WM
 	@:allow(djTui.WM)
-	override function onKey(key:String)
+	override function onKey(key:String):String
 	{
-		switch(key)
-		{
+		switch (key) {
 			case 'tab':
-
-				if (WM._TAB_LEVEL == 0) return;
-
-				if (activeIsLastFocusable())
+				// Tab can:
+				// - Go to the next element on the window and leave focus
+				// - Go to the next element on the window and loop
+				// - Do nothing and tell WM to TAB
+				if (tab_mode > 0){
+					if (tab_mode == 2) flag_return_focus_once = true;
+					return key;
+				}
+				if (flag_lock_focus) // Loop through window elements
 				{
-					if (flag_lock_focus)
-						focusNext(true);
-					else
-					{
-						if(WM._TAB_TYPE == "exit")
-							WM_EVENTS("focus_next", this);
-						else
-							focusNext(true);
-					}
+					focusNext(true);
+					return "";		// Consume the key
 				}
 				else
 				{
-					focusNext(true);
+					if (focusNext()) return "";
 				}
+				// --> "tab" key that bubbles to WM will just focus the next window
 
 			case 'esc':
-					// DEVNOTE: Esc FLAG is handled by the WM
-					// 			It then pushes ESC here if flag is off
-					callback('escape');
-
-			default:
-
-				if (key == 'backsp' && flag_close_on_bksp) {
-					close();
-					return;
+				callback('escape');	// Special callback to user
+				if (flag_close_on_esc) {
+					close(); return "";
 				}
+				// -->	"esc" key to the WM
 
-				if (active == null) return;
+			case 'backsp':
+				if (flag_close_on_bksp) {
+					close(); return "";
+				}
+			default:
+		}// -- end switch
 
-				// Do not pass cursor movement keys to locked elements (textboxes, lists)
-				if (!active.flag_lock_focus)
-				{
-					if (key == "up" && focusPrev()) return;
-					if (key == "down" && focusNext()) return;
-					if (key == "home" || key == "pageup") {
-						BaseElement.focusNext(display_list, null, false);
-						return;
-					}
-					if (key == "end" || key == "pagedown") {
-						BaseElement.focusPrev(display_list, null, false);
-						return;
-					}
 
-				}//- end if
+		// DEV:	Keys that were processed, are now ""
+		//		Send everything to the Active Element and then
+		//		return the key to the WM
 
-				active.onKey(key);
+		if (active == null) return key;
 
-		}// -
+		// The element will block or change the key as it requires
+		var k1 = key;
+		key = active.onKey(key);
+
+		// -- Navigation process
+		switch (key)
+		{
+			case "up": focusPrev();
+			case "down": focusNext();
+			case "home", "pageup": BaseElement.focusNext(display_list, null, false);	// Null means focus the first
+			case "end", "pagedown": BaseElement.focusPrev(display_list, null, false);
+			default : return key;
+		}
+
+		return key;
+
+		// DEV:	The key was processed from an Element, it could either be processed/passed or changed
+		//		So a vertical list took "down" and scrolled, but when it took "down" it could not
+		//		scroll again and it pushed "down" here. So the window can move to the next element?
+		// 		- I am doing it this way, instead of elements directly calling parent.focusNext() etc.
+		//		  because it seems cleaner to me and it is less code.
 
 	}//---------------------------------------------------;
+
 
 	/**
 	   Called when any child element pushes a status
@@ -710,6 +710,7 @@ class Window extends BaseElement
 		// Pipe callbacks to user
 		callback(st, el);
 	}//---------------------------------------------------;
+
 
 	//====================================================;
 	// GETTER, SETTERS
@@ -789,12 +790,9 @@ class Window extends BaseElement
 		lockDraw = false;
 
 		// Experimental :
-		// Draw the top border and the title
+		// Just draw the top border and the title ( the parts that changed )
 		if (visible)
 		{
-			//_readyCol();
-			// NOTE: DO NOT DRAW OVER THE CORNERS!!!
-			//WM.D.lineH(x + 1, y, width - 2, Styles.border[borderStyle].charAt(1));
 			border_el.drawTop();
 			title_el.draw();
 		}

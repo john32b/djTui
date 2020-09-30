@@ -13,6 +13,7 @@
 
 package djTui.el;
 import djTui.Styles.PrintColor;
+import sys.ssl.Key;
 
 class VList extends TextBox
 {
@@ -22,9 +23,6 @@ class VList extends TextBox
 
 	// Current slot the cursor/highlighted element is at
 	var index_slot:Int;
-
-	/* USERSET -  Scroll the view when the cursor is this much from the edge */
-	public var scrollPad:Int = 1;
 
 	// The maximum index the cursor can get ( the number of elements )
 	var index_max(get, null):Int;
@@ -40,6 +38,9 @@ class VList extends TextBox
 
 	/** If true, the active index will be highlighted when element is unfocused */
 	public var flag_ghost_active:Bool = false;
+
+	/* Scroll the view when the cursor is this much from the edge */
+	public var scrollPad:Int = 1;
 
 	//====================================================;
 	public function new(?sid:String, _width:Int, _slots:Int)
@@ -95,50 +96,51 @@ class VList extends TextBox
 	}//---------------------------------------------------;
 
 	// --
-	override function onKey(k:String):Void
+	override function onKey(k:String):String
 	{
-		if (flag_empty) {
-			// Just pass off focus. Let the textbox class do this
-			super.onKey(k);
-			return;
-		}
+		// Make it use the textbox(super) keyhandler
+		if (flag_empty) return super.onKey(k);
 
 		switch(k)
 		{
-			case "up": if (index == 0) parent.focusPrev(); else cursor_up();
-			case "down": if (index == index_max) parent.focusNext(); else cursor_down();
-			case "left": parent.focusPrev();
-			case "right":parent.focusNext();
-			case "pagedown": cursor_pageDown();
-			case "pageup": cursor_pageUp();
-			case "home": cursor_top();
-			case "end": cursor_bottom();
-			case "space" | "enter": fire();
+			case "left": k = "up";		// transform it, make the window focus the previous element
+			case "right": k = "down";
+			case "up": if (cursor_up()) k = ""; // else pass it to the window
+			case "down": if (cursor_down()) k = "";
+			case "pagedown": cursor_pageDown(); k = "";
+			case "pageup": cursor_pageUp(); k = "";
+			case "home": cursor_top(); k = "";
+			case "end": cursor_bottom(); k = "";
+			case "space" | "enter": fire(); k = "";
 			default:
-
-			// Check for letter jumps:
-			if (!flag_letter_jump) return;
-
-				k = k.toUpperCase();
-
-				// Cycle through same letter on multiple presses :
-				if (lines[index].charAt(0).toUpperCase() == k)
-				{
-					if (lines[index + 1] != null && lines[index + 1].charAt(0).toUpperCase() == k)
-					{
-						cursor_down(); return;
-					}
-				}
-
-				// Force go to the start of a letter :
-				var x = 0;
-				do {
-					if (lines[x].charAt(0).toUpperCase() == k) {
-						cursor_to(x);
-						return;
-					}
-				}while (++x < lines.length);
 		}
+
+		if (!flag_letter_jump) return k;
+
+		// -- Check for Letter Jump (pressing a letter will make the list jump to the first entry starting with that)
+		//    Assumes that items are sorted
+
+		var K = k.toUpperCase();
+
+		// Cycle through same letter on multiple presses :
+		if (lines[index].charAt(0).toUpperCase() == K)
+		{
+			if (lines[index + 1] != null && lines[index + 1].charAt(0).toUpperCase() == K)
+			{
+				cursor_down(); return "";
+			}
+		}
+
+		// Force go to the start of a letter :
+		var x = 0;
+		do {
+			if (lines[x].charAt(0).toUpperCase() == K) {
+				cursor_to(x);
+				return "";
+			}
+		}while (++x < lines.length);
+
+		return k;
 	}//---------------------------------------------------;
 
 	// --
@@ -235,9 +237,9 @@ class VList extends TextBox
 	//====================================================;
 
 	// Move the cursor up by one
-	function cursor_up()
+	function cursor_up():Bool
 	{
-		if (index == 0) return;
+		if (index == 0) return false;
 
 		index--;
 
@@ -253,12 +255,13 @@ class VList extends TextBox
 		}
 
 		callback("change");
+		return true;
 	}//---------------------------------------------------;
 
 	// Move the cursor down by one
-	function cursor_down()
+	function cursor_down():Bool
 	{
-		if (index == index_max) return;
+		if (index == index_max) return false;
 
 		index++;
 
@@ -274,6 +277,7 @@ class VList extends TextBox
 		}
 
 		callback("change");
+		return true;
 	}//---------------------------------------------------;
 
 	function cursor_top()

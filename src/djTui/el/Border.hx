@@ -32,6 +32,7 @@ class Border extends BaseElement
 	}//---------------------------------------------------;
 
 	// Draw the top portion only. Used sometimes when drawing the title part of the window
+	// Does not draw the corners for convenience
 	function drawTop()
 	{
 		_readyCol();

@@ -63,6 +63,8 @@ class Button extends BaseMenuItem
 	// Extra function called when this button is pushed. Set with onPush()
 	var _onPush:Void->Void;
 
+	// DEV: This is autoset to true when buttons are added on a window with addStackInline();
+	//		So applies to the MenuBar by default
 	/** If true, will request next/previous element focus upon left/right keys
 	 *  Useful in cases where you put buttons in a single line */
 	public var flag_leftright_escape:Bool = false;
@@ -259,10 +261,11 @@ class Button extends BaseMenuItem
 	}//---------------------------------------------------;
 
 	// --
-	override function onKey(k:String):Void
+	override function onKey(k:String)
 	{
 		if ((k == "enter" || k == "space") && !disabled)
 		{
+			k = "";
 			if (xtr != null && xtr.conf != null)
 			{
 				WM.popupConfirm(action, xtr.confQ, xtr.center == null?[x, y + 1]:null);
@@ -274,10 +277,11 @@ class Button extends BaseMenuItem
 
 		if (flag_leftright_escape)
 		{
-			if (k == "left") parent.focusPrev();
-				else if (k == "right") parent.focusNext();
+			if (k == "left") k = "up"; else
+			if (k == "right") k = "down";
 		}
 
+		return k;
 	}//---------------------------------------------------;
 
 

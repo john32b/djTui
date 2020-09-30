@@ -6,14 +6,14 @@ import djTui.BaseElement;
  * Simple checkbox, switches between two states
  * ----
  */
-class Toggle extends BaseMenuItem 
+class Toggle extends BaseMenuItem
 {
 	//  Hold current state
 	var data:Bool;
-	
+
 	/** This is the symbol that will be printed when the element is checked */
 	public var TOGGLE_SYMBOL:String = "■";
-	
+
 	/**
 	   Creates a Toggle Element
 	   @param	sid --
@@ -28,11 +28,11 @@ class Toggle extends BaseMenuItem
 		setSideSymbols("[", "]");
 		setData(current);
 	}//---------------------------------------------------;
-	
-	override public function setData(val:Any) 
+
+	override public function setData(val:Any)
 	{
 		data = val;
-		
+
 		if (data)
 		{
 			text = TOGGLE_SYMBOL;
@@ -43,18 +43,21 @@ class Toggle extends BaseMenuItem
 		}
 	}//---------------------------------------------------;
 
-	override public function getData():Any 
+	override public function getData():Any
 	{
 		return data;
 	}//---------------------------------------------------;
-	
-	override function onKey(k:String):Void 
+
+	override function onKey(k:String):String
 	{
 		if ((k == "enter" || k == "space") && !disabled)
 		{
 			setData(!data);
 			callback("change");
+			k = "";
 		}
+
+		return k;
 	}//---------------------------------------------------;
-	
+
 }// --

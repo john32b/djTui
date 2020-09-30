@@ -46,9 +46,9 @@ class TextBox extends BaseElement
 	/** Are there any lines */
 	public var flag_empty(default, null):Bool;
 
-	// How many lines
+	/** How many lines */
 	public var linesCount(get, null):Int;
-	function get_linesCount() { return lines.length; }
+
 
 	/**
 	   Create a new TextBox
@@ -67,75 +67,19 @@ class TextBox extends BaseElement
 		flag_lock_focus = true; // Custom handle window next and previous element focus
 	}//---------------------------------------------------;
 
-	// --
-	override function onKey(k:String):Void
+	override public function reset()
 	{
-		if (flag_empty) {
-			if (k == "up") parent.focusPrev(); else
-			if (k == "down") parent.focusNext();
-			return;
-		}
-
-		switch(k)
-		{
-			case "up": if (scroll_offset == 0) parent.focusPrev(); else scrollUp();
-			case "down": if (scroll_offset == scroll_max) parent.focusNext(); else scrollDown();
-			case "right": parent.focusNext();
-			case "left": parent.focusPrev();
-			case "pagedown": scrollPageDown();
-			case "pageup": scrollPageUp();
-			case "home": scrollTop();
-			case "end": scrollBottom();
-			default:
-		}
-	}//---------------------------------------------------;
-
-	// --
-	override function onAdded():Void
-	{
-		if (colorFG == null) setColor(parent.style.textbox);
-
-		if (flag_add_scrollbar)
-		{
-			addScrollbar();
-		}
-
-	}//---------------------------------------------------;
-
-	// --
-	override function focusSetup(focus:Bool):Void
-	{
-		if (parent.style.textbox_focus != null)
-		{
-			if (focus)
-			{
-				setColor(parent.style.textbox_focus);
-			}else{
-				setColor(parent.style.textbox);
-			}
-		}
-
+		lines = [];
+		scroll_offset = 0;
+		scroll_ratio = 0;
+		flag_empty = true;
 		if (scrollbar != null)
 		{
-			// Hack: Don't actually remove the scrollbar,
-			//       rather paint it all a single color, it's easier this way
-			if (flag_scrollbar_autohide && !focus)
-			{
-				scrollbar.setColor(colorBG, colorBG);
-				scrollbar.draw();
-			}else
-
-			if (parent.style.scrollbar_focus != null)
-			{
-				if (focus)
-					scrollbar.setColor(parent.style.scrollbar_focus);
-				else
-					scrollbar.setColor(parent.style.scrollbar_idle);
-
-				scrollbar.draw(); //<- Must call draw to apply color changes
-			}
+			parent.removeChild(scrollbar);
+			scrollbar.clear();
+			scrollbar = null;
 		}
-
+		if (visible) draw();
 	}//---------------------------------------------------;
 
 	override public function draw():Void
@@ -153,13 +97,6 @@ class TextBox extends BaseElement
 		}while (++j < slots_count);
 	}//---------------------------------------------------;
 
-	// --
-	// Draws a single line
-	// Used in the extended VLIST object
-	function drawSlotIndex(i:Int)
-	{
-		WM.T.move(x, y + i).print(lines[i + scroll_offset]);
-	}//---------------------------------------------------;
 
 	/**
 	   Add a single line of content at the end of the list
@@ -186,26 +123,6 @@ class TextBox extends BaseElement
 		if (visible) draw();
 	}//---------------------------------------------------;
 
-	// --
-	function addScrollbar()
-	{
-		if (scrollbar != null) return;
-
-		if (parent == null)
-		{
-			flag_add_scrollbar = true; // Add it later
-			return;
-		}
-
-		scrollbar = new ScrollBar(height);
-		scrollbar.posNext(this);
-
-		parent.addChild(scrollbar);
-
-		focusSetup(isFocused);	// <-- Refresh scrollbar colors
-
-		flag_add_scrollbar = false;
-	}//---------------------------------------------------;
 
 	/**
 	   Set new data, either a `String` or `array<String>`
@@ -255,10 +172,145 @@ class TextBox extends BaseElement
 	}//---------------------------------------------------;
 
 
-	/**
-	   SETTER, autocalculates scroll percent and updates scrollbar
-	   @param	va
-	**/
+	// Move lines down by one, reveal the top
+	public function scrollUp():Bool
+	{
+		if (scroll_offset == 0) return false;
+		scroll_offset--; // uses setter will update everything
+		return true;
+	}//---------------------------------------------------;
+	//  Move lines up by one, reveal the bottom
+	public function scrollDown():Bool
+	{
+		if (scroll_offset == scroll_max) return false;
+		scroll_offset++;
+		return true;
+	}//---------------------------------------------------;
+	public function scrollPageUp()
+	{
+		scroll_offset -= Math.floor(slots_count / 2);
+	}//---------------------------------------------------;
+	public function scrollPageDown()
+	{
+		scroll_offset += Math.floor(slots_count / 2);
+	}//---------------------------------------------------;
+	public function scrollTop()
+	{
+		scroll_offset = 0;
+	}//---------------------------------------------------;
+	public function scrollBottom()
+	{
+		scroll_offset = scroll_max;
+	}//---------------------------------------------------;
+
+
+	// Draws a single line (i:Index)
+	function drawSlotIndex(i:Int)
+	{
+		WM.T.move(x, y + i).print(lines[i + scroll_offset]);
+	}//---------------------------------------------------;
+
+	// --
+	function addScrollbar()
+	{
+		if (scrollbar != null) return;
+
+		if (parent == null)
+		{
+			flag_add_scrollbar = true; // Add it later
+			return;
+		}
+
+		scrollbar = new ScrollBar(height);
+		scrollbar.posNext(this);
+
+		parent.addChild(scrollbar);
+
+		focusSetup(isFocused);	// <-- Refresh scrollbar colors
+
+		flag_add_scrollbar = false;
+	}//---------------------------------------------------;
+	// --
+	override function onKey(k:String):String
+	{
+		// Transform the keys to make parent window focus next/previous
+		if (flag_empty)
+		{
+			if (k == "up") return "left";
+			if (k == "down") return "right";
+			return k;
+		}
+
+		// DEV: All the special nav keys (pagedown,home,etc) are blocked
+		//		I guess this is ok
+
+		switch(k)
+		{
+			case "left": k = "up";		// transform it, make the window focus the previous element
+			case "right": k = "down";
+			case "up": if (scrollUp()) k = "";	// else pass it to the window
+			case "down": if (scrollDown()) k = "";
+			case "pagedown": scrollPageDown(); k = "";
+			case "pageup": scrollPageUp(); k = "";
+			case "home": scrollTop(); k = "";
+			case "end": scrollBottom(); k = "";
+			default:
+		}
+
+		return k;
+	}//---------------------------------------------------;
+
+	// --
+	override function onAdded():Void
+	{
+		if (colorFG == null) setColor(parent.style.textbox);
+
+		if (flag_add_scrollbar)
+		{
+			addScrollbar();
+		}
+
+	}//---------------------------------------------------;
+
+	// --
+	override function focusSetup(focus:Bool):Void
+	{
+		if (parent.style.textbox_focus != null)
+		{
+			if (focus)
+			{
+				setColor(parent.style.textbox_focus);
+			}else{
+				setColor(parent.style.textbox);
+			}
+		}
+
+		if (scrollbar != null)
+		{
+			// Hack: Don't actually remove the scrollbar,
+			//       rather paint it all a single color, it's easier this way
+			if (flag_scrollbar_autohide && !focus)
+			{
+				scrollbar.setColor(colorBG, colorBG);
+				scrollbar.draw();
+			}else
+
+			if (parent.style.scrollbar_focus != null)
+			{
+				if (focus)
+					scrollbar.setColor(parent.style.scrollbar_focus);
+				else
+					scrollbar.setColor(parent.style.scrollbar_idle);
+
+				scrollbar.draw(); //<- Must call draw to apply color changes
+			}
+		}
+
+	}//---------------------------------------------------;
+	// GETTER
+	function get_linesCount() { return lines.length; }
+
+	// SETTER, autocalculates scroll percent and updates scrollbar
 	function set_scroll_offset(val)
 	{
 		if (val < 0) val = 0;
@@ -276,49 +328,6 @@ class TextBox extends BaseElement
 		callback('scroll');
 
 		return val;
-	}//---------------------------------------------------;
-
-	override public function reset()
-	{
-		lines = [];
-		scroll_offset = 0;
-		scroll_ratio = 0;
-		flag_empty = true;
-		if (scrollbar != null)
-		{
-			parent.removeChild(scrollbar);
-			scrollbar.clear();
-			scrollbar = null;
-		}
-		if (visible) draw();
-	}//---------------------------------------------------;
-
-
-	// Move lines down by one, reveal the top
-	public function scrollUp()
-	{
-		scroll_offset--; // uses setter will update everything
-	}//---------------------------------------------------;
-	//  Move lines up by one, reveal the bottom
-	public function scrollDown()
-	{
-		scroll_offset++;
-	}//---------------------------------------------------;
-	public function scrollPageUp()
-	{
-		scroll_offset -= Math.floor(slots_count / 2);
-	}//---------------------------------------------------;
-	public function scrollPageDown()
-	{
-		scroll_offset += Math.floor(slots_count / 2);
-	}//---------------------------------------------------;
-	public function scrollTop()
-	{
-		scroll_offset = 0;
-	}//---------------------------------------------------;
-	public function scrollBottom()
-	{
-		scroll_offset = scroll_max;
 	}//---------------------------------------------------;
 
 }// --

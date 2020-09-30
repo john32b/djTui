@@ -11,6 +11,7 @@
 package djTui;
 
 import djA.DataT;
+import djTui.ElementType;
 import djTui.adaptors.IInput;
 import djTui.adaptors.ITerminal;
 import djTui.Styles.WinStyle;
@@ -77,19 +78,10 @@ class WM
 
 	/// Internal :
 
-	// TAB Capture Level ( 0 = NONE, 1 = WM, 2 = WINDOW )
-	@:allow(djTui.Window)
-	static var _TAB_LEVEL:Int;
-
-	// Encoded behavior, depends on _TAB_LEVEL. Values : [keep,exit]
-	@:allow(djTui.Window)
-	static var _TAB_TYPE:String;
-
 	// If there is an active modal/popup. Else null.
 	static var activeModal:Window;
 
 	/// FLAGS :
-
 
 	#if debug
 	/** Applies to windows. Will trace all ELEMENT callback messages (not window callbacks)*/
@@ -141,8 +133,6 @@ class WM
 
 		// - Init and ClearBG
 		closeAll();
-
-		set_TAB_behavior(); // default values
 
 		_isInited = true;
 
@@ -205,7 +195,7 @@ class WM
 		if (w.y < 0) w.pos(w.x, 0); else
 		if (w.y + w.height > height) w.pos(w.x, height - w.height);
 
-		// trace('WM -> Adding Window : UID:${w.UID}, SID:${w.SID} | Size: (${w.width},${w.height}) | Pos: ${w.x},${w.y} ');
+		 //trace('WM -> Adding Window : UID:${w.UID}, SID:${w.SID} | Size: (${w.width},${w.height}) | Pos: ${w.x},${w.y} ');
 
 		// --
 		if (win_list.indexOf(w) == -1)
@@ -238,25 +228,6 @@ class WM
 		if (from != null) nY = from.y + from.height;
 		A.inLine(w_arr, nY);
 		for ( i in w_arr) add(i);
-	}//---------------------------------------------------;
-
-
-
-	/**
-	   Declare how the Window/Element focus will behave upon [TAB] key. Along with some optional parameters.
-	   I am offering this because some application setups require different approaches to UI.
-
-	   @param	level   Where the focus of the [TAB] key should reach | NONE, WM, WINDOW
-	   @param	param   if WM 	   :  "keep" , remember active element on windows when switching back to them
-						if WINDOW  :  "exit" , exit focus from the window to the next available window ( instead of looping )
-	**/
-	public static function set_TAB_behavior(level:String = "WINDOW", param:String = "")
-	{
-		_TAB_TYPE = param;
-		_TAB_LEVEL = ["NONE", "WM", "WINDOW"].indexOf(level);
-		if (_TAB_LEVEL < 0) {
-				throw "set_TAB_behavior invalid level ID";
-		}
 	}//---------------------------------------------------;
 
 
@@ -306,9 +277,10 @@ class WM
 	/**
 	   Focus Next Window on the list ( if any )
 	**/
-	static function focusNext()
+	static function focusNext():Bool
 	{
-		BaseElement.focusNext(cast win_list, cast active);
+		if (active == null) return false;
+		return BaseElement.focusNext(cast win_list, cast active);
 	}//---------------------------------------------------;
 
 
@@ -367,59 +339,40 @@ class WM
 	// EVENTS
 	//====================================================;
 	// --
-	/**
-	   DEVNOTES:
-		- [TAB],[ESC] keys do not get passed to the active window
-		- Everything else does
 
-	**/
+	// - Called by the KeyManager, pushes keystrokes
+	// - Sends key to User, then Active Window, then Handles it
 	static function _onKey(key:String)
 	{
-		// Push to user.
+		// Push to user
 		if (onKey != null) key = onKey(key);
 
-		if (key == "esc")
-		{
-			if (active != null && active.flag_close_on_esc)
-				active.close();
-			else
-			{
-				if (STATE.handleESC())
-				{
-					return; // The window state is going to change, no need to continue
-				}
-
-				if (active != null) active.onKey("esc");
-			}
-		}else
-
-		if (_TAB_LEVEL == 1 && key == "tab")
-		{
-			// If a window is already locked, don't switch windows
-			// just send 'tab' to that window
-			if (active != null && active.flag_lock_focus)
-			{
-				active.onKey('tab');
-				return;
-			}
-
-			if (active != null && _TAB_TYPE == "keep")
-			{
-				active.flag_return_focus_once = true;
-			}
-
-			focusNext();
-
-		}else
-
+		// Push to active window
 		if (active != null)
 		{
-			active.onKey(key);
+			key = active.onKey(key);
 		}
+
+		// DEV: Any key that is passed through here, means it was not handled or blocked by any element or window
+		//		So, for TAB I will just focus the next window. If a window did not like that to happen, it would
+		//		not pass the "tab" key, it would block it. Same thing for "esc"
+
+		if (key == "tab")
+		{
+			focusNext();
+
+		}else if (key == "esc")
+		{
+			STATE.handleESC();
+		}
+
+		// [X] flag_return_focus_once ?? handles by the window itself
+		// [X] focus next window on tab ??
+
 	}//---------------------------------------------------;
 
 	// --
-	// Callbacks Windows will push specifically to the WM
+	// Special Events from Windows
 	@:allow(djTui.Window)
 	static function handleWindowEvents(status:String, win:Window)
 	{
@@ -431,14 +384,6 @@ class WM
 				active_last = active;
 				active = win;
 				if (windowOverlapsWithAny(win)) win.draw();
-
-			case "focus_next":
-				// - Requested to focus next window, because a window reached the end
-				// - If there are no more windows left, focus the same one again
-				if (!BaseElement.focusNext(cast win_list, cast active))
-				{
-					win.focusNext(true);
-				}
 
 			case "close":
 				closeWindow(win);
