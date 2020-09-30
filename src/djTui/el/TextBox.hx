@@ -3,6 +3,7 @@
  *
  * - Scrollable, with an automatic scrollbar
  * - You can set 'color_scrollbar_focus' and 'color_scrollbar_idle' to customize scrollbar
+ * - Use `setData()` to set the text
  *
  * DEV NOTE:
  * - If height==0 it will be autocalculated on first data set

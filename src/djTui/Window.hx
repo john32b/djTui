@@ -92,10 +92,10 @@ class Window extends BaseElement
 	/** If true, will close this window on `Escape` key. */
 	public var flag_close_on_esc:Bool = false;
 
-	/** If true, will close this window on `BackSpace` key. */
+	/** If true, will close this window on `BackSpace` key. (Useful for navigation like popups) */
 	public var flag_close_on_bksp:Bool = false;
 
-	/** If true, on form elements, enter will jump to the next one */
+	/** If true, on (some) form elements, enter will jump to the next one after the fire event */
 	public var flag_enter_goto_next:Bool = false;
 
 	/** If true, when this window gets focus, will try to focus last element focused
@@ -655,6 +655,11 @@ class Window extends BaseElement
 
 			default:
 
+				if (key == 'backsp' && flag_close_on_bksp) {
+					close();
+					return;
+				}
+
 				if (active == null) return;
 
 				// Do not pass cursor movement keys to locked elements (textboxes, lists)
@@ -672,12 +677,6 @@ class Window extends BaseElement
 					}
 
 				}//- end if
-
-				if (key == 'backsp' && flag_close_on_bksp)
-				{
-					close();
-					return;
-				}
 
 				active.onKey(key);
 
