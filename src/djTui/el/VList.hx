@@ -47,7 +47,7 @@ class VList extends TextBox
 	{
 		super(sid, _width, _slots);
 		type = ElementType.vlist;
-		flag_focusable = true;
+		focusable = true;
 	}//---------------------------------------------------;
 
 

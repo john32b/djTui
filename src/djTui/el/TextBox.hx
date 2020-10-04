@@ -64,7 +64,7 @@ class TextBox extends BaseElement
 		slots_count = height;
 		reset(); // Init vars
 
-		flag_lock_focus = true; // Custom handle window next and previous element focus
+		focus_lock = true; // Custom handle window next and previous element focus
 	}//---------------------------------------------------;
 
 	override public function reset()

@@ -59,13 +59,13 @@ class MessageBox extends Window
 
 		mbType = _type;
 		onSelect = _onSelect;
-		flag_lock_focus = true;
+		focus_lock = true;
 		padding(1, 0);
 
 		// - Create the textbox message
 		tbox = new TextBox(_width - 2, 0);	// Note: I can't use inwidth, it is not ready yet
 		tbox.setData(text);
-		tbox.flag_focusable = false;
+		tbox.focusable = false;
 
 		// - Create Buttons
 		buttons = [];
@@ -85,7 +85,7 @@ class MessageBox extends Window
 		// - Window
 		size(_width, tbox.height + 5);
 		addStack(tbox, 1);
-		addStackInline(cast buttons, 1, 3, "center");
+		addStackInline(cast buttons, 1, 3, "c");
 
 		// Focus the last button added ( if any )
 		if (FOCUS_LAST && lastAdded != null)
@@ -121,18 +121,17 @@ class MessageBox extends Window
 
 
 	/**
-	   Quickly create and open a MessageBox at the center of the screen
-	   This is the same as creating and opening
+	   Quickly create a MessageBox at the center of the screen
+	   - DOES NOT OPEN IT !
 	   @param	text
 	   @param	_type 0:OK | 1:OK,CANCEL | 2:YES,NO
 	   @param	_onSelect fn(int) -> index of button clicked
 	   @param	_width
 	**/
-	public static function create(text:String, _type:Int, ?_onSelect:Int->Void, _width:Int = 30, ?_style:WinStyle, animated:Bool = false ):Window
+	public static function create(text:String, _type:Int, ?_onSelect:Int->Void, _width:Int = 30, ?_style:WinStyle):Window
 	{
-		var m = new MessageBox(text, _type, _onSelect, _width,_style);
+		var m = new MessageBox(text, _type, _onSelect, _width, _style);
 			WM.A.screen(m);
-			if (animated) m.openAnimated(); else m.open(true);
 			return m;
 	}//---------------------------------------------------;
 

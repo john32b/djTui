@@ -108,8 +108,8 @@ class BaseMenuItem extends BaseElement
 	public function disable(V:Bool = true, alsoUnselectable:Bool = false):BaseMenuItem
 	{
 		disabled = V;
-		if (alsoUnselectable && V) flag_focusable = false;
-		else if (!V) flag_focusable = true;
+		if (alsoUnselectable && V) focusable = false;
+		else if (!V) focusable = true;
 		return this;
 	}//---------------------------------------------------;
 
@@ -222,7 +222,7 @@ class BaseMenuItem extends BaseElement
 
 		if (!disabled)
 		{
-			flag_focusable = true;
+			focusable = true;
 		}
 
 		if (parent != null)

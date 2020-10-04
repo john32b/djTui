@@ -27,7 +27,7 @@ class Border extends BaseElement
 	public function new(?sid:String,st:Int = 0)
 	{
 		super(sid);
-		flag_focusable = false;
+		focusable = false;
 		style = st;
 	}//---------------------------------------------------;
 
@@ -46,7 +46,10 @@ class Border extends BaseElement
 	{
 		_readyCol();
 		if (grid == null)
+		{
+			if (height <2) return;
 			WM.D.border(x, y, width, height, style);
+		}
 		else{
 			WM.D.drawGrid(x, y, style, grid);
 		}

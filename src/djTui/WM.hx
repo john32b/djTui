@@ -12,6 +12,7 @@ package djTui;
 
 import djA.DataT;
 import djTui.ElementType;
+import djTui.Window;
 import djTui.adaptors.IInput;
 import djTui.adaptors.ITerminal;
 import djTui.Styles.WinStyle;
@@ -36,11 +37,15 @@ class WM
 	// A Input Renderer
 	static var I(default, null):IInput;
 
+	// A simple DataBase that holds ALL static windows
+	// - All created windows that are given an SID are automatically added here
+	// - Main use to avoid declaring many global window variables
+	// - A nice way to use this is to make a shortcut "import djTui.WM.DB as DB;" at the start of your file
+	//   and then access windows with `DB['winList']`
+	public static var DB(default, null):Map<String,Window>;
+
 	// A global statemanager
 	public static var STATE(default, null):WindowStateManager;
-
-	// A simple DataBase that holds ALL static windows
-	public static var DB(default, null):Map<String,Window>;
 
 	// Current width and height of the WM
 	public static var width(default, null):Int;
@@ -69,8 +74,11 @@ class WM
 
 	/// Callbacks :
 
-	/** Get ALL window element callbacks here ( not windows ) */
+	/** USER - Will push all window element callbacks ( not the actual window elements ) */
 	public static var onElementCallback:String->BaseElement->Void = null;
+
+	/** USER - Will push everytime a window gets focused. */
+	public static var onWindowFocus:Window->Void = null;
 
 	/** User handle keystrokes. Processed first,
 	 *  Keys can transform so you can cancel it if you want be returning null */
@@ -141,19 +149,6 @@ class WM
 		trace(' - Viewport Width = $width , Height = $height');
 	}//---------------------------------------------------;
 
-	/**
-	   Sets a background color and resets the screen
-	   Do this right after new()
-	**/
-	public static function set_backgroundColor(col:String)
-	{
-		if (col == backgroundColor) return col;
-		backgroundColor = col;
-		clearBG();
-		for (i in win_list) i.draw();
-		return col;
-	}//---------------------------------------------------;
-
 
 	/**
 	   Close all windows and redraw the bg
@@ -169,20 +164,10 @@ class WM
 	}//---------------------------------------------------;
 
 
-	/**
-		Clear the WM background
-	**/
-	static function clearBG()
-	{
-		T.reset();
-		T.bg(backgroundColor);
-		D.rect(0, 0, width, height);
-	}//---------------------------------------------------;
-
 
 	/**
 	   Adds a window to the display list.
-	   Alternatively you can call window.open() or .openAnimated()
+	   Alternatively you can call window.open()
 	   @param	w The window to add
 	   @param	autoFocus Focus the window?
 	**/
@@ -208,7 +193,7 @@ class WM
 		// This is the first time the window is being added to the display list, so draw it.
 		w.draw();
 
-		if (autoFocus && w.flag_focusable) w.focus();
+		if (autoFocus && w.focusable) w.focus();
 	}//---------------------------------------------------;
 
 
@@ -231,44 +216,15 @@ class WM
 	}//---------------------------------------------------;
 
 
-	/**
-	   Show a YES/NO popup as a modal under current active window. Callbacks the result.
-	   @param	callback. Will call this if selected YES
-	   @param	Q Custom Question. Default for "Are you Sure"
-	   @param	pos [x,y], Null for center
-	**/
-	public static function popupConfirm(callback:Void->Void, ?Q:String, ?pos:Array<Int>):MessageBox
-	{
-		var m = new MessageBox(Q, 2, function(res){
-			if (res == 0) callback();
-		});
-
-		m.flag_close_on_esc = true;
-
-		if (pos == null)
-			A.screen(m);
-		else
-			m.pos(pos[0], pos[1]);
-
-		if (active != null)
-			active.openSub(m, true);
-		else
-			m.openAnimated();
-
-		return m;
-	}//---------------------------------------------------;
-
 
 	/**
 	   Clear all the stored windows. Does not actually destroy the windows
+	   DEV: Remember windows are auto-added here when they are created with an SID set
 	**/
 	public static function clearDB()
 	{
 		DB = new Map();
 	}//---------------------------------------------------;
-
-
-
 
 	//====================================================;
 	// INTERNAL
@@ -283,43 +239,6 @@ class WM
 		return BaseElement.focusNext(cast win_list, cast active);
 	}//---------------------------------------------------;
 
-
-	/**
-	   - USER should call window.close()
-	   - Remove a window from the list
-	   - Redraw any windows behind it
-	   - Focuses previously focused window
-	   @param	w The Window to remove
-	**/
-	static function closeWindow(win:Window)
-	{
-		win_list.remove(win);
-
-		// Draw a <black> hole where the window was
-		T.reset(); T.bg(backgroundColor);
-		D.rect(win.x, win.y, win.width, win.height);
-
-		// If there are any windows behind it, re-draw them
-		for (w in win_list)
-		{
-			if (w.overlapsWith(win))
-			{
-				w.draw();
-			}
-		}
-		// If closing active window, focus last one
-		if (active == win)
-		{
-			active = null;
-
-			if (active_last != null && active_last.visible == true)
-			{
-				active_last.focus();
-			}
-		}
-
-	}//---------------------------------------------------;
-
 	static function windowOverlapsWithAny(win:Window)
 	{
 		for (w in win_list)
@@ -330,9 +249,47 @@ class WM
 		return false;
 	}//---------------------------------------------------;
 
+	/**
+		Clear the WM background
+	**/
+	static function clearBG()
+	{
+		T.reset();
+		T.bg(backgroundColor);
+		D.rect(0, 0, width, height);
+	}//---------------------------------------------------;
 
 
+	//====================================================;
+	// MISC
+	//====================================================;
 
+	/**
+	   Show a YES/NO popup as a modal under current active window. Callbacks the result.
+	   @param	callback. Will call this if selected YES
+	   @param	Q Custom Question. Default for "Are you Sure"
+	   @param	pos [x,y], Null for center
+	**/
+	public static function popupConfirm(callback:Void->Void, ?Q:String, ?pos:Array<Int>):MessageBox
+	{
+		var m = new MessageBox(Q, 2, (res)->{
+			if (res == 0) callback();
+		});
+
+		m.flag_close_on_esc = true;
+
+		if (pos == null)
+			A.screen(m);
+		else
+			m.pos(pos[0], pos[1]);
+
+		if (active != null)
+			active.openSub(m, true);
+		else
+			m.open(true, true);
+
+		return m;
+	}//---------------------------------------------------;
 
 
 	//====================================================;
@@ -374,25 +331,67 @@ class WM
 	// --
 	// Special Events from Windows
 	@:allow(djTui.Window)
-	static function handleWindowEvents(status:String, win:Window)
+	static function _onWindowEvent(status:String, win:Window)
 	{
 		switch(status) {
 
 			case "focus":
+				//- Ready the window
+				//- Redraw it if it was to, in case it was hidden by other windows
+				//- User callback
 				if (active == win) return;
 				if (active != null) active.unfocus();
 				active_last = active;
 				active = win;
 				if (windowOverlapsWithAny(win)) win.draw();
+				if (onWindowFocus != null) onWindowFocus(win);
 
 			case "close":
-				closeWindow(win);
+				//- Remove the window from the list
+				//- Redraw any windows behind it
+				//- Focuses previously focused window
+				win_list.remove(win);
+
+				// Draw a <black> hole where the window was
+				T.reset(); T.bg(backgroundColor);
+				D.rect(win.x, win.y, win.width, win.height);
+
+				// If there are any windows behind it, re-draw them
+				for (w in win_list)
+				{
+					if (w.overlapsWith(win))
+					{
+						w.draw();
+					}
+				}
+				// If closing active window, focus last one
+				if (active == win)
+				{
+					active = null;
+
+					if (active_last != null && active_last.visible == true)
+					{
+						active_last.focus();
+					}
+				}
 
 			default:
 		}
 
 	}//---------------------------------------------------;
 
+	//====================================================;
+	// GET-SET
+	//====================================================;
 
-
+	// Sets a background color and resets the screen
+	// Do this right after new()
+	public static function set_backgroundColor(col:String)
+	{
+		if (col == backgroundColor) return col;
+		backgroundColor = col;
+		clearBG();
+		for (i in win_list) i.draw();
+		return col;
+	}//---------------------------------------------------;
 }//- end class-

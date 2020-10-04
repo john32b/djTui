@@ -243,11 +243,7 @@ class Button extends BaseMenuItem
 						WM.A.screen(win);
 					}
 
-					if (xtr.anim != null) {
-						win.openAnimated();
-					}else {
-						win.open(true);
-					}
+					win.open(true, xtr.anim != null);
 				}else
 				{
 					trace('WARNING: Button request to goto window SID:"${xtr.sid}" that doesn\'t exist in WM.DB');

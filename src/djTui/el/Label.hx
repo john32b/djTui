@@ -35,7 +35,7 @@ class Label extends BaseMenuItem
 	{
 		super();
 		type = ElementType.label;
-		flag_focusable = false;
+		focusable = false;
 		textWidth = TextWidth;
 		textAlign = Align;
 		height = 1;

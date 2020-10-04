@@ -1,33 +1,29 @@
+/********************************************************************
+ * Align utilities for windows
+ * Singleton class accessible through `WM.A`
+ *
+ *******************************************************************/
+
 package djTui;
 
-/**
- * Align utilities for windows
- * Singleton class ccessible through `WM.A`
- * 
- */
-class Align 
+class Align
 {
-
-	// Test guide winect
-	var g:Window = null;
-	
-	public function new() 
+	public function new()
 	{
 	}//---------------------------------------------------;
-	
-	
+
 	/**
 	 * Align a window using the Terminal Viewport as a guide
 	 * @param	win Window to align
 	 * @param	alignX l|c|r (left, center, right)
 	 * @param	alignY t|c|b (top, center, bottom)
-	 * @param   padding Apply this much padding 
+	 * @param   padding Apply this much padding
 	 */
 	public function screen(win:Window, alignX:String = "c", alignY:String = "c", pad:Int = 0):Window
 	{
 		var tx:Int = 0;
 		var ty:Int = 0;
-		
+
 		switch(alignX)
 		{
 			case "l" : tx = 0 + pad;
@@ -35,7 +31,7 @@ class Align
 			case "c" : tx = Std.int((WM.width / 2) - (win.width / 2));
 			default:	// none
 		}
-		
+
 		switch(alignY)
 		{
 			case "t" : ty = 0 + pad;
@@ -43,12 +39,12 @@ class Align
 			case "c" : ty = Std.int((WM.height / 2) - (win.height / 2));
 			default : // none
 		}
-		
+
 		win.pos(tx, ty);
-		
+
 		return win; // for chaining
 	}//---------------------------------------------------;
-	
+
 	/**
 	   Place A on top of B
 	**/
@@ -57,26 +53,26 @@ class Align
 		A.move(B.x + offx, B.y - A.height + offy);
 		return A;
 	}//---------------------------------------------------;
-	
+
 	public function down(A:Window, B:Window, offx:Int = 0, offy:Int = 0):Window
 	{
 		A.move(B.x + offx , B.y + B.height + offy);
 		return A;
 	}//---------------------------------------------------;
-	
+
 	public function left(A:Window, B:Window, offx:Int = 0, offy:Int = 0):Window
 	{
 		A.move(B.x - A.width + offx, B.y + offy);
 		return A;
 	}//---------------------------------------------------;
-	
+
 	public function right(A:Window, B:Window, offx:Int = 0, offy:Int = 0):Window
 	{
 		A.move(B.x + B.width + offx, B.y + offy);
 		return A;
 	}//---------------------------------------------------;
-	
-	
+
+
 	/**
 	   Move a collection of windows in the same Line
 	   @param	A Array of Windows
@@ -104,17 +100,17 @@ class Align
 			default:
 				throw 'Not supported align type `$align` Typo?';
 		}
-		
+
 		for (w in A) { w.pos(sx, Y); sx += w.width + p1; }
 	}//---------------------------------------------------;
-	
+
 	//
 	//public static function addTiled(w_arr:Array<Window>, ?from:Window)
 	//{
 		//var ww:Window = from; // Temp
 		//
-		//var nextX:Int = 0; 
-		//var nextY:Int = 0; 
+		//var nextX:Int = 0;
+		//var nextY:Int = 0;
 		//
 		//if (ww == null && win_list.length > 0)
 		//{

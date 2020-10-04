@@ -32,7 +32,7 @@ import djTui.el.Label;
 import djTui.Styles.WinStyle;
 import haxe.Timer;
 
-import djTui.WM.handleWindowEvents as WM_EVENTS;
+import djTui.WM._onWindowEvent as WM_EVENTS;
 
 class Window extends BaseElement
 {
@@ -150,6 +150,22 @@ class Window extends BaseElement
 			setStyle(WM.global_style_win);
 
 		size(_width, _height);
+	}//---------------------------------------------------;
+
+	// Put some extra info on the default
+	override public function toString():String
+	{
+		var s = super.toString();
+		s += ', padding ($padX, $padY), childen(${display_list.length})';
+		return s;
+	}//---------------------------------------------------;
+
+	override public function kill():Void
+	{
+		super.kill();
+		lockDraw = true;
+		removeAll();
+		WM.DB.remove(SID);	// If it was not set, will do nothing
 	}//---------------------------------------------------;
 
 	/**
@@ -278,13 +294,24 @@ class Window extends BaseElement
 		el.onAdded();
 		el.visible = visible;
 
-		if (el.flag_focusable)
+		if (el.focusable)
 		{
 			el.focusSetup(isFocused);	// Setup colors, in supported elements.
 		}
 
 		if (visible && !lockDraw) el.draw();
 		return el;
+	}//---------------------------------------------------;
+
+	/** Remove all children (but the border) */
+	public function removeAll()
+	{
+		// Call kill() on every child but the first one (which is the border element)
+		for (i in 1...display_list.length){
+			display_list[i].kill();
+		}
+		display_list = [border_el];
+		if (visible && !lockDraw) draw();
 	}//---------------------------------------------------;
 
 	// --
@@ -331,7 +358,7 @@ class Window extends BaseElement
 	   @param	el The elements to add
 	   @param	yPad From the previously added element
 	   @param	xPad In between the elements
-	   @param   align l|c (left,center)
+	   @param   align l|c (left,center) Alignment of the whole strip in relation to window
 	**/
 	public function addStackInline(el:Array<BaseElement>, yPad:Int = 0, xPad:Int = 1, align:String = "l")
 	{
@@ -377,7 +404,7 @@ class Window extends BaseElement
 	{
 		flag_close_on_esc = true;
 		flag_close_on_bksp = true;
-		flag_lock_focus = true;
+		focus_lock = true;
 	}//---------------------------------------------------;
 
 	/**
@@ -404,55 +431,25 @@ class Window extends BaseElement
 		// Will unfocus any active element
 		unfocus();
 
-		WM_EVENTS("close", this);
+		WM_EVENTS("close", this); // Internal handle of a window close. -> Will also push to global onWindowFocus
 		callback("close");	// push to user
 	}//---------------------------------------------------;
 
 	/**
-	   Shorthand to WM.open()
+	   Adds a window to the WM display list.
 	   @param	autoFocus
 	**/
-	public function open(autoFocus:Bool = false)
+	public function open(autoFocus:Bool = false, animated:Bool = false):Window
 	{
-		WM.add(this, autoFocus);
-		callback("open");
+		if (animated) {
+			_openAnim();
+		}else{
+			WM.add(this, autoFocus);
+			callback("open");
+		}
+		return this;
 	}//---------------------------------------------------;
 
-
-	/**
-	   Open the window with a simple animation
-	   AutoFocuses it
-	**/
-	public function openAnimated()
-	{
-		if (WM.active != null)
-		{
-			WM.active.unfocus();
-		}
-
-		var st = [0.3, 0.6];
-		var t = new Timer(windowAnimationTick);
-		var c:Int = 0;
-		t.run = function()
-		{
-			var w:Int = Math.ceil(st[c] * width);
-			var h:Int = Math.ceil(st[c] * height);
-			var xx:Int = Math.ceil(x + (width - w) / 2);
-			var yy:Int = Math.ceil(y + (height - h) / 2);
-
-			_readyCol();
-			WM.D.rect(xx, yy, w, h);
-			if (borderStyle > 0)
-			{
-				WM.D.border(xx, yy, w, h, borderStyle);
-			}
-
-			if (++c == st.length) {
-				t.stop();
-				open(true);
-			}
-		}
-	}//---------------------------------------------------;
 
 
 	/**
@@ -464,11 +461,7 @@ class Window extends BaseElement
 	public function openSub(w:Window, anim:Bool = false)
 	{
 		flag_return_focus_once = true;
-
-		if (anim)
-			w.openAnimated();
-		else
-			w.open(true);
+		w.open(true, anim);
 	}//---------------------------------------------------;
 
 
@@ -481,7 +474,7 @@ class Window extends BaseElement
 	**/
 	override public function focus()
 	{
-		if (!flag_focusable) return;
+		if (!focusable) return;
 
 		if (style.borderColor_focus != null)
 		{
@@ -578,7 +571,38 @@ class Window extends BaseElement
 		return -1;
 	}//---------------------------------------------------;
 
+	/**
+	   Open the window with a simple animation
+	   - Sub function of open()
+	**/
+	function _openAnim()
+	{
+		// Unfocus The current window NOW. Because I don't want it to get keyboard input
+		// while this window is animating.
+		if (WM.active != null) {
+			WM.active.unfocus();
+		}
+		var st = [0.3, 0.6];
+		var t = new Timer(windowAnimationTick);
+		var c:Int = 0;
+		t.run = function()
+		{
+			var w = Math.ceil(st[c] * width);
+			var h = Math.ceil(st[c] * height);
+			var xx = Math.ceil(x + (width - w) / 2);
+			var yy = Math.ceil(y + (height - h) / 2);
 
+			_readyCol();
+			WM.D.rect(xx, yy, w, h);
+			if (borderStyle > 0) {
+				WM.D.border(xx, yy, w, h, borderStyle);
+			}
+			if (++c == st.length) {
+				t.stop();
+				open(true, false);	// Note, I am calling it with anim:false
+			}
+		}
+	}//---------------------------------------------------;
 	// Focus next element, can loop through the edges
 	@:allow(djTui.WM)
 	function focusNext(loop:Bool = false):Bool
@@ -602,7 +626,7 @@ class Window extends BaseElement
 		var ni = display_list.length;
 		while (ni-->0)
 		{
-			if (display_list[ni].flag_focusable) break;
+			if (display_list[ni].focusable) break;
 		}
 
 		return ai == ni;
@@ -627,7 +651,7 @@ class Window extends BaseElement
 					if (tab_mode == 2) flag_return_focus_once = true;
 					return key;
 				}
-				if (flag_lock_focus) // Loop through window elements
+				if (focus_lock) // Loop through window elements
 				{
 					focusNext(true);
 					return "";		// Consume the key
@@ -660,7 +684,6 @@ class Window extends BaseElement
 		if (active == null) return key;
 
 		// The element will block or change the key as it requires
-		var k1 = key;
 		key = active.onKey(key);
 
 		// -- Navigation process
@@ -728,6 +751,9 @@ class Window extends BaseElement
 		if (borderStyle > Styles.border.length - 1) borderStyle = 1;	// Safeguard
 
 		border_el.style = borderStyle;
+
+		// Write it back to the style, in case modStyle gets called later
+		style.borderStyle = borderStyle;
 
 		// DEV: The border will not get drawn at object constructor
 		if (visible && !lockDraw)

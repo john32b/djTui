@@ -70,7 +70,7 @@ class PopupOption extends BaseMenuItem
 		});
 
 		win.padding(0,0).size(_width, slots + 2);
-		win.flag_lock_focus = true;
+		win.focus_lock = true;
 		win.flag_close_on_esc = true;
 
 		// --
