@@ -36,7 +36,9 @@ class MenuBar extends Window
 		align:"l",		// Alignment of the whole button strip inside the panel | l,c (left,center) | Works on a fixed menu width
 		bWidth:0,		// Fixed button width. (0) for Auto. (-1) To stretch to MenuBar Width
 		bSmb:[0, 0, 0],	// [Button Symbol ID , Symbol Left Pad, Symbol Right Pad ] ; For button ID check `Button.hx:SMB`
-		pads:[1, 1]		// [BarWindow Inner X, Between Buttons] !! Works only when grid=false
+		pads:[1, 1],	// [BarWindow Inner X, Between Buttons] !! Works only when grid=false
+		colbg:"",
+		colfg:""
 	}
 
 	/** callback for when an Item becomes highlighted. Index starts at 0 */
@@ -60,8 +62,8 @@ class MenuBar extends Window
 
 		/// TODO, custom style ?
 
-		var col0 = style.bg;
-		var col1 = style.text;
+		var col0 = bSt.colbg==""?style.bg:bSt.colbg;
+		var col1 = bSt.colfg==""?style.text:bSt.colfg;
 
 		modStyle({
 			borderStyle:bSt.bs,

@@ -47,7 +47,7 @@ class MessageBox extends Window
 	/**
 	   Create a messagebox window
 	   @param	text
-	   @param	_type 0:OK | 1:OK,CANCEL | 2:YES,NO | 3:NOTHING
+	   @param	_type 0:OK | 1:OK,CANCEL | 2:YES,NO | 3:NOTHING, CLOSE ON ESC | -1:NOTHING, LOCK KEYS
 	   @param	_onSelect fn(int) -> index of button clicked
 	   @param	_width
 	   @param	_style
@@ -69,7 +69,9 @@ class MessageBox extends Window
 
 		// - Create Buttons
 		buttons = [];
-		switch(mbType) {
+		switch (mbType) {
+			case -1:
+				// Do not close on esc
 			case 0:
 				add_b("OK");
 			case 1:

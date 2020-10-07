@@ -7,7 +7,12 @@
  *
  * + Callbacks
  * 		fire 		;	when an element was pressed on
- *  	change	;	when the selected element changed
+ *  	change		;	when the selected element changed
+ *
+ *
+ * + TRICK
+ * 	- If a VLIST selection is to open a popup window, you can enable the 'flag_ghost_active' right before
+ *    the new window is opened. And then disable it, so that it will only apply for that popup
  *
  *******************************************************************/
 
@@ -31,7 +36,7 @@ class VList extends TextBox
 	var color_cursor:PrintColor;
 
 	/** Quickly get a callback for selected elements fn(index) */
-	public var onSelect:Int->Void;
+	public var onSelect:VList->Void;
 
 	/** Jump to letters on keystrokes. Works best on sorted lists */
 	public var flag_letter_jump:Bool = false;
@@ -92,7 +97,7 @@ class VList extends TextBox
 	function fire()
 	{
 		callback("fire");
-		Tools.tCall(onSelect, index); // DEV: This is to call the function using a clean callstack
+		Tools.tCall(onSelect, this); // DEV: This is to call the function using a clean callstack
 	}//---------------------------------------------------;
 
 	// --

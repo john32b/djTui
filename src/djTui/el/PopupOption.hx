@@ -64,7 +64,7 @@ class PopupOption extends BaseMenuItem
 		// --
 		var s = parent.style;
 		win = new Window(parent.style);
-		win.modifyStyle({
+		win.modStyle({
 			bg:s.elem_focus.fg,
 			vlist_cursor : {fg:s.elem_idle.bg, bg:s.elem_idle.fg}
 		});

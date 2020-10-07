@@ -364,6 +364,7 @@ class WM
 						w.draw();
 					}
 				}
+
 				// If closing active window, focus last one
 				if (active == win)
 				{

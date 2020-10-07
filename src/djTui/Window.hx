@@ -356,7 +356,7 @@ class Window extends BaseElement
 	/**
 	   Add a bunch of elements in a single line, centered to the window X axis
 	   @param	el The elements to add
-	   @param	yPad From the previously added element
+	   @param	yPad From the previously added element | Negative values to count from the bottom of the window
 	   @param	xPad In between the elements
 	   @param   align l|c (left,center) Alignment of the whole strip in relation to window
 	**/
@@ -364,11 +364,19 @@ class Window extends BaseElement
 	{
 		// Calculate starting Y
 		var yloc:Int = 0;
-		if (lastAdded == null) {
-			yloc = y + padY;
-		}else {
-			yloc = lastAdded.y + lastAdded.height + yPad;
+		if (yPad < 0)
+		{
+			yloc = y + inHeight + yPad + 1;
+		}else
+		{
+			if (lastAdded == null) {
+				yloc = y + padY;	// First element of the window
+			}else {
+				yloc = lastAdded.y + lastAdded.height + yPad;	// Put below the last one
+			}	
 		}
+		
+
 		// Calculate total width.etc
 		var totalWidth:Int = 0;
 		for (i in el) totalWidth += i.width;
@@ -426,7 +434,7 @@ class Window extends BaseElement
 	public function close()
 	{
 		if (visible == false) return;
-		visible = false; //-> will trigger children
+			visible = false; //-> will trigger children
 
 		// Will unfocus any active element
 		unfocus();
@@ -474,7 +482,7 @@ class Window extends BaseElement
 	**/
 	override public function focus()
 	{
-		if (!focusable) return;
+		if (!focusable || !visible) return;
 
 		if (style.borderColor_focus != null)
 		{
@@ -518,7 +526,7 @@ class Window extends BaseElement
 	**/
 	override public function unfocus()
 	{
-		if (!isFocused) return;
+		if (!isFocused || !visible) return;
 
 		if (style.borderColor_focus != null)
 		{

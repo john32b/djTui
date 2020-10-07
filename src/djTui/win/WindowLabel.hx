@@ -6,10 +6,8 @@ import djTui.el.Label;
 
 /**
  * Quickly create windows for use as headers/footers
- * -
+ * 
  * - Width is always SCREENWIDTH
- * -
- *
  */
 class WindowLabel extends Window
 {
