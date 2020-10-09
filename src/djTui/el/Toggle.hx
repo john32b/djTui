@@ -24,7 +24,7 @@ class Toggle extends BaseMenuItem
 		super(sid);
 		type = ElementType.toggle;
 		height = 1;
-		setSideSymbolPad(1, 0);
+		setSideSymbolPad(2, 0);
 		setSideSymbols("[", "]");
 		setData(current);
 	}//---------------------------------------------------;
@@ -50,13 +50,14 @@ class Toggle extends BaseMenuItem
 
 	override function onKey(k:String):String
 	{
-		if ((k == "enter" || k == "space") && !disabled)
+		if (disabled) return k;
+		
+		if (k == "space" || k=="enter")
 		{
 			setData(!data);
 			callback("change");
 			k = "";
 		}
-
 		return k;
 	}//---------------------------------------------------;
 

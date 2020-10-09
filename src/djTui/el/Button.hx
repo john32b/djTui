@@ -259,7 +259,8 @@ class Button extends BaseMenuItem
 	// --
 	override function onKey(k:String)
 	{
-		if ((k == "enter" || k == "space") && !disabled)
+		if (disabled) return k;
+		if (k == "enter" || k == "space")
 		{
 			k = "";
 			if (xtr != null && xtr.conf != null)

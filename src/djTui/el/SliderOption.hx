@@ -18,7 +18,7 @@ import djTui.BaseElement;
  */
 class SliderOption extends BaseMenuItem
 {
-	var options:Array<String>;	// The source options
+	public var options(default, null):Array<String>;	// The source options
 	var index_max:Int;			// Shorthand for `options.length - 1`
 	var index:Int;				// Hold the currently selected index
 	var ar_stat:Array<Bool>; 	// Arrow enabled status
@@ -79,7 +79,6 @@ class SliderOption extends BaseMenuItem
 		return k;
 	}//---------------------------------------------------;
 
-
 	// -- Set Data and callback 'change' in one call
 	function sd(d:Int)
 	{
@@ -105,10 +104,20 @@ class SliderOption extends BaseMenuItem
 	}//---------------------------------------------------;
 
 	// ! NO Safeguard !
-	// Sets current selected INDEX
+	// you can use <INT> for index
+	// or <STRING> of an existing elements text
 	override public function setData(val:Any)
 	{
-		index = val;
+		var ind = 0; 
+		if (Std.is(val, String))
+		{
+			ind = options.indexOf(cast val);
+			if (ind ==-1) return;	// Nothing found
+		}else{
+			ind = val;
+		}
+		
+		index = ind;
 		ar_stat[0] = index != 0;
 		ar_stat[1] = index != index_max;
 		updateText();
@@ -119,6 +128,12 @@ class SliderOption extends BaseMenuItem
 	override public function getData():Any
 	{
 		return index;
+	}//---------------------------------------------------;
+	
+	/** Get currently selected option as TEXT */
+	public function getSelected():String
+	{
+		return options[index];
 	}//---------------------------------------------------;
 
 }// --

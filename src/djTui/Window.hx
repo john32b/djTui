@@ -216,7 +216,7 @@ class Window extends BaseElement
 		if (display_list.length > ind) return display_list[ind]; return null;
 	}//---------------------------------------------------;
 
-
+	
 	/**
 	   Override the basic `move` to also move all of the children
 	   - NOTE: Does not redraw over old area
@@ -526,7 +526,9 @@ class Window extends BaseElement
 	**/
 	override public function unfocus()
 	{
-		if (!isFocused || !visible) return;
+		if (!isFocused) return;
+		// DEV: I cannot put (if !visible) here, because I need this to apply
+		//      when elements are not visible, so they can setup proper colors etc
 
 		if (style.borderColor_focus != null)
 		{
