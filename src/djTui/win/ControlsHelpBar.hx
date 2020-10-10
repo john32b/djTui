@@ -73,6 +73,8 @@ class ControlsHelpBar extends Window
 			labels.push(l);
 		}
 		lockDraw = false;
+		WM.T.reset().bg(style.bg);
+		WM.D.rect(x, y, width, height);
 		addStackInline(cast labels, 0, ST.pad, ST.align);
 	}//---------------------------------------------------;
 

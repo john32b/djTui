@@ -8,9 +8,6 @@
  *  bar.setData("One,Two,Three");
  *
  *
- * TODO:
- * 	- Make it accept user/custom styles for colors and borders?
- *
  *******************************************************************/
 
 package djTui.win;
@@ -179,9 +176,9 @@ class MenuBar extends Window
 	}//---------------------------------------------------;
 
 
-	override function onElementCallback(st:String, el:BaseElement)
+	override function onChildEvent(st:String, el:BaseElement)
 	{
-		super.onElementCallback(st, el);
+		super.onChildEvent(st, el);
 
 		if (st == "fire" && onSelect != null)
 		{

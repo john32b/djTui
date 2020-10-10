@@ -26,6 +26,7 @@
 package djTui;
 import djA.DataT;
 import djTui.BaseElement;
+import djTui.WindowEvents;
 import djTui.el.Border;
 import djTui.el.Button;
 import djTui.el.Label;
@@ -37,6 +38,8 @@ import djTui.WM._onWindowEvent as WM_EVENTS;
 class Window extends BaseElement
 {
 	public static var windowAnimationTick:Int = 90;
+	
+	public var events:WindowEvents;
 
 	/** Sets the window title drawn at the top. Can be changed whenever */
 	public var title(default, set):String;
@@ -123,6 +126,8 @@ class Window extends BaseElement
 	{
 		// DEVNOTE: Don't mess with the ordering, it matters
 		display_list = [];
+		
+		events = new WindowEvents(this);
 
 		if (sid != null)
 		{
@@ -289,7 +294,6 @@ class Window extends BaseElement
 	public function addChild(el:BaseElement):BaseElement
 	{
 		display_list.push(el);
-		el.listen(onElementCallback);
 		el.parent = this;
 		el.onAdded();
 		el.visible = visible;
@@ -311,7 +315,11 @@ class Window extends BaseElement
 			display_list[i].kill();
 		}
 		display_list = [border_el];
-		if (visible && !lockDraw) draw();
+		lastAdded = null;
+		if (visible && !lockDraw) {
+			clear();
+			draw();
+		}
 	}//---------------------------------------------------;
 
 	// --
@@ -402,7 +410,19 @@ class Window extends BaseElement
 		}
 		lastAdded = el[el.length - 1];
 	}//---------------------------------------------------;
-
+	
+	/**
+	   Add a horizontal line separator. ( A quick label element )
+	   @param forceStyle Set a border style (0-6) - Default to same style as the window border
+	**/
+	public function addSeparator(forceStyle:Int = 0)
+	{
+		if (forceStyle == 0) forceStyle = borderStyle;
+		var s = StringTools.lpad("", Styles.border[forceStyle].charAt(1), inWidth);
+		var l = new Label(s, 0, "center");
+		addStack(l);
+	}//---------------------------------------------------;
+	
 	/**
 	   Set control behavior to be popup-like
 	   - Close on ESC, BACKSPACE
@@ -415,17 +435,7 @@ class Window extends BaseElement
 		focus_lock = true;
 	}//---------------------------------------------------;
 
-	/**
-	   Add a horizontal line separator. ( A quick label element )
-	   @param forceStyle Set a border style (0-6) - Default to same style as the window border
-	**/
-	public function addSeparator(forceStyle:Int = 0)
-	{
-		if (forceStyle == 0) forceStyle = borderStyle;
-		var s = StringTools.lpad("", Styles.border[forceStyle].charAt(1), inWidth);
-		var l = new Label(s, 0, "center");
-		addStack(l);
-	}//---------------------------------------------------;
+
 
 	/**
 	   Close window, does not destroy it
@@ -452,8 +462,8 @@ class Window extends BaseElement
 		if (animated) {
 			_openAnim();
 		}else{
-			WM.add(this, autoFocus);
 			callback("open");
+			WM.add(this, autoFocus);
 		}
 		return this;
 	}//---------------------------------------------------;
@@ -581,6 +591,17 @@ class Window extends BaseElement
 		return -1;
 	}//---------------------------------------------------;
 
+	
+	// Force focus an element
+	// - Will properly unfocus current one and focus the new one
+	public function focusElement(el:BaseElement)
+	{
+		if (active != null) active.unfocus();
+		active_last = active;
+		active = el;
+	}//---------------------------------------------------;
+	
+	
 	/**
 	   Open the window with a simple animation
 	   - Sub function of open()
@@ -627,19 +648,6 @@ class Window extends BaseElement
 	{
 		if (active == null) return false;
 		return BaseElement.focusPrev(display_list, active, false);
-	}//---------------------------------------------------;
-
-	// Checks if <active> is the last focusable on the window list
-	function activeIsLastFocusable():Bool
-	{
-		var ai = display_list.indexOf(active);
-		var ni = display_list.length;
-		while (ni-->0)
-		{
-			if (display_list[ni].focusable) break;
-		}
-
-		return ai == ni;
 	}//---------------------------------------------------;
 
 
@@ -716,34 +724,26 @@ class Window extends BaseElement
 
 	}//---------------------------------------------------;
 
-
-	/**
-	   Called when any child element pushes a status
-	   @param	st Status Message
-	   @param	el The element that fired the status
-	**/
-	function onElementCallback(st:String, el:BaseElement)
+		
+	/** All child events will call this */
+	@:allow(djTui.BaseElement)
+	function onChildEvent(msg:String, el:BaseElement)
 	{
-		#if (debug)
-		if(WM.flag_debug_trace_element_callbacks)
-			trace('> Element Callback : From:${el.SID}, Status:$st, Data:"${el.getData()}", Owner:${el.parent.SID}');
-		#end
-
-		// Pipe callbacks to the global WM if set
-		if (WM.onElementCallback != null) WM.onElementCallback(st, el);
-
-		// Handle element special calls :
-		if (st == "focus")
+		if (msg == "focus")
 		{
-			if (active != null) active.unfocus();
-			active_last = active;
-			active = el;
+			focusElement(el);
 		}
-
-		// Pipe callbacks to user
-		callback(st, el);
+		
+		events.trig(msg, el);
 	}//---------------------------------------------------;
-
+	
+	override function callback(msg:String, caller:BaseElement = null):Void 
+	{
+		// DEV:	On all baseelements, this will call the parent windows event manager
+		//		but a window does not have a parent window, so override this and call own event manager
+		events.trig(msg, this);
+	}//---------------------------------------------------;
+	
 
 	//====================================================;
 	// GETTER, SETTERS

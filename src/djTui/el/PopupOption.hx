@@ -63,30 +63,23 @@ class PopupOption extends BaseMenuItem
 
 		// --
 		var s = parent.style;
-		win = new Window(parent.style);
-		win.modStyle({
-			bg:s.elem_focus.fg,
-			vlist_cursor : {fg:s.elem_idle.bg, bg:s.elem_idle.fg}
-		});
-
+		win = new Window(s);
 		win.padding(0,0).size(_width, slots + 2);
 		win.focus_lock = true;
 		win.flag_close_on_esc = true;
-
+		win.modStyle({
+			bg:s.elem_focus.fg,
+			vlist_cursor : {fg: s.elem_focus.bg, bg:s.bg}
+		});
 		// --
 		list = new VList("list", win.inWidth, win.height - 2);
 		list.setData(options);
-
+		list.onSelect = (l)->{
+			setData(l.index);
+			win.close();
+			callback('change');
+		};
 		win.addStack(list);
-		win.listen(function(status, elem)
-		{
-			switch(status) {
-				case "fire" :
-					setData(elem.getData());
-					win.close();
-					callback("change");
-			}
-		});//--
 	}//---------------------------------------------------;
 
 	override function onKey(k:String):String

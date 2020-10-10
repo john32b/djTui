@@ -13,6 +13,7 @@ package djTui;
 import djA.DataT;
 import djTui.ElementType;
 import djTui.Window;
+import djTui.WindowEvents;
 import djTui.adaptors.IInput;
 import djTui.adaptors.ITerminal;
 import djTui.Styles.WinStyle;
@@ -73,12 +74,9 @@ class WM
 	public static var backgroundColor(default, set):String = "black";
 
 	/// Callbacks :
-
-	/** USER - Will push all window element callbacks ( not the actual window elements ) */
-	public static var onElementCallback:String->BaseElement->Void = null;
-
-	/** USER - Will push everytime a window gets focused. */
-	public static var onWindowFocus:Window->Void = null;
+	
+	/** USER - Will window events from all windows here.*/
+	public static var winEvents:WindowEvents;
 
 	/** User handle keystrokes. Processed first,
 	 *  Keys can transform so you can cancel it if you want be returning null */
@@ -92,8 +90,8 @@ class WM
 	/// FLAGS :
 
 	#if debug
-	/** Applies to windows. Will trace all ELEMENT callback messages (not window callbacks)*/
-	public static var flag_debug_trace_element_callbacks:Bool = false;
+	/** Traces ALL window events ( from windows + child elements ) */
+	public static var flag_debug_trace_events:Bool = false;
 	#end
 
 	// Is the WM created with no problems
@@ -344,7 +342,6 @@ class WM
 				active_last = active;
 				active = win;
 				if (windowOverlapsWithAny(win)) win.draw();
-				if (onWindowFocus != null) onWindowFocus(win);
 
 			case "close":
 				//- Remove the window from the list

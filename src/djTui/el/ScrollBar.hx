@@ -40,6 +40,8 @@ class ScrollBar extends BaseElement
 
 	override public function draw():Void
 	{
+		if (!visible) return;
+		
 		_readyCol();
 
 		for (i in 0...height)

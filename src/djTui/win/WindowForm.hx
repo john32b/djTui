@@ -148,29 +148,26 @@ class WindowForm extends Window
 	/**
 	   Override standard callbacks to add label highlight
 	**/
-	override function onElementCallback(st:String, el:BaseElement) 
+	override function onChildEvent(st:String, el:BaseElement) 
 	{
 		// Capture element focus to handle label coloring
 		if (st == "focus")
 		{
-			var l:Label = labelMap.get(el);
-			if (l != null) 
-			{
+			var l = labelMap.get(el);
+			if (l != null) {
 				l.focusSetup(true); l.draw();
 			}
 		}
 		
 		else if (st == "unfocus")
 		{
-			var l:Label = labelMap.get(el);
-			if (l != null)
-			{
+			var l = labelMap.get(el);
+			if (l != null) {
 				l.focusSetup(false); l.draw();
 			}
 		}
 		
-		super.onElementCallback(st, el);
-		
+		super.onChildEvent(st, el);
 	}//---------------------------------------------------;
 	
 	
@@ -182,7 +179,7 @@ class WindowForm extends Window
 		- toggle,sid,start(bool)
 		- slNum,sid,min,max,inc,startValue
 		- slOpt,sid,el1|el2|...,startIndex
-		- popOpt,sid,sid,el1|el2|...,slots,startIndex
+		- popOpt,sid,el1|el2|...,slots,startIndex
 		
 	   @param label The Text of the label that preceeds the menu item
 	   @param enc The encoded string  "type,sid,Class Conscructor Parameters"

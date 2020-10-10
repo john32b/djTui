@@ -46,10 +46,6 @@ class BaseElement
 	/** Is this element currently focused */
 	public var isFocused(default, null):Bool = false;
 
-	/** Pushes generic status messages. Is an <Array> so that it can have many listeners
-	    - ACCESS with listen(..) */
-	var callbacks:Array<String->BaseElement->Void>;
-
 	/** All elements have a parent container */
 	public var parent(default, null):Window = null;
 
@@ -69,7 +65,6 @@ class BaseElement
 	{
 		UID = UID_GEN++;
 		SID = sid;
-		callbacks = [];
 		visible = false;	// everything starts as `not visible` until added to a window/WM
 		if (SID == null || SID == "") SID = 'id_$UID';
 	}//---------------------------------------------------;
@@ -77,7 +72,6 @@ class BaseElement
 	// Free up handles for this to get cleared by the GC
 	public function kill()
 	{
-		callbacks = null;
 		parent = null;
 	}//---------------------------------------------------;
 
@@ -153,29 +147,14 @@ class BaseElement
 	}//---------------------------------------------------;
 
 	/**
-	   Pushes a callback listener. It will fire on various events
-	   @param	fn function( message , Element that sent the message )
-	**/
-	public function listen(fn:String->BaseElement->Void)
-	{
-		callbacks.push(fn);
-	}//---------------------------------------------------;
-
-	/**
 	   Fire a message to all listeners
 	**/
 	function callback(msg:String, caller:BaseElement = null)
 	{
 		if (caller == null) caller = this;
-
-		// for (i in callbacks) i(msg, caller); // (old way)
-		// EXPERIMENTAL :
-		// Try to avoid filling up the callstack :
-		for (i in callbacks) {
-			haxe.Timer.delay(i.bind(msg, caller), 0);
-		}
+		//haxe.Timer.delay(parent.onChildEvent.bind(msg, caller), 0);
+		parent.onChildEvent(msg, caller);
 	}//---------------------------------------------------;
-
 
 	/**
 	   Element was just added on a window
@@ -194,6 +173,7 @@ class BaseElement
 	   Called every time the focus changes
 	   Handles focus colors etc
 	   - Is also called on focusable elements when they are added on a window (to init colors)
+	   - THIS SHOULD NOT DO ANY DRAWING
 	**/
 	function focusSetup(focus:Bool):Void {}
 

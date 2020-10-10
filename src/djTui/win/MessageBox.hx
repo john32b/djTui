@@ -30,9 +30,7 @@ class MessageBox extends Window
 	// Buttons are variable and depend on "type"
 	var buttons:Array<Button>;
 
-	// 0: OK,YES
-	// 1: OK,CANCEL
-	// 2: YES,NO
+	/** Callbacks Index of Button pressed (0,1) */
 	public var onSelect:Int->Void;
 
 	// Will close the popup when user selects something.
@@ -95,11 +93,11 @@ class MessageBox extends Window
 
 	}//---------------------------------------------------;
 
-	override function onElementCallback(st:String, el:BaseElement)
+	override function onChildEvent(st:String, el:BaseElement)
 	{
-		super.onElementCallback(st, el);
+		super.onChildEvent(st, el);
 
-		if (st == "fire")
+		if (st == "fire")	// Any button
 		{
 			if (flag_auto_close)
 			{
