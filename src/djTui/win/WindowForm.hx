@@ -190,6 +190,7 @@ class WindowForm extends Window
 		var e:BaseMenuItem = null;
 		var s:Array<String> = enc.split(',');
 		var i = function(n:Int){return Std.parseInt(s[n]); };
+		var f = function(n:Int){return Std.parseFloat(s[n]); };
 		var w2 = width - align_fix_start - padX;
 		
 		switch(s[0])
@@ -203,7 +204,7 @@ class WindowForm extends Window
 			case 'toggle':
 				e = new Toggle(s[1], s[2] == "true");
 			case 'slNum':
-				e = new SliderNum(s[1], i(2), i(3), i(4));
+				e = new SliderNum(s[1], i(2), i(3), f(4), f(5));
 			case 'slOpt':
 				e = new SliderOption(s[1], s[2].split('|'), i(3));
 			case 'popOpt':

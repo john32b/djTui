@@ -1,6 +1,7 @@
 package djTui.el;
 
 
+import djA.MathT;
 import djTui.BaseElement;
 
 /**
@@ -107,7 +108,14 @@ class SliderNum extends BaseMenuItem
 	// Safeguards
 	override public function setData(val:Any)
 	{
-		data = val;
+		var V:Float;
+		if (Std.is(val,String)){
+			V = Std.parseFloat(cast val);
+			if (Math.isNaN(V)) return;
+		}else{
+			V = val;
+		}
+		data = MathT.roundFloat(V, 2);
 		if (data < min) data = min; else
 		if (data > max) data = max;
 		ar_stat[0] = data != min;

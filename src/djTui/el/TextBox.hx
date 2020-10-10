@@ -325,7 +325,7 @@ class TextBox extends BaseElement
 		if (scrollbar != null) scrollbar.scroll_ratio = scroll_ratio; // :: setter draw
 		if (visible && !lockDraw) draw();
 
-		callback('scroll');
+		if (visible) callback('scroll');
 
 		return val;
 	}//---------------------------------------------------;
