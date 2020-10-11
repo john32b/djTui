@@ -46,22 +46,23 @@ class State_WinForm extends WindowState
 			wf.addStack(new Label("On Select:").setColor("black", "white"));
 			wf.addStack(new Label().setSID("c02"));
 			
-			wf.listen(function(a, b){
+			wf.events.onElem = (a, b)->{
 				if (a == "change")
 				{
 					var ss = cast(wf.getEl("c01"), Label);	
-					ss.text = '' + b.getData();				
+					ss.text = '' + b.getData();
 				}else
 				if (a == "fire")
 				{
 					var ss = cast(wf.getEl("c02"), Label);	
-					ss.text = '' + b.getData();					
+					ss.text = '' + b.getData();
 				}
-			});
+				return;
+			}
 			
 		// -- Information Box
 		var info = new Window(30, 18, Styles.win.get('gray.1'));
-			info.flag_focusable = false;
+			info.focusable = false;
 		var tb:TextBox = new TextBox(info.inWidth, info.inHeight);
 		info.addStack(tb);
 		tb.setData("A WindowForm extends a Window and allows quickly adding elements in a window along with some descriptive text. Checkout the source code on usage.\n\n==Arrow keys to navigate, Enter to select/interact with elements.");

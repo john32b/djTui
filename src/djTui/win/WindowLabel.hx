@@ -31,7 +31,7 @@ class WindowLabel extends Window
 
 		if (_col != null)
 		{
-			modifyStyle({
+			modStyle({
 				text:_col[0], bg:_col[1], borderColor:{fg:_col[0],bg:_col[1]}
 			});
 		}

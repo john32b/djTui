@@ -8,9 +8,9 @@ import openfl.display.StageScaleMode;
 import openfl.events.Event;
 
 /**
- * Showcase and code usage for djTUI
- * --
- * Initialize openFL specific and then start the global demo
+ * - OPENFL version of the djTui Demo
+ * - WARNING. THIS IS JUST A PROOF OF CONCEPT
+ * -          It works, but it is ugly
  */
 class Main_openfl extends Sprite 
 {
@@ -22,7 +22,6 @@ class Main_openfl extends Sprite
         else addEventListener(Event.ADDED_TO_STAGE, start);
 
 	}//---------------------------------------------------;
-	
 	
 	public function start(event:Dynamic)
 	{
@@ -39,7 +38,6 @@ class Main_openfl extends Sprite
 		
 		var demo = new ShowcaseDemo();
 			demo.start();
-			
 	}//---------------------------------------------------;
 	
 }// --

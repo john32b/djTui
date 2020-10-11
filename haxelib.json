@@ -6,9 +6,9 @@
   "description": "A simple TUI framework with an agnostic renderer.",
   "version": "0.2.0",
   "classPath": "src/",
-  "releasenote": "First Release",
+  "releasenote": "",
   "contributors": ["JohnDimi"],
   "dependencies": { 
-	"dJA" : ""
+	"djA" : ""
   }
 }

@@ -36,18 +36,15 @@ class State_Textbox extends WindowState
 			tb1.setData(REG.longString);
 			win1.addStack(tb1);
 			win1.addStackInline([new Label("Scroll Percent :").setColor("yellow", "blue"), new Label("").setSID("sp").setColor("yellow", "blue")], 1, 0, "center");
-			tb1.listen(function(a, b){
-				if (a == "scroll"){
-					var l:Label = cast win1.getEl("sp");
-					l.text = '' + Std.int(cast(b, TextBox).scroll_ratio * 100);
-				}
-			});
-			
+			tb1.onScroll = (t)->{
+				var l:Label = cast win1.getEl("sp");
+				l.text = '' + Std.int(t.scroll_ratio * 100);
+			};
 			
 		// --
 		var win2 = new Window(40, 6, Styles.win.get('cyan.1'));
 			win2.title = "Test Textbox";
-			win2.flag_focusable = false;
+			win2.focusable = false;
 		var tb2 = new TextBox("", win2.inWidth, win2.inHeight);
 			tb2.flag_scrollbar_autohide = false;
 			tb2.setData("----");
@@ -64,7 +61,7 @@ class State_Textbox extends WindowState
 			ctr.addStackInline([new Button("su", "Up", 1) , new Button("sd", "Down",1)]);
 			ctr.addStack(new Button("aline", "Add Line"));
 			ctr.addStack(new Button("reset", "Reset"));
-			ctr.listen(function(a, b){
+			ctr.events.onElem = (a,b)->{
 				if (a == "fire"){
 					switch(b.SID)
 					{
@@ -77,7 +74,7 @@ class State_Textbox extends WindowState
 						default:
 					}
 				}
-			});
+			};
 			
 		//--
 		WM.A.screen(win1, "c", "t", 3);

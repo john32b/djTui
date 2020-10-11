@@ -57,7 +57,7 @@ class MenuBar extends Window
 
 		bSt = DataT.copyFields(BarStyle, bSt);
 
-		/// TODO, custom style ?
+		/// TODO: custom style ?
 
 		var col0 = bSt.colbg==""?style.bg:bSt.colbg;
 		var col1 = bSt.colfg==""?style.text:bSt.colfg;

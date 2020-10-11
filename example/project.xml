@@ -1,20 +1,25 @@
 <!-- 
 
  This is for when building the OPENFL demo
+
+ Remember:
+	`lime build html5` or 
+	`lime build X` X = any other openfl target
  
 -->
 
 <?xml version="1.0" encoding="utf-8"?>
 <project>
 	
-	<meta title="djTui in openFL" package="org.johndimi.djtui" version="0.1.0" company="johndimi" />
+	<meta title="djTui in openFL" package="org.johndimi.djtui" version="0.2.0" company="johndimi" />
 	
-	<app main="Main_openfl" path="bin" file="app" />
+	<app main="Main_openfl" path="bin" file="djTuiDemo" />
 	
 	<source path="src" />
 	<source path="../src/" />
 	
 	<haxelib name="openfl" />
+	<haxelib name="djA" />
 	
 	<!-- window -->
 	<window background="#000000" fps="30" />

@@ -48,6 +48,9 @@ class TextBox extends BaseElement
 
 	/** How many lines */
 	public var linesCount(get, null):Int;
+	
+	/** This textbox just scrolled */
+	public var onScroll:TextBox->Void;
 
 
 	/**
@@ -325,7 +328,10 @@ class TextBox extends BaseElement
 		if (scrollbar != null) scrollbar.scroll_ratio = scroll_ratio; // :: setter draw
 		if (visible && !lockDraw) draw();
 
-		if (visible) callback('scroll');
+		if (visible) {
+			if (onScroll != null) onScroll(this);
+			callback('scroll');
+		}
 
 		return val;
 	}//---------------------------------------------------;

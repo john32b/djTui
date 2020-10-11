@@ -20,10 +20,11 @@ class State_Buttons extends WindowState
 		super("st_buttons");
 		
 		// Whenever this state comes in, the WM background will change to this color
-		bgColor = "darkcyan";
+		bgColor = "darkmagenta";
 		 
 		// When [ESC] is pressed. This WindowState ID will be called
 		onEscGoto = "main";
+
 		//
 		var h = new WindowLabel(['= ${WM.NAME} - Buttons Demo'], [0, 1, 0], ["black", "gray"]);	
 		
@@ -35,10 +36,8 @@ class State_Buttons extends WindowState
 			w1.addStack( new Button("", "Confirmation").extra("?Are you sure?"));
 			w1.addStack( new Button("", "Custom Length", 0, w1.inWidth).colorIdle("red", "cyan"));
 			w1.addStack( new Button("", "Custom Style", 3).setSideSymbolPad(2, 2));
-			
 			w1.addStack( new Button("testbtn", "-test button-"));
-			w1.addStack( new Button("","Toggle Disable Status ^").onPush( 
-				function(){
+			w1.addStack( new Button("","Toggle Disable Status ^").onPush( ()->{
 					var b:Button = cast w1.getEl("testbtn");
 						b.disable(!b.disabled, true);
 						b.text = b.disabled?"disabled":"enabled";
@@ -46,8 +45,7 @@ class State_Buttons extends WindowState
 							
 				
 			w1.addStack( new Button("b_text", "---") );
-			w1.addStack( new Button("", "Write Text ^").onPush( 
-				function(){
+			w1.addStack( new Button("", "Write Text ^").onPush( ()->{
 					var b:Button = cast w1.getEl("b_text");
 						b.text = DataT.randAr(["random", "test 01", "other", "hello", "world", "djtui"]);
 				}));
@@ -56,7 +54,7 @@ class State_Buttons extends WindowState
 				
 		// Info Window
 		var w2 = new Window( 60, 4, Styles.win.get("gray.1"));
-			w2.flag_focusable = false;
+			w2.focusable = false;
 			var tb = new TextBox(w2.inWidth, w2.inHeight);
 				tb.setData([
 					"Demo and usage on Buttons", "Select with arrow keys and press enter to interact"
@@ -66,7 +64,7 @@ class State_Buttons extends WindowState
 				
 		// Some info on selected buttons
 		var w3 = new Window(w1.width, 10, Styles.win.get("green.1"));
-			w3.flag_focusable = false;
+			w3.focusable = false;
 			w3.title = "Info";
 			// NOTE:
 			w3.addStack(new Label("Current Selected SID :"));
@@ -74,11 +72,11 @@ class State_Buttons extends WindowState
 			w3.addStack(new Label("Last Pressed SID :"));
 			w3.addStack(new Label().setColor("white", "blue"));
 			w3.addStack(new Label("Just Pressed :"));
-			w3.addStack(new Label().setColor("red"));
+			w3.addStack(new Label().setColor("black"));
 			
 			
 		// - Event listener for the main window
-		w1.listen(function(msg, elem)
+		w1.events.onElem = function(msg, elem)
 		{	
 			if (msg == "focus" && elem.type == djTui.ElementType.button)
 			{
@@ -97,13 +95,13 @@ class State_Buttons extends WindowState
 				var l2:Label = cast w3.getElIndex(7);
 					l2.text = "-" + cast (elem, Button).text + "-";
 					// Blink the text and erase it after a while
-					l2.blink(200);
-						Timer.delay(function(){
-							l2.stop();
+					l2.blink(9,50);
+						Timer.delay(()->{
+							l2.anim_stop();
 							l2.text = "";
 						},800);
 			}
-		});
+		}// -- on elem
 			
 			
 		// - Place the windows	

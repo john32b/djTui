@@ -22,9 +22,6 @@ class ShowcaseDemo
 	
 	public function start()
 	{
-		
-		WM.set_TAB_behavior("WM", "keep");
-
 		// Set the background color for the whole terminal area
 		WM.backgroundColor = "darkblue";
 		
@@ -35,11 +32,11 @@ class ShowcaseDemo
 		var head = new WindowLabel(['== ${WM.NAME} V ${WM.VERSION} ==', " - Demo and use examples - "], "center", ["black", "cyan"]);
 		
 		// : Footer
-		var foot = new WindowLabel(["[Arrow Keys / TAB] = MOVE | [ENTER] = SELECT | [ESC] = BACK"], "center", [0, 0, 0], ["black", "cyan"]);
-			foot.placeBottom();
-		WM.add(foot); // <-- Add the footer, this will be visible with all statesb
+		var foot = new djTui.win.ControlsHelpBar( -1, {bg:"black"});
+			foot.setData('Nav:←↑→↓|Select:Enter|Focus:Tab|Esc:Back|Quit:^c');
+			foot.pos(0, WM.height - 1);
+		WM.add(foot); // Visible at all times
 		
-	
 		// : Main Menu 
 		var menu = new Window( 40, 18);
 			menu.addStack(new Label("Select a demo :").setColor("black", "white"));
@@ -61,9 +58,10 @@ class ShowcaseDemo
 
 		// Quit/About Menu
 		// --
-		var qWin = new MenuBar(menu.width, 2);
-			qWin.setItemStyle("center", 0, 1);
-			qWin.setPanelStyle("white", "magenta");
+		var qWin = new MenuBar(null, menu.width, 1, {
+			align:"c", bSmb:[1, 1, 1],
+			colbg:"white", colfg:"magenta"
+		});
 			qWin.setItems(["QUIT", "ABOUT"]);
 			WM.A.down(qWin, menu);
 			qWin.onSelect = function(s){
@@ -87,10 +85,9 @@ class ShowcaseDemo
 			}
 			
 			
-			
 		// TextBox
 		var wint = new Window(30, 15, Styles.win.get('gray.1'));
-			wint.flag_focusable = false;
+			wint.focusable = false;
 			wint.posNext(menu, 2).move(0, 3);
 			var tb = new TextBox(wint.inWidth, wint.inHeight);
 				tb.setData(
@@ -98,7 +95,6 @@ class ShowcaseDemo
 				);
 			wint.addStack(tb);
 		
-			
 			
 		// Dynamically create a state with those 2 windows
 		// This way I can open/close these windows quickly

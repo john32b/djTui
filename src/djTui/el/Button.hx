@@ -126,46 +126,38 @@ class Button extends BaseMenuItem
 	}//---------------------------------------------------;
 
 	/**
-	 * Add Extra Functionality that will trigger on click
-	 * - Open Another Static Window
-	 * - Open A Window State
-	 * - Confirm Action
-	 *
-	 * The data is read from a @CSV string that supports multiple variables
+	 * Add Extra Functionality that will trigger upon Button Push
+	 * The data is read from a `CSV` string. Tags supported:
 	 *  ------
 	 * 	@ + windowSID 	=	Goto a Window with sid==windowSID), the window must be static (existing in WM.DB)
 	 *  # + stateSID	=	Goto a WM.STATE with sid==stateSID
 	 *  ? + (Question)	=	Present a confirmation popup with a YES/NO, (Question is optional)
+	 *  x + xpos	=	Place the @ Window at a custom X screen Position (e.g. x10)
+	 *  y + ypos	=	Place the @ Window at a custom Y screen Position
 	 *  close		=	Close the parent window
 	 *  anim		=	Animate Open the Target Window ( valid only if an auto window call is set )
 	 * 	center		=	Will screen center the @ Window or the Confirmation Dialog
-	 *  x + xpos	=	Place the @ Window at a custom X screen Position (e.g. x10)
-	 *  y + ypos	=	Place the @ Window at a custom Y screen Position
 	 *  ----
 	 * example: "@window2,close,x10,y10,?Really Open?,anim"
 	 *  will ask "Really Open?" , if yes will close the parent window and anim open window2 at (10,10)
 	 *
 	 * @param	tags Separated with comma. Check comments
-	 * @return
+	 * @return button chain
 	**/
 	public function extra(tags:String):Button
 	{
-		var ar = tags.split(',');
 		if (xtr == null) xtr = {};
 
-		for (i in ar)
+		for (i in tags.split(','))
 		{
-			var c0 = i.charAt(0);
 			var c1 = i.substr(1);
-			switch(c0){
+			switch (i.charAt(0)){
 				case "?":
 					xtr.conf = true;
 					xtr.confQ = c1;
-					if (StrT.isEmpty(xtr.confQ))
-					{
+					if (StrT.isEmpty(xtr.confQ)) {
 						xtr.confQ = CONF_DEF;
 					}
-
 				case "#":
 					xtr.call = 0;
 					xtr.sid = c1;
@@ -176,10 +168,9 @@ class Button extends BaseMenuItem
 					xtr.x = Std.parseInt(c1);
 				case "y":
 					xtr.y = Std.parseInt(c1);
+					
 				default:
-
-					switch(i)
-					{
+					switch(i) {
 						case "center":
 							xtr.center = true;
 						case "close":
@@ -190,7 +181,7 @@ class Button extends BaseMenuItem
 							trace("Error, Unrecognized Tag", i);
 					}
 			}
-		}
+		}// - for
 
 		return this;
 	}//---------------------------------------------------;
@@ -260,14 +251,13 @@ class Button extends BaseMenuItem
 	override function onKey(k:String)
 	{
 		if (disabled) return k;
+		
 		if (k == "enter" || k == "space")
 		{
 			k = "";
-			if (xtr != null && xtr.conf != null)
-			{
+			if (xtr != null && xtr.conf != null) {
 				WM.popupConfirm(action, xtr.confQ, xtr.center == null?[x, y + 1]:null);
-			}else
-			{
+			}else {
 				action();
 			}
 		}else

@@ -26,7 +26,7 @@ class State_Labels extends WindowState
 		// Decorative window thingy
 		var dec = new Window(15, 2, Styles.win.get('black.1'));
 			dec.borderStyle = 0;
-			dec.flag_focusable = false;
+			dec.focusable = false;
 			dec.addStack(new Label('DjTui Demo ** ', dec.inWidth).scroll(150).setColor("red"));
 			dec.addStack(new Label('-+-+==+-+', dec.inWidth).scroll(300));
 			WM.A.screen(dec, "r", "b", 1);
@@ -44,16 +44,14 @@ class State_Labels extends WindowState
 			win.addSeparator(3);
 			win.addStack(new Label("SCROLL --").scroll().setSID("scroll").setColor("yellow"));
 			win.addSeparator(3);
-			win.addStack(new Button("", "Stop Animations").onPush(function()
-			{
+			win.addStack(new Button("", "Stop Animations").onPush(()->{
 				var bl:Label = cast win.getEl("blink");
 				var sc:Label = cast win.getEl("scroll");
-				bl.stop();
-				sc.stop();
+				bl.anim_stop();
+				sc.anim_stop();
 			}));
 			
-			win.addStack(new Button("", "Start Animations").onPush(function()
-			{
+			win.addStack(new Button("", "Start Animations").onPush(()->{
 				var bl:Label = cast win.getEl("blink");
 				var sc:Label = cast win.getEl("scroll");
 				bl.blink();
@@ -71,12 +69,12 @@ class State_Labels extends WindowState
 				
 			win.pos(2, 2);
 			// Note:
-			// Blink and Scroll will repeat forever, until .STOP() is called
+			// Blink and Scroll will repeat forever, until .anim_stop() is called
 		
 		
 		// -- Information Box
 		var info = new Window(30, 18, Styles.win.get('gray.1'));
-			info.flag_focusable = false;
+			info.focusable = false;
 		var tb:TextBox = new TextBox(info.inWidth, info.inHeight);
 		info.addStack(tb);
 		tb.setData("Labels are single line and have customizable colors and alignment. Also there are two built in effects, Blinking and Scrolling.");

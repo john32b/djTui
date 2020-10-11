@@ -18,7 +18,6 @@
 
 package djTui.el;
 import djTui.Styles.PrintColor;
-import sys.ssl.Key;
 
 class VList extends TextBox
 {

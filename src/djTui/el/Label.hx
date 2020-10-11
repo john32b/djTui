@@ -2,7 +2,6 @@ package djTui.el;
 import djA.StrT;
 import djTui.BaseElement;
 import haxe.Timer;
-import js.lib.Intl;
 
 
 private typedef LabelAnim = {
@@ -148,7 +147,7 @@ class Label extends BaseMenuItem
 	}//---------------------------------------------------;
 	
 	// -- Just stop the animation. It can be resumed with `anim_start`
-	function anim_stop()
+	public function anim_stop()
 	{
 		if (an != null && an.timer != null){
 			an.timer.stop();

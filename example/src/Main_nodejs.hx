@@ -8,9 +8,9 @@ import djTui.adaptors.djNode.*;
 import djTui.win.MessageBox;
 
 /**
- * Showcase and code usage for djTUI
- * --
- * Initialize nodeJS specific and then start the global demo
+ * DJTui Demo/Showcase
+ * - Initializes nodeJS specific code 
+ * - Creates the main Demo object
  */
 class Main_nodejs extends BaseApp 
 {
@@ -35,14 +35,15 @@ class Main_nodejs extends BaseApp
 		T.pageDown();
 		T.clearScreen();
 		T.cursorHide();
+		T.resizeTerminal(REG.APP_WIDTH, REG.APP_HEIGHT);
 		
 		// Init the Window Manager and set some parameters :
 		WM.create(
 			new InputObj(), 
 			new TerminalObj(), 
-			REG.APP_WIDTH, REG.APP_HEIGHT	
+			REG.APP_WIDTH, REG.APP_HEIGHT
 		);
-	
+		
 		// --
 		var demo = new ShowcaseDemo();
 			demo.start();

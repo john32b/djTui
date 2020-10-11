@@ -62,7 +62,7 @@ class State_VList extends WindowState
 			
 		// -- Information Box
 		var info = new Window(44, 10, Styles.win.get('gray.1'));
-			info.flag_focusable = false;
+			info.focusable = false;
 		var tb:TextBox = new TextBox(info.inWidth, info.inHeight);
 			tb.setData("A Vertical List is just a TextBox with a cursor, which you can control and select elements. It shares all the basic functionality of the Textbox.\n-- Arrow keys, PageUp/Down to navigate , \n[Εnter] to select an element.");
 			info.addStack(tb);
@@ -70,7 +70,7 @@ class State_VList extends WindowState
 			
 		// --
 		var info2 = new Window(18, 4, Styles.win.get('cyan.1'));
-			info2.flag_focusable = false;
+			info2.focusable = false;
 			info2.padding(1,1);
 			info2.borderStyle = 0;
 			info2.addStack(new Label("Selected Index :").setColor("red"));
@@ -78,9 +78,9 @@ class State_VList extends WindowState
 			info2.pos(WM.width - info2.width - 3, info.y + info.height + 1);
 			
 		// --
-		vlist.onSelect = function(index) {
+		vlist.onSelect = function(L) {
 			var f:Label = cast info2.getEl("s1");
-			f.text = '' + index;
+			f.text = '' + L.index;
 		}
 		// copy the listener
 		vl2.onSelect = vlist.onSelect;

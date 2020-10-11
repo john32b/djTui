@@ -31,9 +31,9 @@ class State_ButtonGrid extends WindowState
 		var h = new WindowLabel(['= ${WM.NAME} - ButtonGrid Demo'], [0, 1, 0], ["black", "yellow"]);	
 		
 		// -- Test 1
-		var g1 = new ButtonGrid(23, 7, 3);
+		var g1 = new ButtonGrid(23, 7, 3, {bSmb:[1, 0, 1]});
 			g1.title = "Numbers";
-			g1.setButtonStyle(1, 0, 1, 1);
+			g1.padding(1, 1);
 			g1.add(0, "1");
 			g1.add(1, "2");
 			g1.add(2, "3");
@@ -46,9 +46,8 @@ class State_ButtonGrid extends WindowState
 		
 		
 		// -- Test 2
-		var g2 = new ButtonGrid(30, 14, 2);
+		var g2 = new ButtonGrid(30, 14, 2, {sep:true, xPad:2, vPad:2});
 			g2.title = "Other";
-			g2.setColumnStyle(0, 2, 2);
 			g2.add(0,"Btn");
 			// Adding elements to the grid, returns button objects, so I can customize them.
 			g2.add(0,"Custom Color").colorIdle("yellow","blue").colorFocus("white","darkblue");
@@ -61,7 +60,7 @@ class State_ButtonGrid extends WindowState
 		
 		// -- Info Box 0
 		var inf = new Window(25, 8, Styles.win.get("magenta.1"));
-			inf.flag_focusable = false;
+			inf.focusable = false;
 			inf.borderStyle = 3;
 			inf.addStack(new Label("From Window :").setColor("yellow","darkmagenta"));
 			inf.addStack(new Label().setSID("win"));
@@ -73,7 +72,7 @@ class State_ButtonGrid extends WindowState
 		
 		// -- Info Text
 		var inf1 = new Window(72, 5, Styles.win.get('gray.1'));
-			inf1.flag_focusable = false;
+			inf1.focusable = false;
 		var tb:TextBox = new TextBox(inf1.inWidth, inf1.inHeight);
 			inf1.addStack(tb);
 			tb.setData(
@@ -82,7 +81,7 @@ class State_ButtonGrid extends WindowState
 			
 			
 		// -- Add listeners
-		g1.onPush = function(btn, coords){
+		g1.onPush = g2.onPush = (btn, coords)->{
 			var a1:Label = cast inf.getEl("ssid");
 			var a2:Label = cast inf.getEl("coords");
 			var a3:Label = cast inf.getEl("win");

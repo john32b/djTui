@@ -1,7 +1,9 @@
 package djTui.win;
 
+import djA.DataT;
 import djTui.BaseElement;
 import djTui.el.Button;
+import haxe.macro.Expr.Var;
 
 /**
  * A Table/grid of buttons where you can select between them using the arrow keys
@@ -10,8 +12,6 @@ import djTui.el.Button;
  * - Primarily used for adding buttons, but you can add anything else with put();
  * - add() to add content
  * - getData() to get current cursor position
- * - setButtonStyle() to customize buttons
- * - setColumnStyle() to customize padding and separator
  */
 class ButtonGrid extends Window
 {
@@ -30,21 +30,14 @@ class ButtonGrid extends Window
 	var c_x:Int;
 	var c_y:Int;
 
-	// Vertical Pad betwen elements
-	var pad_el:Int = 0;
-
-	// If true, will loop on the edges
-	public var flag_loop:Bool = false;
-
-	// - Global Button Styles for All Buttons
-	var btn_style:Int = 0;		// Index. Check `Button.hx` button style symbols
-	var btn_width:Int = 0;		// Force Button width
-	var btn_padOut:Int = 0;		// Symbol Pad Outer
-	var btn_padIn:Int = 0;		// Symbol Pad Inner
-
-	// - Drawable separator
-	var sep_enable:Bool = false;
-	var sep_symbol:String;
+	// Custom Style
+	var St = {
+		bWidth:0,		// Fixed button width. (0) for Auto. (-1) To stretch to MenuBar Width
+		bSmb:[0, 0, 0],	// [Button Symbol ID , Symbol Left Pad, Symbol Right Pad ] ; For button ID check `Button.hx:SMB`
+		vPad:0,			// Vertical Pad betwen elements
+		xPad:0,			// Left Edge Padding
+		sep:false,		// Use a Vertical Separator between columns
+	}
 
 	// - Maps <SID> to <CURSORPOS> of all elements
 	//  CURSORPOS : `x,y` starting at 0,0 for top left
@@ -54,68 +47,29 @@ class ButtonGrid extends Window
 	 * callback(SID, POS) - SID is the element sid,
 	 * POS is the position of the element in the grid, starting at (0,0) top left */
 	public var onPush:Button->String->Void;
-
+	
+	// If true, will loop on the edges
+	public var flag_loop:Bool = false;
+	
 	/**
 	   @param	_w Width -
 	   @param	_h Height -
 	   @param	columns How many columns
 	**/
-	public function new(?_sid:String, _w:Int = 20, _h:Int = 10, columns:Int = 2)
+	public function new(?_sid:String, _w:Int = 20, _h:Int = 10, columns:Int = 2, st:Dynamic = null)
 	{
+		St = DataT.copyFields(st, St);
+		trace("ButtonGrid Style:", St);
 		col_pos = [];
 		col_el = [];
 		c_x = 0; c_y = 0;
 		col_count = columns;
 		posMap = new Map();
 
+		padX = St.xPad;
+		
 		super(_sid, _w, _h); // Keep it last
-	}//---------------------------------------------------;
-
-	/**
-	   Sets button display mode
-	   ~ Call this before adding elements
-	   @param	buttonStyle Common button style for all buttons? (0-4)
-	   @param	buttonWidth 0 for auto, other for forced width
-	   @param	padOut Symbol pad Outer
-	   @param	padIn Symbol pad Inner
-	**/
-	public function setButtonStyle(buttonStyle:Int, buttonWidth:Int, padOut:Int, padIn:Int):ButtonGrid
-	{
-		btn_style = buttonStyle;
-		btn_width = buttonWidth;
-		btn_padOut = padOut;
-		btn_padIn = padIn;
-		return this;
-	}//---------------------------------------------------;
-
-
-	/**
-	   Set a separator style for the columns and a padding
-	   NOTE: the separator color is `style.text`. This is if you want a different color than the border
-	   @param	sep  Separator symbol Index. -1 for none. 0 to follow border style. Else to apply border ID style
-	   @param	Xpad  Left Edge Padding
-	   @param	Vpad  Vertical padding between elements
-	**/
-	public function setColumnStyle(sep:Int = -1, Xpad:Int = 1, Vpad:Int = 0)
-	{
-		pad_el = Vpad;
-		padX = Xpad;
-
-		// -
-		if (sep >-1)
-		{
-			sep_enable = true;
-			if (sep == 0)
-			{
-				if (borderStyle > 0) sep = borderStyle; else sep = 1;
-			}
-			sep_symbol = Styles.border[sep].charAt(7);
-
-			// Need to have a padding
-			if (padX == 0) padX = 1;
-		}
-
-		setupColumns(); // Because paddingX might have changed
+		
 	}//---------------------------------------------------;
 
 	override public function size(_w:Int, _h:Int):BaseElement
@@ -134,7 +88,7 @@ class ButtonGrid extends Window
 		for (i in 0...col_count) col_pos[i] = colWidth * i;
 	}//---------------------------------------------------;
 
-
+	
 	/**
 	   Quickly add a button at a column. Conforms to global button style
 	   @param	col The column to add the button to ( start at 0 )
@@ -144,12 +98,12 @@ class ButtonGrid extends Window
 	**/
 	public function add(col:Int, text:String, ?_sid:String):Button
 	{
-		var b = new Button(_sid, text, btn_style, btn_width);
+		var b = new Button(_sid, text, St.bSmb[0], St.bWidth);
 			b.focus_lock = true;
 
-		if (btn_style > 0)
+		if (St.bSmb[0] > 0)
 		{
-			b.setSideSymbolPad(btn_padOut, btn_padIn);
+			b.setSideSymbolPad(St.bSmb[1], St.bSmb[2]);
 		}
 
 		putEl(col, b);
@@ -175,7 +129,7 @@ class ButtonGrid extends Window
 			col_el[col] = [];
 		}else
 		{
-			yy = col_el[col][rowsAt(col) - 1].y + 1 + pad_el;
+			yy = col_el[col][rowsAt(col) - 1].y + 1 + St.vPad;
 		}
 
 		el.pos(xx, yy);
@@ -201,19 +155,21 @@ class ButtonGrid extends Window
 		return false;
 	}//---------------------------------------------------;
 
-	override function onKey(key:String)
+	override function onKey(key:String):String
 	{
-		// Note: The generic handler will not process UP/DOWN, since the element is locked
-		super.onKey(key);
-
 		switch(key)
 		{
-			case "up": 	 focusRelY(-1);
-			case "down": focusRelY(1);
-			case "left": focusRelX(-1);
-			case "right":focusRelX(1);
+			case "up": 	 focusRelY( -1); key = "";
+			case "down": focusRelY(1); key = "";
+			case "left": focusRelX(-1); key = "";
+			case "right":focusRelX(1); key = "";
 			default:
 		}
+		
+		// Note: The generic handler will not process UP/DOWN, since the element is locked
+		key = super.onKey(key);
+		
+		return key;
 	}//---------------------------------------------------;
 
 	// Focus relative to cursor at Y axis,
@@ -275,16 +231,17 @@ class ButtonGrid extends Window
 		return c_x + ',' + c_y;
 	}//---------------------------------------------------;
 
-	override function onElementCallback(st:String, el:BaseElement)
+	override function onChildEvent(msg:String, el:BaseElement):Void 
 	{
-		super.onElementCallback(st, el);
-
-		if (st == "fire")
+		if (msg == "fire")
 		{
 			Tools.tCall(onPush, cast el, posMap.get(el.SID));
 		}
+		
+		super.onChildEvent(msg, el);
+		
 	}//---------------------------------------------------;
-
+	
 	// Adjust pointer location
 	override public function focus()
 	{
@@ -300,12 +257,13 @@ class ButtonGrid extends Window
 	override public function draw():Void
 	{
 		super.draw();
-		if (sep_enable)
+		if (St.sep)
 		{
+			var smb = Styles.border[borderStyle].charAt(7);
 			_readyCol(); // <-- draw separator with BG,FG
 			for (i in 1...col_count)
 			{
-				WM.D.lineV(x + col_pos[i], y + padY, height - (padY * 2), sep_symbol);
+				WM.D.lineV(x + col_pos[i], y + padY, height - (padY * 2), smb);
 			}
 		}
 	}//---------------------------------------------------;
