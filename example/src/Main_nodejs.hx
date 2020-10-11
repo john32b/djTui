@@ -21,8 +21,10 @@ class Main_nodejs extends BaseApp
 	{
 		PROGRAM_INFO.name  = "djTui development";
 		
+		#if debug
 		LOG.pipeTrace(); // all traces will redirect to LOG object
 		LOG.setLogFile(REG.LOG_FILE);
+		#end
 		super.init();
 	}//---------------------------------------------------;
 	

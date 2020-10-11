@@ -1,30 +1,32 @@
-## Example Project
+# Example Project
 
-A simple project showcasing many components of **djTui**.
-djTUI is agnostic and can run into any HAXE target.
+A simple project showcasing components of **djTui**.  
+Currently it compiles to **nodejs** and **openfl**
 
-#### General Requirements
-- Haxe 4.0
-- Optional , use HAXEDEVELOP to open the project file `tui_example.hxproj`
+#### REQUIREMENTS
 
+- `HAXE 4.1.3` https://haxe.org/download/
 
-### Building for nodeJs
+- `djA (v0.1)` Library. It is a personal general use library. Install it with haxelib. https://github.com/johndimi/djA
 
-**Requirements**:
+- `djNode (v0.6)` Library. For building for **nodejs**. Install it with haxelib. https://github.com/johndimi/djNode/
 
-- nodeJS setup on system
-- https://github.com/johndimi/djNode/releases/tag/v0.4 ( A simple nodeJS helper, get V0.4 )
-- https://github.com/HaxeFoundation/hxnodejs ( the nodeJS externs for haxe )
+  
 
-Using a command line, navigate to the `examples` folder and run **`haxe build_nodejs.hxml`**\
-This will create `bin/nodejs/app.js`, which can be run with `nodejs`
+#### :warning: NOTES on OPENFL Version
 
-### Building for openFL
-
-**Requirements**:
-
-- https://github.com/openfl/openfl
-
-You can build to all openFL targets. Running the included **`build_openfl.bat`** will create a flash build of the demo in the `/bin/` folder.
+The openfl adaptors for djTui are just a proof of concept. It works, but everything could be better. Font rendering is bad. It can be fixed and achieve results similar to running a real terminal. Perhaps in a later version
 
 
+
+##### Building nodeJS
+
+- `haxe example/build_nodejs` will build the binary to `example/bin/nodejs`
+- `lime build example/project.xml html5` will build the binaries to `example/bin/html5` folder
+- you can also target anything else you want with openfl. Check openfl Documentation
+
+
+
+##### 
+
+##### 
