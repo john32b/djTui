@@ -56,8 +56,8 @@ class TextInput extends BaseMenuItem
 		}
 
 		setSideSymbolPad(0, 0);
-		setSideSymbols(":", "");
-		setTextWidth(maxChars + 1, "l"); //+1 is to accomodate for the blinking cursor
+		setSideSymbols(":", "");	// If you change this, CHECK set_text() for length 
+		setTextWidth(maxChars + 2, "l"); // +2 is to accomodate for the blinking cursor and the ":" symbol
 
 		text = "";
 	}//---------------------------------------------------;
@@ -141,7 +141,7 @@ class TextInput extends BaseMenuItem
 	//
 	override function set_text(val)
 	{
-		if (val != null && cast(val, String).length == maxChars)
+		if (val != null && cast(val, String).length == maxChars + 1)	// +1 is to accomodate for ":"
 		{
 			return text;
 		}

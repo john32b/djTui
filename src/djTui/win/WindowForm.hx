@@ -83,7 +83,7 @@ class WindowForm extends Window
 		}
 		#end
 		
-		trace('> Alignment set align:$align, padX:$align_padx, divider:$align_fix_start');
+		// trace('> Alignment set align:$align, padX:$align_padx, divider:$align_fix_start');
 		
 		return this;
 	}//---------------------------------------------------;
@@ -200,7 +200,7 @@ class WindowForm extends Window
 			case 'label':
 				e = new Label(s[1], i(2) == 1?w2:0, s[3]);
 			case 'input':
-				e = new TextInput(s[1], align == "fixed"?w2-1:0, s[2]);
+				e = new TextInput(s[1], i(2), s[3]);
 			case 'toggle':
 				e = new Toggle(s[1], s[2] == "true");
 			case 'slNum':
