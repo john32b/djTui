@@ -2,7 +2,7 @@
 
 # DJTUI 
 
-**License:** MIT, **Version:** 0.2, **Author:** John Dimi
+**License:** MIT, **Version:** 0.2, **Author:** John32B
 
 **DJTUI** is a Terminal User Interface Library with a **platform agnostic** renderer and input manager. You can basically run this on whatever **HAXE** supports building to. From nodeJS, running on a real terminal, to openFL and heaps, etc.
 
@@ -95,5 +95,5 @@ Currently djTUI comes with interfaces for
 ## End Notes
 
 - This was mostly developed for personal use and as a programming practice.  
-- Checkout [PsxLauncher](https://github.com/johndimi/psxlauncher/) An open source emulation launcher that uses djTui
+- Checkout [PsxLauncher](https://github.com/john32b/psxlauncher/) An open source emulation launcher that uses djTui
 - This project is a low priority of mine. Perhaps I will come back to it in the future

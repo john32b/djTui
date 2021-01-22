@@ -11,7 +11,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <project>
 	
-	<meta title="djTui in openFL" package="org.johndimi.djtui" version="0.2.0" company="johndimi" />
+	<meta title="djTui in openFL" package="org.john32b.djtui" version="0.2.0" company="john32b" />
 	
 	<app main="Main_openfl" path="bin" file="djTuiDemo" />
 	

@@ -1,13 +1,13 @@
 {
   "name": "djTui",
-  "url" : "https://github.com/johndimi/djTui",
+  "url" : "https://github.com/john32b/djTui",
   "license": "MIT",
   "tags": ["TUI","graphic","interface","terminal","nodejs","openfl"],
   "description": "A simple TUI framework with an agnostic renderer.",
   "version": "0.2.0",
   "classPath": "src/",
   "releasenote": "",
-  "contributors": ["JohnDimi"],
+  "contributors": ["john32b"],
   "dependencies": { 
 	"djA" : ""
   }
